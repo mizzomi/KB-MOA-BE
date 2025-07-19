@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.moa.member.mapper.MemberMapper">
+    <insert id="insert" parameterType="org.moa.member.entity.Member" useGeneratedKeys="true" keyProperty="memberId">
+        INSERT INTO MEMBER (member_type,
+                            email,
+                            password,
+                            name,
+                            id_card_number,
+                            created_at,
+                            updated_at)
+        VALUES (#{memberType},
+                #{email},
+                #{password},
+                #{name},
+                #{idCardNumber},
+                #{createdAt},
+                #{updatedAt})
+    </insert>
+
+</mapper>
