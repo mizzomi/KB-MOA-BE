@@ -20,5 +20,8 @@
                 #{createdAt},
                 #{updatedAt})
     </insert>
-
+    <select id="selectUserIdByEmail" resultType="java.lang.String" parameterType="java.lang.String">
+        SELECT user_id  FROM MEMBER
+        WHERE email = #{email}
+    </select>
 </mapper>

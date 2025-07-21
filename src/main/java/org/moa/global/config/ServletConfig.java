@@ -16,7 +16,8 @@ import org.springframework.web.servlet.view.JstlView;
 	"org.moa.global",
 	"org.moa.member.controller", //member controller 추가
 	"org.moa.member.service",
-	"org.moa.member.mapper"
+	"org.moa.member.mapper",
+	"org.moa.trip"
 })
 public class ServletConfig implements WebMvcConfigurer {
 

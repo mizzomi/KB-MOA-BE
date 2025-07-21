@@ -9,4 +9,5 @@ public interface MemberService {
 
 	boolean userJoin(MemberJoinRequestDto dto);
 
+	String searchUserIdByEmail(String email);
 }

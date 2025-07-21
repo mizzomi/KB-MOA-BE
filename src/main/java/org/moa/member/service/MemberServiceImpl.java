@@ -73,4 +73,9 @@ public class MemberServiceImpl implements MemberService {
 	public boolean validateNameAndIdCardNumber(String name, String idCardNumber) {
 		return idCardMapper.existsByNameAndIdCardNumber(name, idCardNumber);
 	}
+
+	@Override
+	public String searchUserIdByEmail(String email){
+		return memberMapper.selectUserIdByEmail(email);
+	}
 }
