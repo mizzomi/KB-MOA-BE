@@ -1,4 +1,4 @@
-package org.moa.global.entity;
+package org.moa.global.account.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

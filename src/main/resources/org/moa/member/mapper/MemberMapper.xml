@@ -20,8 +20,14 @@
                 #{createdAt},
                 #{updatedAt})
     </insert>
-    <select id="selectUserIdByEmail" resultType="java.lang.String" parameterType="java.lang.String">
-        SELECT user_id  FROM MEMBER
+    <select id="getByEmail" resultType="org.moa.member.entity.Member">
+        SELECT *
+        FROM MEMBER
         WHERE email = #{email}
+    </select>
+    <select id="getByMemberId" resultType="org.moa.member.entity.Member">
+        SELECT *
+        FROM MEMBER
+        WHERE member_id = #{memberId}
     </select>
 </mapper>

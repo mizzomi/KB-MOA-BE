@@ -20,7 +20,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 @Configuration
 @PropertySource({"classpath:/application.properties"})
-@MapperScan(basePackages = {"org.moa.global.mapper", "org.moa.member.mapper", "org.moa.trip.mapper"})
+@MapperScan(basePackages = {"org.moa.global.account.mapper", "org.moa.member.mapper","org.moa.trip.mapper"})
 public class RootConfig {
 	private final Properties envProperties = new Properties();
 	@Autowired
