@@ -18,6 +18,8 @@ public class Trip {
     private Location tripLocation;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     // 여행 멤버들
     private List<TripMember> tripMembers;
     // 여행 기록들

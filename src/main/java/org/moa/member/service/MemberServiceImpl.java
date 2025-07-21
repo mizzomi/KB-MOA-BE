@@ -93,7 +93,7 @@ public class MemberServiceImpl implements MemberService {
 	}
 
 	@Override
-	public String searchUserIdByEmail(String email){
-		return memberMapper.selectUserIdByEmail(email);
+	public Long searchUserIdByEmail(String email){
+		return memberMapper.getByEmail(email).getMemberId();
 	}
 }

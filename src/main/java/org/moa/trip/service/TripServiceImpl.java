@@ -35,25 +35,31 @@ public class TripServiceImpl implements TripService {
                 .endDate(dto.getEndTime())
                 // DTO location String 필드를 대문자로 바꾼뒤 Location.valueOf() 사용
                 .tripLocation(location)
-                .startDate(LocalDateTime.now())
-                .endDate(LocalDateTime.now())
+                .startDate(LocalDateTime.now()) // 입력받기
+                .endDate(LocalDateTime.now()) // 입력받기 22
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .tripMembers(new ArrayList<>())
                 .tripRecords(new ArrayList<>())
                 .expenses(new ArrayList<>())
                 .tripDays(new ArrayList<>())
                 .build();
-        // 호스트를 생성 / DB에 저장
+        // 여행을 DB에 저장
+        tripMapper.insert(newTrip);
+        
+        // 호스트를 생성
         TripMember host  = TripMember.builder()
                 .tripId(newTrip.getTripId())
                 .memberId(newTrip.getMemberId())
                 .role(TripRole.HOST)
                 .joinedAt(LocalDateTime.now())
                 .build();
+
+        // 호스트 참여를 DB에 저장
         tripMemberMapper.insert(host);
 
-        // 호스트를 본인 여행에 추가 / 여행을 DB에 저장
-        newTrip.getTripMembers().add(host);
-        tripMapper.insert(newTrip);
+//      유저 추가를 여행에 또 새로 저장해야하나....
+//      newTrip.getTripMembers().add(host);
 
         // 참여자들에게 알림 생성
         if(dto.getMemberIds() != null){

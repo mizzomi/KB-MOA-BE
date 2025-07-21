@@ -8,15 +8,18 @@
         INSERT INTO TRIP (member_id,
                           trip_name,
                           trip_location,
-                          destination,
                           start_date,
-                          end_date
+                          end_date,
+                          created_at,
+                          updated_at
         )
         VALUES (#{memberId},
                 #{tripName},
                 #{tripLocation},
-                #{destination},
                 #{startDate},
-                #{endDate})
+                #{endDate},
+                #{createdAt},
+                #{updatedAt}
+               )
     </insert>
 </mapper>

@@ -5,18 +5,17 @@
 
 <mapper namespace="org.moa.trip.mapper.TripMemberMapper">
     <insert id="insert" parameterType="org.moa.trip.entity.TripMember" useGeneratedKeys="true" keyProperty="tripMemberId">
-        INSERT INTO TRAVEL_MEMBER (
-                                   travel_id,
-                                   user_id,
-                                   join_status,
-                                   joined_at,
-                                   role
+        INSERT INTO TRIP_MEMBER (
+                                   trip_id,
+                                   member_id,
+                                   role,
+                                   joined_at
         )
         VALUES (
                  #{tripId},
                  #{memberId},
-                 #{joinStatus},       #{joinedAt},
-                 #{role}
+                 #{role},
+                 #{joinedAt}
                  )
     </insert>
 </mapper>
