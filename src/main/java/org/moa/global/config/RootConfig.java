@@ -20,7 +20,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 @Configuration
 @PropertySource({"classpath:/application.properties"})
-@MapperScan(basePackages = {"org.moa"})
+@MapperScan(basePackages = {"org.moa.global.mapper", "org.moa.member.mapper"})
 public class RootConfig {
 	private final Properties envProperties = new Properties();
 	@Autowired
@@ -54,6 +54,9 @@ public class RootConfig {
 		sqlSessionFactory.setConfigLocation(applicationContext.getResource("classpath:/mybatis-config.xml"));
 		sqlSessionFactory.setDataSource(dataSource());
 
+		// ✅ mapperLocations 추가
+		sqlSessionFactory.setMapperLocations(applicationContext.getResources("classpath:/org/moa/**/*.xml"));
+		
 		return sqlSessionFactory.getObject();
 	}
 

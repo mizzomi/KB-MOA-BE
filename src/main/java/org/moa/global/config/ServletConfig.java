@@ -13,7 +13,10 @@ import org.springframework.web.servlet.view.JstlView;
 
 @EnableWebMvc
 @ComponentScan(basePackages = {
-	"org.moa.global"
+	"org.moa.global",
+	"org.moa.member.controller", //member controller 추가
+	"org.moa.member.service",
+	"org.moa.member.mapper"
 })
 public class ServletConfig implements WebMvcConfigurer {
 

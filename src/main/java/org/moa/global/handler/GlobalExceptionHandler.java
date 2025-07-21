@@ -1,10 +1,13 @@
 package org.moa.global.handler;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.moa.global.response.ApiResponse;
 import org.moa.global.type.StatusCode;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -65,5 +68,31 @@ public class GlobalExceptionHandler {
 		return ResponseEntity
 			.status(StatusCode.INTERNAL_ERROR.getStatus())
 			.body(ApiResponse.error(StatusCode.INTERNAL_ERROR, ex.getMessage()));
+	}
+
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	protected ResponseEntity<ApiResponse<Object>> handleDataIntegrityViolationException(
+		DataIntegrityViolationException ex) {
+		log.error("DataIntegrityViolationException occurred", ex);
+		return ResponseEntity
+			.status(StatusCode.CONFLICT.getStatus())
+			.body(ApiResponse.error(StatusCode.CONFLICT, "데이터 무결성 제약 조건에 위배되었습니다."));
+	}
+
+	@ExceptionHandler(DuplicateKeyException.class)
+	protected ResponseEntity<ApiResponse<Object>> handleDuplicateKeyException(DuplicateKeyException ex) {
+		log.error("DuplicateKeyException occurred", ex);
+		return ResponseEntity
+			.status(StatusCode.CONFLICT.getStatus())
+			.body(ApiResponse.error(StatusCode.CONFLICT, "이미 존재하는 데이터입니다."));
+	}
+
+	@ExceptionHandler(SQLIntegrityConstraintViolationException.class)
+	protected ResponseEntity<ApiResponse<Object>> handleSQLIntegrityException(
+		SQLIntegrityConstraintViolationException ex) {
+		log.error("SQLIntegrityConstraintViolationException occurred", ex);
+		return ResponseEntity
+			.status(StatusCode.CONFLICT.getStatus())
+			.body(ApiResponse.error(StatusCode.CONFLICT, "DB 제약조건 위반입니다: " + ex.getMessage()));
 	}
 }
