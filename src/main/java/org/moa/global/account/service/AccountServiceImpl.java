@@ -1,6 +1,6 @@
-package org.moa.global.service.account;
+package org.moa.global.account.service;
 
-import org.moa.global.mapper.AccountMapper;
+import org.moa.global.account.mapper.AccountMapper;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;

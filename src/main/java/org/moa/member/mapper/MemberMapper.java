@@ -7,4 +7,9 @@ import org.moa.member.entity.Member;
 public interface MemberMapper {
 
 	int insert(Member member);
+
+	Member getByMemberId(Long memberId);
+
+	Member getByEmail(String email);
+
 }

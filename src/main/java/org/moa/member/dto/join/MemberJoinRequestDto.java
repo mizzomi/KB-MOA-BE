@@ -1,14 +1,10 @@
 package org.moa.member.dto.join;
 
-import java.time.LocalDateTime;
-
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
-import org.moa.global.util.HashUtil;
-import org.moa.member.entity.Member;
 import org.moa.member.type.MemberRole;
 
 import lombok.AllArgsConstructor;
@@ -44,16 +40,4 @@ public class MemberJoinRequestDto {
 
 	@NotNull(message = "회원 역할은 필수입니다.")
 	private MemberRole role;
-
-	public static Member toVO(MemberJoinRequestDto dto) {
-		return Member.builder()
-			.memberType(MemberRole.ROLE_USER)
-			.email(dto.getEmail())
-			.password(HashUtil.hash(dto.getPassword()))
-			.name(dto.getName())
-			.idCardNumber(HashUtil.hash(dto.getIdCardNumber()))
-			.createdAt(LocalDateTime.now())
-			.updatedAt(LocalDateTime.now())
-			.build();
-	}
 }
