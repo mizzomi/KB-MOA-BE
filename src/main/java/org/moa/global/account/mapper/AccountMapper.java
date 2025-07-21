@@ -1,4 +1,4 @@
-package org.moa.global.mapper;
+package org.moa.global.account.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
