@@ -2,7 +2,7 @@ package org.moa.trip.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.moa.global.response.ApiResponse;
-import org.moa.trip.dto.settlement.ExpenseCreateRequestDto;
+import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
 import org.moa.trip.service.ExpenseService;
 import org.moa.trip.service.TripService;
@@ -27,5 +27,10 @@ public class TripController {
     @PostMapping("/settlement")
     public ResponseEntity<ApiResponse<?>> createExpense(@Valid @RequestBody ExpenseCreateRequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(expenseService.createExpense(dto)));
+    }
+
+    @GetMapping("/settlement")
+    public ResponseEntity<ApiResponse<?>> getExpenses(@RequestParam Long memberId,  @RequestParam Long tripId) {
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(expenseService.getExpenses(memberId,tripId)));
     }
 }
