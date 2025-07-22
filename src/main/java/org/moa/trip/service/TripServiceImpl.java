@@ -2,6 +2,7 @@ package org.moa.trip.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.moa.trip.dto.settlement.ExpenseCreateRequestDto;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
 import org.moa.trip.entity.Trip;
 import org.moa.trip.entity.TripMember;
@@ -14,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -70,4 +70,5 @@ public class TripServiceImpl implements TripService {
         // !추후 초대받은 유저들이 수락시 newTrip 에 해당 유저들 추가하는 서비스 로직 필요!
         return true;
     }
+
 }

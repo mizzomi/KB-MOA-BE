@@ -19,6 +19,7 @@ public class Expense {
     private BigDecimal amount;
     private Location location;
     private Boolean settlementCompleted;
+    private LocalDateTime expenseDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.moa.trip.mapper.SettlementMapper">
+    <insert id="insert" parameterType="org.moa.trip.entity.SettlementNotes" useGeneratedKeys="true" keyProperty="settlementId">
+        INSERT INTO SETTLEMENT_NOTES (expense_id,
+                                      trip_id,
+                                      member_id,
+                                      share_amount,
+                                      is_payed,
+                                      created_at,
+                                      updated_at
+        )
+        VALUES (#{expenseId},
+                #{tripId},
+                #{memberId},
+                #{shareAmount},
+                #{isPayed},
+                #{createdAt},
+                #{updatedAt}
+               )
+    </insert>
+</mapper>
