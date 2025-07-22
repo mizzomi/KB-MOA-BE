@@ -7,5 +7,7 @@ import java.util.List;
 
 @Mapper
 public interface TripMapper {
+    public Trip selectTripById(long tripId);
+
     public void insert(Trip trip);
 }
