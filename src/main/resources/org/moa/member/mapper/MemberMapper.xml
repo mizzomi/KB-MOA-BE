@@ -30,5 +30,4 @@
         FROM MEMBER
         WHERE member_id = #{memberId}
     </select>
-
 </mapper>

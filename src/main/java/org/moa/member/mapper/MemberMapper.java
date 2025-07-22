@@ -8,8 +8,7 @@ public interface MemberMapper {
 
 	int insert(Member member);
 
-	Member getByMemberId(Long memberId);
+    Member getByMemberId(Long memberId);
 
-	Member getByEmail(String email);
-
+    Member getByEmail(String email);
 }

@@ -91,4 +91,9 @@ public class MemberServiceImpl implements MemberService {
 	public boolean validateNameAndIdCardNumber(String name, String idCardNumber) {
 		return idCardMapper.existsByNameAndIdCardNumber(name, idCardNumber);
 	}
+
+	@Override
+	public Long searchUserIdByEmail(String email){
+		return memberMapper.getByEmail(email).getMemberId();
+	}
 }

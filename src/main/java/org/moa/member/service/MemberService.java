@@ -12,4 +12,5 @@ public interface MemberService {
 
 	boolean userJoin(MemberJoinRequestDto dto);
 
+	Long searchUserIdByEmail(String email);
 }
