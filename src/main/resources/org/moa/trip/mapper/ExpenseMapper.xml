@@ -26,4 +26,9 @@
                 #{updatedAt}
         )
     </insert>
+    <select id="searchByExpenseId" resultType="org.moa.trip.entity.Expense">
+        SELECT *
+        FROM EXPENSE
+        WHERE expense_id = #{expenseId}
+    </select>
 </mapper>

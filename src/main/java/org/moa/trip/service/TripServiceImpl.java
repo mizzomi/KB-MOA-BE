@@ -2,7 +2,6 @@ package org.moa.trip.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.moa.trip.dto.settlement.ExpenseCreateRequestDto;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
 import org.moa.trip.entity.Trip;
 import org.moa.trip.entity.TripMember;

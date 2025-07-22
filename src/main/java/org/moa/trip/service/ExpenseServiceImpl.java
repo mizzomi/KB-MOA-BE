@@ -4,16 +4,25 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.global.handler.BusinessException;
 import org.moa.global.type.StatusCode;
-import org.moa.trip.dto.settlement.ExpenseCreateRequestDto;
+import org.moa.member.entity.Member;
+import org.moa.member.mapper.MemberMapper;
+import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
+import org.moa.trip.dto.expense.ExpenseResponseDto;
 import org.moa.trip.entity.Expense;
+import org.moa.trip.entity.SettlementNotes;
 import org.moa.trip.entity.Trip;
 import org.moa.trip.mapper.ExpenseMapper;
+import org.moa.trip.mapper.SettlementMapper;
 import org.moa.trip.mapper.TripMapper;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -21,8 +30,10 @@ import java.time.LocalDateTime;
 public class ExpenseServiceImpl implements ExpenseService{
     private final SettlementService settlementService;
 
+    private final MemberMapper memberMapper;
     private final TripMapper tripMapper;
     private final ExpenseMapper expenseMapper;
+    private final SettlementMapper settlementMapper;
 
     @Override
     @Transactional
@@ -67,10 +78,93 @@ public class ExpenseServiceImpl implements ExpenseService{
 
         // 각 member 에 대해 공유 금액만큼 정산 생성
         for(int i=0;i<dto.getMemberIds().size();i++){
+            Long creatorId = dto.getMemberId();
             Long memberId = dto.getMemberIds().get(i);
             BigDecimal amount = dto.getAmounts().get(i);
-            settlementService.createSettlement(newExpense.getExpenseId(), newExpense.getTripId(), memberId, amount);
+            settlementService.createSettlement(newExpense.getExpenseId(), newExpense.getTripId(), creatorId , memberId, amount);
         }
         return true;
+    }
+
+    @Override
+    @Transactional
+    public List<ExpenseResponseDto> getExpenses(Long memberId, Long tripId){
+        log.info("getExpenses 호출: memberId={}, tripId={}", memberId, tripId);
+        if (memberId == null || tripId == null) {
+            throw new BusinessException(StatusCode.BAD_REQUEST, "회원 ID 또는 여행 ID가 누락되었습니다.");
+        }
+        // 해당 여행의 해당 유저의 정산 내역을 불러옴
+        List<SettlementNotes> settlementNotes;
+        try {
+            settlementNotes = settlementMapper.searchByMemberIdAndTripId(memberId, tripId);
+        } catch (DataAccessException e) {
+            throw new BusinessException(StatusCode.INTERNAL_ERROR, "정산 내역 조회 중 서버 오류가 발생했습니다.");
+        }
+
+        if (settlementNotes.isEmpty()) {
+            log.info("getExpenses: 사용자 {}의 여행 {}에 대한 정산 내역이 없습니다.", memberId, tripId);
+            return Collections.emptyList();
+        }
+
+        List<ExpenseResponseDto> responseDtos = new ArrayList<>();
+        // 각 정산 내역마다 처리
+        for(SettlementNotes s : settlementNotes){
+            Long expenseId = s.getExpenseId();
+
+            Expense expense;
+            try {
+                expense = expenseMapper.searchByExpenseId(expenseId);
+            } catch (DataAccessException e) {
+                log.error("getExpenses: expenseMapper.searchByExpenseId DB 오류 발생 (expenseId={}) - {}", expenseId, e.getMessage(), e);
+                throw new BusinessException(StatusCode.INTERNAL_ERROR, "비용 정보 조회 중 서버 오류가 발생했습니다.");
+            }
+
+            if (expense == null) {
+                log.error("getExpenses: expenseId {}에 해당하는 Expense 를 찾을 수 없습니다. 데이터 무결성 오류.", expenseId);
+                throw new BusinessException(StatusCode.INTERNAL_ERROR, "정산 처리 중 내부 데이터 오류가 발생했습니다. (관련 비용을 찾을 수 없음)");
+            }
+
+            // DTO 에 넣을 것들
+            LocalDateTime expenseDate = expense.getExpenseDate();
+            BigDecimal shareAmount = s.getShareAmount();
+            Boolean received = s.getReceived();
+            String status = getString(s, expense, received);
+            ExpenseResponseDto dto = ExpenseResponseDto.builder()
+                    .expenseDate(expenseDate)
+                    .shareAmount(!received ? expense.getAmount() : shareAmount)
+                    .received(received)
+                    .status(status)
+                    .build();
+            responseDtos.add(dto);
+            log.info("received : {}, shareAmount : {}, status : {}",dto.getReceived(), dto.getShareAmount(),dto.getStatus());
+        }
+        return responseDtos;
+    }
+
+    private String getString(SettlementNotes s, Expense expense, Boolean received) {
+        Boolean isPayed = s.getIsPayed();
+        Boolean settlementCompleted = expense.getSettlementCompleted();
+        String status;
+        if(!received){ // 보낸 요청일 때
+            if(settlementCompleted){ // 정산이 완료되었을 때
+                status = "정산 완료";
+            }
+            else{ // 정산이 완료되지 않았을 때
+                status = "정산 진행중";
+            }
+        } else {
+            if(isPayed){
+                if(settlementCompleted){ // 정산이 완료되었을 때
+                    status = "정산 완료";
+                }
+                else{ // 정산이 완료되지 않았을 때
+                    status = "정산 진행중";
+                }
+            }
+            else{
+                status = "정산 하기";
+            }
+        }
+        return status;
     }
 }

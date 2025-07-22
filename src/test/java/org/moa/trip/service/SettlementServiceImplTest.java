@@ -29,6 +29,7 @@ class SettlementServiceImplTest {
 
     private Long expenseId;
     private Long tripId;
+    private Long creatorId;
     private Long memberId;
     private BigDecimal amount;
 
@@ -36,6 +37,7 @@ class SettlementServiceImplTest {
     void setUp() {
         expenseId = 1L;
         tripId = 1L;
+        creatorId = 1L;
         memberId = 1L;
         amount = new BigDecimal("15000.00");
         doNothing().when(settlementMapper).insert(any(SettlementNotes.class));
@@ -45,7 +47,7 @@ class SettlementServiceImplTest {
     @DisplayName("정산 내역 성공 시, SettlementNotes 가 DB에 저장 잘 되는지?")
     void createSettlement() {
         // when
-        boolean result = settlementService.createSettlement(expenseId, tripId, memberId, amount);
+        boolean result = settlementService.createSettlement(expenseId, tripId, creatorId, memberId, amount);
 
         // then
         assertThat(result).isTrue();

@@ -22,4 +22,9 @@
                 #{updatedAt}
                )
     </insert>
+    <select id="searchByMemberIdAndTripId" resultType="org.moa.trip.entity.SettlementNotes">
+        SELECT *
+        FROM SETTLEMENT_NOTES
+        WHERE member_id = #{memberId} AND trip_id = #{tripId}
+    </select>
 </mapper>

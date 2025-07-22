@@ -17,14 +17,16 @@ import java.time.LocalDateTime;
 public class SettlementServiceImpl implements  SettlementService {
     private final SettlementMapper settlementMapper;
 
-    public boolean createSettlement(Long expenseId, Long tripId, Long memberId, BigDecimal amount) {
+    public boolean createSettlement(Long expenseId, Long tripId, Long creatorId, Long memberId, BigDecimal amount) {
         log.info("createSettlement");
         SettlementNotes settlementNotes = SettlementNotes.builder()
                 .expenseId(expenseId)
                 .tripId(tripId)
                 .memberId(memberId)
                 .shareAmount(amount)
-                .isPayed(false)
+                // 정산 생성자 ID = 리스트에 담긴 ID -> 자동 정산 완료 처리
+                // 정산 생성자 ID != 리스트에 담긴 ID -> 정산 해야함
+                .isPayed(creatorId.equals(memberId))
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
