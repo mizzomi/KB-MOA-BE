@@ -3,6 +3,7 @@ package org.moa.trip.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
+import org.moa.trip.dto.trip.TripListResponseDto;
 import org.moa.trip.entity.Trip;
 import org.moa.trip.entity.TripMember;
 import org.moa.trip.mapper.TripMapper;
@@ -12,8 +13,10 @@ import org.moa.trip.type.TripRole;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -70,4 +73,25 @@ public class TripServiceImpl implements TripService {
         return true;
     }
 
+    @Override
+    public List<TripListResponseDto> getTripList(Long memberId) {
+        List<TripListResponseDto> trips = tripMapper.getTripsByMemberId(memberId);
+
+        // 여행 상태 결정
+        for(TripListResponseDto trip : trips){
+            LocalDate now = LocalDate.now();
+            String status;
+
+            if (now.isBefore(trip.getStartDate())){
+                status = "여행예정";
+            } else if (now.isAfter(trip.getEndDate())){
+                status = "여행종료";
+            } else {
+                status = "여행중";
+            }
+
+            trip.setStatus(status);
+        }
+        return trips;
+    }
 }

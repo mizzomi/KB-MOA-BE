@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.moa.global.response.ApiResponse;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
+import org.moa.trip.dto.trip.TripListResponseDto;
 import org.moa.trip.service.ExpenseService;
 import org.moa.trip.service.TripService;
 import org.springframework.http.HttpStatus;
@@ -11,17 +12,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/public")
 @RequiredArgsConstructor
 public class TripController {
     private final TripService tripService;
     private final ExpenseService expenseService;
 
+
     @PostMapping("/trip")
     public ResponseEntity<ApiResponse<?>> createTrip(@Valid @RequestBody TripCreateRequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(tripService.createTrip(dto)));
+    }
+
+    @GetMapping("/trip")
+    public ResponseEntity<ApiResponse<List<TripListResponseDto>>> getTripList(@RequestParam Long memberId) {
+        List<TripListResponseDto> trips = tripService.getTripList(memberId);
+        return ResponseEntity.ok(ApiResponse.of(trips));
     }
 
     @PostMapping("/settlement")

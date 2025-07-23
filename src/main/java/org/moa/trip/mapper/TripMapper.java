@@ -1,6 +1,8 @@
 package org.moa.trip.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.moa.trip.dto.trip.TripListResponseDto;
 import org.moa.trip.entity.Trip;
 
 import java.util.List;
@@ -10,4 +12,6 @@ public interface TripMapper {
     public Trip selectTripById(long tripId);
 
     public void insert(Trip trip);
+
+    List<TripListResponseDto> getTripsByMemberId(@Param("memberId") Long memberId);
 }
