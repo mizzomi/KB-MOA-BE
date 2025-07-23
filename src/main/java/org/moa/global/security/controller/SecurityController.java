@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@RequestMapping("/api")
+@RequestMapping("/api/public")
 @RestController
 public class SecurityController {
 
