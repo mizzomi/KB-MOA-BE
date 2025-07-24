@@ -37,7 +37,7 @@ dependencies {
     implementation 'org.aspectj:aspectjweaver:1.9.20'
 
     // JSP, SERVLET, JSTL
-    implementation('javax.servlet:javax.servlet-api:4.0.1')
+    compileOnly('javax.servlet:javax.servlet-api:4.0.1')
     compileOnly 'javax.servlet.jsp:jsp-api:2.1'
     implementation 'javax.servlet:jstl:1.2'
 
@@ -91,6 +91,11 @@ dependencies {
     implementation("org.springframework.security:spring-security-core:${springSecurityVersion}")
     implementation("org.springframework.security:spring-security-taglibs:${springSecurityVersion}")
 
+    // JWT(JSON Web Token) - 인증/인가(로그인 토큰 발급/검증)
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
 
     // 테스트
     testImplementation "org.springframework:spring-test:${springVersion}"
@@ -99,6 +104,10 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
+    testImplementation 'org.assertj:assertj-core:3.25.3'
 }
 
 

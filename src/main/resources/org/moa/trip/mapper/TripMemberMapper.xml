@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.moa.trip.mapper.TripMemberMapper">
+    <insert id="insert" parameterType="org.moa.trip.entity.TripMember" useGeneratedKeys="true" keyProperty="tripMemberId">
+        INSERT INTO TRIP_MEMBER (
+                                   trip_id,
+                                   member_id,
+                                   role,
+                                   joined_at
+        )
+        VALUES (
+                 #{tripId},
+                 #{memberId},
+                 #{role},
+                 #{joinedAt}
+                 )
+    </insert>
+</mapper>
