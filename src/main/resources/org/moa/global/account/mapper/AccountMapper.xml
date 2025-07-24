@@ -10,7 +10,6 @@
         WHERE account_number = #{accountNumber}
     </update>
 
-
     <select id="existsByAccountNumberAndAccountPassword" resultType="java.lang.Boolean">
         SELECT EXISTS (SELECT 1
                        FROM ACCOUNT
