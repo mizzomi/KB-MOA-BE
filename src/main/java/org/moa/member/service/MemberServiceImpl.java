@@ -3,6 +3,7 @@ package org.moa.member.service;
 import org.moa.global.account.mapper.AccountMapper;
 import org.moa.global.util.HashUtil;
 import org.moa.member.dto.join.MemberJoinRequestDto;
+import org.moa.member.dto.verify.MemberVerifyRequestDto;
 import org.moa.member.entity.Member;
 import org.moa.member.mapper.DriverLicenseMapper;
 import org.moa.member.mapper.IdCardMapper;
@@ -40,6 +41,20 @@ public class MemberServiceImpl implements MemberService {
 	@Override
 	public Member getByMemberId(Long memberId) {
 		return memberMapper.getByMemberId(memberId);
+	}
+
+	@Transactional
+	@Override
+	public boolean verifyJoin(MemberVerifyRequestDto dto) {
+		if (!verifyAccountNumber(dto.getName(), dto.getAccountNumber(), dto.getAccountPassword())) {
+			throw new IllegalArgumentException("일치하는 계좌 정보가 없습니다.");
+		}
+
+		if (!validateNameAndIdCardNumber(dto.getName(), dto.getIdCardNumber())) {
+			throw new IllegalArgumentException("일치하는 신분증 정보가 없습니다.");
+		}
+
+		return true;
 	}
 
 	@Transactional
@@ -88,12 +103,16 @@ public class MemberServiceImpl implements MemberService {
 		return accountMapper.existsByAccountNumberAndAccountPassword(accountNumber, accountPassword);
 	}
 
+	public boolean verifyAccountNumber(String name, String accountNumber, String accountPassword) {
+		return accountMapper.existsByNameAndAccountNumberAndAccountPassword(name, accountNumber, accountPassword);
+	}
+
 	public boolean validateNameAndIdCardNumber(String name, String idCardNumber) {
 		return idCardMapper.existsByNameAndIdCardNumber(name, idCardNumber);
 	}
 
 	@Override
-	public Long searchUserIdByEmail(String email){
+	public Long searchUserIdByEmail(String email) {
 		return memberMapper.getByEmail(email).getMemberId();
 	}
 }

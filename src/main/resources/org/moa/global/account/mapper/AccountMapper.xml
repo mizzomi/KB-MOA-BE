@@ -17,6 +17,12 @@
                        WHERE account_number = #{accountNumber}
                          AND account_password = #{accountPassword})
     </select>
-
+    <select id="existsByNameAndAccountNumberAndAccountPassword" resultType="java.lang.Boolean">
+        SELECT EXISTS(SELECT 1
+                      FROM ACCOUNT
+                      WHERE name = #{name}
+                        AND account_number = #{accountNumber}
+                        AND account_password = #{accountPassword})
+    </select>
 
 </mapper>
