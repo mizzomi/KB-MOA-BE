@@ -8,6 +8,7 @@ import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.expense.ExpenseResponseDto;
+import org.moa.trip.dto.expense.SettlementProgressResponseDto;
 import org.moa.trip.entity.Expense;
 import org.moa.trip.entity.SettlementNotes;
 import org.moa.trip.entity.Trip;
@@ -142,7 +143,7 @@ public class ExpenseServiceImpl implements ExpenseService{
         return responseDtos;
     }
 
-    private String getString(SettlementNotes s, Expense expense, Boolean received) {
+    public static String getString(SettlementNotes s, Expense expense, Boolean received) {
         Boolean isPayed = s.getIsPayed();
         Boolean settlementCompleted = expense.getSettlementCompleted();
         String status;
