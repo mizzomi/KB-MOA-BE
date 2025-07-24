@@ -3,6 +3,7 @@ package org.moa.trip.controller;
 import lombok.RequiredArgsConstructor;
 import org.moa.global.response.ApiResponse;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
+import org.moa.trip.dto.trip.PageResponse;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
 import org.moa.trip.dto.trip.TripListResponseDto;
 import org.moa.trip.service.ExpenseService;
@@ -28,9 +29,12 @@ public class TripController {
     }
 
     @GetMapping("/trip")
-    public ResponseEntity<ApiResponse<List<TripListResponseDto>>> getTripList(@RequestParam Long memberId) {
-        List<TripListResponseDto> trips = tripService.getTripList(memberId);
-        return ResponseEntity.ok(ApiResponse.of(trips));
+    public ResponseEntity<ApiResponse<PageResponse<TripListResponseDto>>> getTripList(@RequestParam Long memberId,
+                                                                              @RequestParam(defaultValue = "1") int page,
+                                                                              @RequestParam(defaultValue = "10") int size
+    ) {
+        PageResponse<TripListResponseDto> tripPage = tripService.getTripList(memberId, page, size);
+        return ResponseEntity.ok(ApiResponse.of(tripPage));
     }
 
     @PostMapping("/settlement")

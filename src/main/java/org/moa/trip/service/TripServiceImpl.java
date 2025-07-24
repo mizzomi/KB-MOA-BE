@@ -2,6 +2,7 @@ package org.moa.trip.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.moa.trip.dto.trip.PageResponse;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
 import org.moa.trip.dto.trip.TripListResponseDto;
 import org.moa.trip.entity.Trip;
@@ -74,8 +75,11 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
-    public List<TripListResponseDto> getTripList(Long memberId) {
-        List<TripListResponseDto> trips = tripMapper.getTripsByMemberId(memberId);
+    public PageResponse<TripListResponseDto> getTripList(Long memberId, int page, int size) {
+        int offset = (page - 1) * size;
+
+        List<TripListResponseDto> trips = tripMapper.getTripsByMemberIdPaged(memberId, offset, size);
+        int total = tripMapper.countTripsByMemberId(memberId);
 
         // 여행 상태 결정
         for(TripListResponseDto trip : trips){
@@ -92,6 +96,6 @@ public class TripServiceImpl implements TripService {
 
             trip.setStatus(status);
         }
-        return trips;
+        return new PageResponse<>(page, size, total, trips);
     }
 }

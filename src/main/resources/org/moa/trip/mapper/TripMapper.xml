@@ -5,8 +5,15 @@
 
 <mapper namespace="org.moa.trip.mapper.TripMapper">
 
-    <!--    사용자가 생성하거나 참여한 여행 리스트 불러오기-->
-    <select id="getTripsByMemberId" resultType="org.moa.trip.dto.trip.TripListResponseDto">
+    <!--    사용자가 생성하거나 참여한 여행 총 개수-->
+    <select id="countTripsByMemberId" resultType="int">
+        SELECT COUNT(*)
+        FROM trip t
+                 INNER JOIN trip_member tm ON t.trip_id = tm.trip_id
+        WHERE tm.member_id = #{memberId}
+    </select>
+    <!--    사용자가 생성하거나 참여한 여행 페이징 된 리스트-->
+    <select id="getTripsByMemberIdPaged" resultType="org.moa.trip.dto.trip.TripListResponseDto">
         SELECT
             t.trip_id     AS tripId,
             t.trip_name   AS tripName,
@@ -20,6 +27,7 @@
             tm.member_id = #{memberId}
         ORDER BY
             t.start_date DESC
+        LIMIT #{size} OFFSET #{offset}
     </select>
 
     <select id="selectTripById" resultType="org.moa.trip.entity.Trip">

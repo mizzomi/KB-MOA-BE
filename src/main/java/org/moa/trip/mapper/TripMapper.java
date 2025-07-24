@@ -13,5 +13,9 @@ public interface TripMapper {
 
     public void insert(Trip trip);
 
-    List<TripListResponseDto> getTripsByMemberId(@Param("memberId") Long memberId);
+    List<TripListResponseDto> getTripsByMemberIdPaged(@Param("memberId") Long memberId,
+                                                      @Param("offset") int offset,
+                                                      @Param("size") int size);
+
+    int countTripsByMemberId(@Param("memberId") Long memberId);
 }
