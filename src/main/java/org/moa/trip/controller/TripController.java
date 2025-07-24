@@ -3,6 +3,7 @@ package org.moa.trip.controller;
 import lombok.RequiredArgsConstructor;
 import org.moa.global.response.ApiResponse;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
+import org.moa.trip.dto.settlement.SettlementRequestDto;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
 import org.moa.trip.service.ExpenseService;
 import org.moa.trip.service.SettlementService;
@@ -39,5 +40,10 @@ public class TripController {
     @GetMapping("/settlement-progress")
     public ResponseEntity<ApiResponse<?>> getSettlementProgress(@RequestParam Long expenseId){
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(settlementService.getSettlementProgress(expenseId)));
+    }
+
+    @PostMapping("/settlement")
+    public ResponseEntity<ApiResponse<?>> settle(@RequestBody SettlementRequestDto dto){
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(settlementService.settle(dto)));
     }
 }

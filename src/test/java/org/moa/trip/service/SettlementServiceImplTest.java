@@ -6,9 +6,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.moa.global.account.entity.Account;
+import org.moa.global.account.mapper.AccountMapper;
+import org.moa.global.handler.BusinessException;
+import org.moa.global.type.StatusCode;
 import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
-import org.moa.trip.dto.expense.SettlementProgressResponseDto;
+import org.moa.trip.dto.settlement.SettlementProgressResponseDto;
+import org.moa.trip.dto.settlement.SettlementRequestDto;
 import org.moa.trip.entity.Expense;
 import org.moa.trip.entity.SettlementNotes;
 import org.moa.trip.mapper.ExpenseMapper;
@@ -24,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -36,6 +42,8 @@ class SettlementServiceImplTest {
     private ExpenseMapper expenseMapper;
     @Mock
     private MemberMapper memberMapper;
+    @Mock
+    private AccountMapper accountMapper;
     @InjectMocks
     private SettlementServiceImpl settlementService;
 
@@ -174,6 +182,108 @@ class SettlementServiceImplTest {
             verify(expenseMapper, times(1)).searchByExpenseId(eq(mockExpenseId));
             verify(settlementMapper, times(1)).searchByExpenseId(eq(mockExpenseId));
             verify(memberMapper, times(3)).getByMemberId(any(Long.class)); // 3명의 멤버 이름 조회
+        }
+    }
+
+    @Nested
+    @DisplayName("settle() 메서드")
+    class settleTest{
+        private SettlementRequestDto validDto;
+        private Expense mockExpense;
+        private Account mockReceiverAccount;
+        private Account mockSenderAccount;
+
+        @BeforeEach // 이 @Nested 클래스의 각 테스트 메서드 실행 전 초기화
+        void setUpSettle() {
+            // 1. 유효한 SettlementRequestDto 설정
+            validDto = SettlementRequestDto.builder()
+                    .expenseId(1L)
+                    .memberId(200L) // 송신자 (돈을 보내는 사람)
+                    .amount(new BigDecimal("10000.00")) // 송금할 금액
+                    .build();
+
+            // 2. expenseMapper.searchByExpenseId 호출 시 반환될 가상의 Expense 객체
+            //    (Expense의 memberId는 수신자 ID가 됨)
+            mockExpense = Expense.builder()
+                    .expenseId(1L)
+                    .memberId(100L) // 수신자 (돈을 받을 사람)
+                    .expenseName("저녁 식사")
+                    .amount(new BigDecimal("30000.00"))
+                    .build();
+            when(expenseMapper.searchByExpenseId(eq(validDto.getExpenseId()))).thenReturn(mockExpense);
+
+            // 3. accountMapper.searchAccountByMemberId 호출 시 반환될 가상의 Account 객체들
+            //    (잔액이 충분하도록 설정)
+            mockReceiverAccount = Account.builder()
+                    .memberId(100L).balance(new BigDecimal("50000.00")).build(); // 수신자 계좌
+            mockSenderAccount = Account.builder()
+                    .memberId(200L).balance(new BigDecimal("15000.00")).build(); // 송신자 계좌 (잔액 충분)
+        }
+
+        @Test
+        @DisplayName("정산 처리 성공 시, 계좌 트랜잭션이 올바르게 호출되어야 한다")
+        void settle() {
+            // given
+            // accountMapper.searchAccountByMemberId 스터빙 (성공 케이스에 필요)
+            when(accountMapper.searchAccountByMemberId(eq(mockExpense.getMemberId()))).thenReturn(mockReceiverAccount); // 수신자 계좌
+            when(accountMapper.searchAccountByMemberId(eq(validDto.getMemberId()))).thenReturn(mockSenderAccount);     // 송신자 계좌
+
+            // accountMapper.transactionBalance 스터빙 (성공 케이스에서만 호출)
+            doNothing().when(accountMapper).transactionBalance(any(Long.class), any(Long.class), any(BigDecimal.class));
+
+
+            // when (테스트 대상 메서드 실행)
+            boolean result = settlementService.settle(validDto);
+
+            // then (결과 검증)
+            assertThat(result).isTrue(); // 메서드가 true를 반환하는지 확인
+
+            // 1. expenseMapper.searchByExpenseId가 한 번 호출되었는지 검증
+            verify(expenseMapper, times(1)).searchByExpenseId(eq(validDto.getExpenseId()));
+
+            // 2. accountMapper.searchAccountByMemberId가 수신자와 송신자 각각에 대해 한 번씩 호출되었는지 검증
+            verify(accountMapper, times(1)).searchAccountByMemberId(eq(mockExpense.getMemberId())); // 수신자 ID로 호출
+            verify(accountMapper, times(1)).searchAccountByMemberId(eq(validDto.getMemberId()));     // 송신자 ID로 호출
+
+            // 3. accountMapper.transactionBalance가 올바른 인자들과 함께 한 번 호출되었는지 검증
+            verify(accountMapper, times(1)).transactionBalance(
+                    eq(mockExpense.getMemberId()), // 수신자 ID
+                    eq(validDto.getMemberId()),    // 송신자 ID
+                    eq(validDto.getAmount())       // 금액
+            );
+
+            // (선택 사항) 다른 매퍼나 서비스가 호출되지 않았음을 검증
+            verifyNoMoreInteractions(expenseMapper); // expenseMapper에 다른 호출이 없음을 확인
+            verifyNoMoreInteractions(accountMapper); // accountMapper에 다른 호출이 없음을 확인
+            verifyNoInteractions(settlementMapper); // settle 메서드에서 settlementMapper는 사용하지 않으므로 호출 없어야 함
+            verifyNoInteractions(memberMapper);     // settle 메서드에서 memberMapper는 사용하지 않으므로 호출 없어야 함
+        }
+
+        @Test
+        @DisplayName("잔액 부족시, 예외가 처리된다.")
+        void settleFailure() {
+            // given
+            // 송신자 계좌 (잔액 부족)를 이 테스트 내에서만 설정
+            mockSenderAccount = Account.builder()
+                    .memberId(200L).balance(new BigDecimal("5000.00")).build();
+            when(accountMapper.searchAccountByMemberId(eq(mockExpense.getMemberId()))).thenReturn(mockReceiverAccount); // 수신자 계좌
+            when(accountMapper.searchAccountByMemberId(eq(validDto.getMemberId()))).thenReturn(mockSenderAccount);     // 송신자 계좌 (잔액 부족)
+
+            // when & then
+            BusinessException e = assertThrows(BusinessException.class, () ->
+                    settlementService.settle(validDto)
+            );
+
+            assertThat(e.getStatusCode()).isEqualTo(StatusCode.BAD_REQUEST);
+            assertThat(e.getMessage()).isEqualTo("계좌 잔액을 확인해주세요.");
+
+            // 매퍼 호출 검증 (여기까지는 성공했어야 함)
+            verify(expenseMapper, times(1)).searchByExpenseId(eq(validDto.getExpenseId()));
+            verify(accountMapper, times(1)).searchAccountByMemberId(eq(mockExpense.getMemberId()));
+            verify(accountMapper, times(1)).searchAccountByMemberId(eq(validDto.getMemberId()));
+            verifyNoMoreInteractions(expenseMapper);
+            // transactionBalance는 호출되지 않아야 함
+            verify(accountMapper, never()).transactionBalance(any(Long.class), any(Long.class), any(BigDecimal.class));
         }
     }
 }

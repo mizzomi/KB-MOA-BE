@@ -1,4 +1,4 @@
-package org.moa.trip.dto.expense;
+package org.moa.trip.dto.settlement;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

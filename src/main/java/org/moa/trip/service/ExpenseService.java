@@ -2,8 +2,6 @@ package org.moa.trip.service;
 
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.expense.ExpenseResponseDto;
-import org.moa.trip.dto.expense.SettlementProgressResponseDto;
-import org.moa.trip.entity.Expense;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
