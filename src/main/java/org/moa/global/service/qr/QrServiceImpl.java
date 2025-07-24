@@ -18,7 +18,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class QrServiceImpl implements QrService{
 
-    private final IdCardMapper idCardMapper; // myBatis 매퍼 주입, DB에서 주민등록증 조회할 때 사용
+    private final IdCardMapper idCardMapper;
 
     // 주민등록증 QR 생성 API
     @Override
@@ -33,7 +33,7 @@ public class QrServiceImpl implements QrService{
 
         } catch (Exception e) {
             log.error("QR 생성 실패", e);
-            throw new RuntimeException("QR 생성 실패: " + e.getMessage()); // error를 Controller로 던짐
+            throw new RuntimeException("QR 생성 실패: " + e.getMessage());
         }
     }
 
@@ -41,7 +41,7 @@ public class QrServiceImpl implements QrService{
     @Override
     public IdCardResponseDto decryptIdCardQr(String encryptedText) {
         try {
-            String json = AesUtil.decryptWithIv(encryptedText); // AesUtil.decryptWithIv 사용
+            String json = AesUtil.decryptWithIv(encryptedText);
             Map<String, Object> data = new ObjectMapper().readValue(json, Map.class); // json -> map 으로 파싱
 
             Long memberId = Long.valueOf(data.get("member_id").toString());
@@ -57,7 +57,8 @@ public class QrServiceImpl implements QrService{
                     card.getIssuedDate().toString(),
                     card.getAddress(),
                     card.getImageUrl()
-            ); // DTO
+            );
+
         } catch (Exception e) {
             throw new RuntimeException("복호화 실패 : " + e.getMessage());
         } // 복호화/파싱 실패 시 500 error

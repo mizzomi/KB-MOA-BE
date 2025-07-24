@@ -9,22 +9,26 @@ import java.util.Base64;
 // AES 암호화/복호화를 위한 유틸 클래스
 public class AesUtil {
 
-    private static final String SECRET_KEY = "MySuperSecureKey"; // AES 128bit (16byte = 16글자) 키
+    private static String SECRET_KEY;
     private static final String ALGORITHM = "AES/CBC/PKCS5Padding"; // AES는 대칭키 알고리즘, CBC는 블록 암호화 방식, PKCS5Padding은 데이터 길이를 블록 단위로 맞춤
     private static final String CHARSET = "UTF-8";
+
+    public static void setSecretKey(String key) {
+        SECRET_KEY = key;
+    }
 
     // 암호화
     public static String encryptWithIv(String plainText) {
         try {
-            byte[] keyBytes = SECRET_KEY.getBytes(CHARSET); // 키 문자열을 바이트 배열로 변환
+            byte[] keyBytes = SECRET_KEY.getBytes(CHARSET);
             SecretKeySpec skeySpec = new SecretKeySpec(keyBytes, "AES"); // 비밀 키 객체(skeySpec) 생성
 
             // IV 생성 (16바이트)
-            byte[] iv = new byte[16]; // iv 바이트 배열
+            byte[] iv = new byte[16];
             new SecureRandom().nextBytes(iv); // 랜덤 IV 생성
             IvParameterSpec ivSpec = new IvParameterSpec(iv); // 암호화 설정에 쓸 수 있도록 래핑
 
-            Cipher cipher = Cipher.getInstance(ALGORITHM); // 암호화 방식 설정 (AES/CBC/PKCS5Padding)
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
             cipher.init(Cipher.ENCRYPT_MODE, skeySpec, ivSpec); // Cipher.ENCRYPT_MODE = 암호화 모드로 설정, 키와 IV를 설정
             byte[] encrypted = cipher.doFinal(plainText.getBytes(CHARSET)); // 평문을 바이트로 바꿔서 암호화 실행 -> 암호화된 바이트 배열
 

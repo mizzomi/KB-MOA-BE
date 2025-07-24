@@ -34,7 +34,7 @@ public class MemberQrController {
             log.error("QR 생성 실패", e);
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR) // INTERNAL_SERVER_ERROR = 500
-                    .body(ApiResponse.error(StatusCode.INTERNAL_ERROR, "QR 생성 실패: " + e.getMessage()));
+                    .body(ApiResponse.error(StatusCode.INTERNAL_ERROR, "QR 코드 생성 중 오류가 발생했습니다. 다시 시도해주세요."));
         }
     }
 }

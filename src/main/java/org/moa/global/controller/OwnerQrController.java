@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/owner")
+@RequestMapping("/api/public")
 public class OwnerQrController {
 
     private final QrService qrService;
@@ -33,12 +33,12 @@ public class OwnerQrController {
                         .body(ApiResponse.error(StatusCode.NOT_FOUND, "해당하는 주민등록증 정보가 없습니다."));
             } // NOT_FOUND = 404
 
-            return ResponseEntity.ok(ApiResponse.of(response)); // OK로 DTO 반환
+            return ResponseEntity.ok(ApiResponse.of(response));
 
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error(StatusCode.INTERNAL_ERROR, "복호화 실패: " + e.getMessage()));
+                    .body(ApiResponse.error(StatusCode.INTERNAL_ERROR, "유효하지 않은 QR 코드입니다."));
         } // INTERNAL_SERVER_ERROR = 500
     }
 }
