@@ -76,8 +76,14 @@ public class SettlementServiceImpl implements  SettlementService {
             throw new BusinessException(StatusCode.INTERNAL_ERROR, "연동 계좌 조회 중 서버 오류가 발생했습니다.");
         }
         // 간단한 계산 로직
+        BigDecimal amount = verificationAmount(dto, senderAccount, receiverAccount);
+        accountMapper.transactionBalance(receiverId,senderId,amount);
+        return true;
+    }
+
+    private static BigDecimal verificationAmount(SettlementRequestDto dto, Account senderAccount, Account receiverAccount) {
         BigDecimal amount = dto.getAmount();
-        if(amount == null && amount.compareTo(BigDecimal.ZERO) <= 0){
+        if(amount == null || amount.compareTo(BigDecimal.ZERO) <= 0){
             throw new BusinessException(StatusCode.BAD_REQUEST, "금액은 0원 이상이여야 합니다.");
         }
         if(senderAccount == null || receiverAccount == null){
@@ -86,8 +92,7 @@ public class SettlementServiceImpl implements  SettlementService {
         if(senderAccount.getBalance().subtract(amount).compareTo(BigDecimal.ZERO)<=0){
             throw new BusinessException(StatusCode.BAD_REQUEST, "계좌 잔액을 확인해주세요.");
         }
-        accountMapper.transactionBalance(receiverId,senderId,amount);
-        return true;
+        return amount;
     }
 
     @Override

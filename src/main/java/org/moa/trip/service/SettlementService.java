@@ -8,9 +8,9 @@ import java.math.BigDecimal;
 
 @Service
 public interface SettlementService {
-    public boolean createSettlement(Long expenseId, Long tripId, Long creatorId, Long memberId, BigDecimal amount);
+    boolean createSettlement(Long expenseId, Long tripId, Long creatorId, Long memberId, BigDecimal amount);
 
-    public boolean settle(SettlementRequestDto dto);
+    boolean settle(SettlementRequestDto dto);
 
-    public SettlementProgressResponseDto getSettlementProgress(Long expenseId);
+    SettlementProgressResponseDto getSettlementProgress(Long expenseId);
 }

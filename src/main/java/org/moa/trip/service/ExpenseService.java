@@ -8,7 +8,6 @@ import java.util.List;
 
 @Service
 public interface ExpenseService {
-    public boolean createExpense(ExpenseCreateRequestDto dto);
-
-    public List<ExpenseResponseDto> getExpenses(Long memberId, Long tripId);
+    boolean createExpense(ExpenseCreateRequestDto dto);
+    List<ExpenseResponseDto> getExpenses(Long memberId, Long tripId);
 }

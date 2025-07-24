@@ -29,7 +29,6 @@ import java.util.List;
 public class ExpenseServiceImpl implements ExpenseService{
     private final SettlementService settlementService;
 
-    private final MemberMapper memberMapper;
     private final TripMapper tripMapper;
     private final ExpenseMapper expenseMapper;
     private final SettlementMapper settlementMapper;
