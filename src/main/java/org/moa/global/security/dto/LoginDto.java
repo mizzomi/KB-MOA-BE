@@ -1,5 +1,9 @@
 package org.moa.global.security.dto;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.stream.Collectors;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,9 +26,15 @@ public class LoginDto {
 	public static LoginDto of(HttpServletRequest request) {
 		ObjectMapper om = new ObjectMapper();
 		try {
-			return om.readValue(request.getInputStream(), LoginDto.class);
+			String body = new BufferedReader(new InputStreamReader(request.getInputStream()))
+				.lines()
+				.collect(Collectors.joining("\n"));
+
+			log.info("LoginDto body 수신: {}", body); // 로그 찍히는지 확인
+
+			return om.readValue(body, LoginDto.class);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("LoginDto 파싱 실패", e);
 			throw new BadCredentialsException("해당 email 또는 password가 없습니다.");
 		}
 	}
