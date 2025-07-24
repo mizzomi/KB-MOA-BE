@@ -17,6 +17,5 @@ public class ExpenseCreateRequestDto {
     private Long tripId;
     private BigDecimal amount;
     private String expenseName;
-    private List<Long> memberIds;
-    private List<BigDecimal> amounts;
+    private List<AmountAndMemberIdRequest> expenses;
 }
