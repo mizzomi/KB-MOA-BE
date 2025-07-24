@@ -130,6 +130,7 @@ public class ExpenseServiceImpl implements ExpenseService{
             Boolean received = s.getReceived();
             String status = getString(s, expense, received);
             ExpenseResponseDto dto = ExpenseResponseDto.builder()
+                    .expenseId(expenseId)
                     .expenseDate(expenseDate)
                     .shareAmount(!received ? expense.getAmount() : shareAmount)
                     .received(received)
