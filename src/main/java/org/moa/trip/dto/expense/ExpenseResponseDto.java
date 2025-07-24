@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExpenseResponseDto {
+    private Long expenseId;
     private LocalDateTime expenseDate;
     private BigDecimal shareAmount;
     private Boolean received;

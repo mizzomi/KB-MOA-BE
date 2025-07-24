@@ -9,7 +9,6 @@
         SET member_id = #{memberId}
         WHERE account_number = #{accountNumber}
     </update>
-
     <select id="existsByAccountNumberAndAccountPassword" resultType="java.lang.Boolean">
         SELECT EXISTS (SELECT 1
                        FROM ACCOUNT
@@ -23,5 +22,20 @@
                         AND account_number = #{accountNumber}
                         AND account_password = #{accountPassword})
     </select>
+    <select id="searchAccountByMemberId" resultType="org.moa.global.account.entity.Account">
+        SELECT *
+        FROM ACCOUNT
+        WHERE member_id = #{memberId}
+    </select>
+    <update id="transactionBalance" >
+        -- 1. 수신자(receiverId)의 계좌 잔액을 amount만큼 증가시킵니다.
+        UPDATE ACCOUNT
+        SET balance = balance + #{amount}
+        WHERE member_id = #{receiverId};
 
+        -- 2. 송신자(senderId)의 계좌 잔액을 amount만큼 감소시킵니다.
+        UPDATE ACCOUNT
+        SET balance = balance - #{amount}
+        WHERE member_id = #{senderId};
+    </update>
 </mapper>

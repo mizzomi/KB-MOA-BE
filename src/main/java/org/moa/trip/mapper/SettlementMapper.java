@@ -10,4 +10,5 @@ import java.util.List;
 public interface SettlementMapper {
     public void insert(SettlementNotes settlementNotes);
     public List<SettlementNotes> searchByMemberIdAndTripId(Long memberId, Long tripId);
+    public List<SettlementNotes> searchByExpenseId(Long expenseId);
 }
