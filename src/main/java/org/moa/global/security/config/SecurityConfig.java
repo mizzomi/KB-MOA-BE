@@ -20,6 +20,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.access.channel.ChannelProcessingFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -68,9 +69,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		CorsConfiguration config = new CorsConfiguration();
 		config.setAllowCredentials(true);
-		config.addAllowedOriginPattern("*");
+		// config.addAllowedOriginPattern("*");
+		config.addAllowedOrigin("http://localhost:5173");
 		config.addAllowedHeader("*");
 		config.addAllowedMethod("*");
+		config.addExposedHeader("Authorization");
+		config.setMaxAge(3600L); //preflight 결과 캐시
 		source.registerCorsConfiguration("/**", config);
 		return new CorsFilter(source);
 	}
@@ -92,7 +96,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	public void configure(HttpSecurity http) throws Exception {
 		//한글 인코딩 필터 설정
-		http.addFilterBefore(encodingFilter(), CsrfFilter.class)
+		http
+			//Cors필터 제일 먼저 적용
+			.addFilterBefore(corsFilter(), ChannelProcessingFilter.class)
+			.addFilterBefore(encodingFilter(), CsrfFilter.class)
 			//인증 에러 필터
 			.addFilterBefore(authenticationErrorFilter, UsernamePasswordAuthenticationFilter.class)
 			//Jwt 인증 필터
@@ -101,6 +108,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.addFilterBefore(jwtUsernamePasswordAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 		http
+			.cors().and()
 			.exceptionHandling()
 			.authenticationEntryPoint(authenticationEntryPoint)
 			.accessDeniedHandler(accessDeniedHandler);
@@ -112,7 +120,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 		http
 			.authorizeRequests() // 경로별 접근 권한 설정
-			.antMatchers(HttpMethod.OPTIONS)
+			.antMatchers(HttpMethod.OPTIONS, "/**")
 			.permitAll()
 			.antMatchers("/api/public/**")
 			.permitAll()
