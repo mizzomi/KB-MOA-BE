@@ -1,5 +1,7 @@
 package org.moa.global.security.filter;
 
+import java.io.IOException;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -33,6 +35,18 @@ public class JwtUsernamePasswordAuthenticationFilter extends UsernamePasswordAut
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 		throws AuthenticationException {
+		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+			log.warn("OPTIONS 요청 무시 - 200 OK 반환");
+			try {
+				response.setStatus(HttpServletResponse.SC_OK);
+				response.getWriter().write("OK");
+				response.getWriter().flush();
+				response.getWriter().close();
+			} catch (IOException e) {
+				log.error("OPTIONS 응답 처리 실패", e);
+			}
+			return null; // 반드시 반환 필요
+		}
 		// 요청 BODY의 JSON에서 email, password  LoginDTO
 		LoginDto login = LoginDto.of(request);
 		// 인증 토큰(UsernamePasswordAuthenticationToken) 구성

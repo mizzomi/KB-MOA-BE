@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.global.handler.BusinessException;
 import org.moa.global.type.StatusCode;
-import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.expense.ExpenseResponseDto;
@@ -30,7 +29,6 @@ import java.util.List;
 public class ExpenseServiceImpl implements ExpenseService{
     private final SettlementService settlementService;
 
-    private final MemberMapper memberMapper;
     private final TripMapper tripMapper;
     private final ExpenseMapper expenseMapper;
     private final SettlementMapper settlementMapper;
@@ -130,6 +128,7 @@ public class ExpenseServiceImpl implements ExpenseService{
             Boolean received = s.getReceived();
             String status = getString(s, expense, received);
             ExpenseResponseDto dto = ExpenseResponseDto.builder()
+                    .expenseId(expenseId)
                     .expenseDate(expenseDate)
                     .shareAmount(!received ? expense.getAmount() : shareAmount)
                     .received(received)
@@ -141,7 +140,7 @@ public class ExpenseServiceImpl implements ExpenseService{
         return responseDtos;
     }
 
-    private String getString(SettlementNotes s, Expense expense, Boolean received) {
+    public static String getString(SettlementNotes s, Expense expense, Boolean received) {
         Boolean isPayed = s.getIsPayed();
         Boolean settlementCompleted = expense.getSettlementCompleted();
         String status;
