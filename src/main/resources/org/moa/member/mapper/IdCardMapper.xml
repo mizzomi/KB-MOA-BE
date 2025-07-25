@@ -19,4 +19,20 @@
     </select>
 
 
+    <select id="findByMemberId" resultType="org.moa.member.entity.IdCard">
+        SELECT
+            id_card_id,
+            member_id,
+            id_card_number,
+            name,
+            issued_date,
+            address,
+            image_url,
+            created_at,
+            updated_at
+        FROM ID_CARD
+        WHERE member_id = #{memberId}
+    </select>
+
+
 </mapper>
