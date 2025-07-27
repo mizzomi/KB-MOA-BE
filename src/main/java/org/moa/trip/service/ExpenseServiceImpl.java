@@ -75,10 +75,10 @@ public class ExpenseServiceImpl implements ExpenseService{
         }
 
         // 각 member 에 대해 공유 금액만큼 정산 생성
-        for(int i=0;i<dto.getMemberIds().size();i++){
+        for(int i=0;i<dto.getExpenses().size();i++){
             Long creatorId = dto.getMemberId();
-            Long memberId = dto.getMemberIds().get(i);
-            BigDecimal amount = dto.getAmounts().get(i);
+            Long memberId = dto.getExpenses().get(i).getMemberId();
+            BigDecimal amount = dto.getExpenses().get(i).getAmount();
             settlementService.createSettlement(newExpense.getExpenseId(), newExpense.getTripId(), creatorId , memberId, amount);
         }
         return true;

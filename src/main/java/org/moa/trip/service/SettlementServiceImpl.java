@@ -8,6 +8,7 @@ import org.moa.global.handler.BusinessException;
 import org.moa.global.type.StatusCode;
 import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
+import org.moa.trip.dto.settlement.ProgressAndMemberNameResponse;
 import org.moa.trip.dto.settlement.SettlementProgressResponseDto;
 import org.moa.trip.dto.settlement.SettlementRequestDto;
 import org.moa.trip.entity.Expense;
@@ -115,21 +116,20 @@ public class SettlementServiceImpl implements  SettlementService {
         String expenseName = expense.getExpenseName();
         LocalDateTime expenseDate = expense.getExpenseDate();
         BigDecimal amount = expense.getAmount();
-        List<String> names =  new ArrayList<>();
-        List<String> statuses =  new ArrayList<>();
-
+        List<ProgressAndMemberNameResponse> progresses =  new ArrayList<>();
         for(SettlementNotes s : settlementNotes){
             Member member = memberMapper.getByMemberId(s.getMemberId());
-            names.add(member.getName());
-            statuses.add(getString(s,expense,s.getReceived()));
+            progresses.add(ProgressAndMemberNameResponse.builder()
+                    .name(member.getName())
+                    .status(getString(s,expense,s.getReceived()))
+                    .build());
         }
 
         return SettlementProgressResponseDto.builder()
                 .expenseName(expenseName)
                 .expenseDate(expenseDate)
                 .amount(amount)
-                .names(names)
-                .statuses(statuses)
+                .progresses(progresses)
                 .build();
     }
 }
