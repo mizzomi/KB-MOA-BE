@@ -2,6 +2,7 @@ package org.moa.trip.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.moa.global.response.ApiResponse;
+import org.moa.global.security.domain.CustomUser;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.trip.PageResponse;
 import org.moa.trip.dto.settlement.SettlementRequestDto;
@@ -12,6 +13,7 @@ import org.moa.trip.service.SettlementService;
 import org.moa.trip.service.TripService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -33,10 +35,11 @@ public class TripController {
 
 
     @GetMapping("/trip")
-    public ResponseEntity<ApiResponse<PageResponse<TripListResponseDto>>> getTripList(@RequestParam Long memberId,
+    public ResponseEntity<ApiResponse<PageResponse<TripListResponseDto>>> getTripList(@AuthenticationPrincipal CustomUser customUser,
                                                                               @RequestParam(defaultValue = "1") int page,
                                                                               @RequestParam(defaultValue = "10") int size
     ) {
+        Long memberId = customUser.getMember().getMemberId();
         PageResponse<TripListResponseDto> tripPage = tripService.getTripList(memberId, page, size);
         return ResponseEntity.ok(ApiResponse.of(tripPage));
     }
