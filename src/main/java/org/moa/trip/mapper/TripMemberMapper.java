@@ -3,7 +3,11 @@ package org.moa.trip.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.moa.trip.entity.TripMember;
 
+import java.util.List;
+
 @Mapper
 public interface TripMemberMapper {
-    public void insert(TripMember tripMember);
+    void insert(TripMember tripMember);
+
+    List<TripMember> searchTripMembersByTripId(Long tripId);
 }

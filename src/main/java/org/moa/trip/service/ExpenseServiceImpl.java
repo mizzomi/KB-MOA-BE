@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.global.handler.BusinessException;
 import org.moa.global.type.StatusCode;
-import org.moa.member.mapper.MemberMapper;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.expense.ExpenseResponseDto;
 import org.moa.trip.entity.Expense;
@@ -46,7 +45,7 @@ public class ExpenseServiceImpl implements ExpenseService{
         }
 
         // 2. 여행 정보 조회 및 존재 여부 검사
-        Trip trip = tripMapper.selectTripById(dto.getTripId());
+        Trip trip = tripMapper.searchTripById(dto.getTripId());
         if (trip == null) {
             throw new BusinessException(StatusCode.NOT_FOUND, "해당 ID의 여행을 찾을 수 없습니다.");
         }

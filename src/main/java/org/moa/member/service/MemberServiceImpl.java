@@ -9,12 +9,16 @@ import org.moa.member.mapper.DriverLicenseMapper;
 import org.moa.member.mapper.IdCardMapper;
 import org.moa.member.mapper.MemberMapper;
 import org.moa.trip.dto.trip.TripMemberResponseDto;
+import org.moa.trip.entity.Trip;
+import org.moa.trip.entity.TripMember;
+import org.moa.trip.mapper.TripMemberMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -22,6 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService {
 	private final MemberMapper memberMapper;
+	private final TripMemberMapper tripMemberMapper;
 	private final IdCardMapper idCardMapper;
 	private final AccountMapper accountMapper;
 	private final DriverLicenseMapper driverLicenseMapper;
@@ -132,10 +137,20 @@ public class MemberServiceImpl implements MemberService {
 
 	@Override
 	public List<TripMemberResponseDto> getTripMembers(Long tripId){
-		// 1. tripId를 기반으로 TRIP_MEMBER 에서 member_id 뽑기
-        // 2. member_id 를 기반으로 member_name 뽑기
-		// 3. DTO 에 담아 보내기
-		// return memberMapper.getTripMembers(tripId);
-		return null;
+		// 1. tripId를 기반으로 TRIP_MEMBER 에서 member_id 들 뽑기
+		List<TripMember> tripMembers = tripMemberMapper.searchTripMembersByTripId(tripId);
+
+		List<TripMemberResponseDto> dtos = new ArrayList<>();
+
+		for(TripMember m : tripMembers){
+			Member member = memberMapper.getByMemberId(m.getMemberId());
+			// 2. member_id 를 기반으로 MEMBER 에서 member_name 뽑기
+			dtos.add(TripMemberResponseDto.builder()
+							.memberId(member.getMemberId())
+							.memberName(member.getName())
+							.memberEmail(member.getEmail())
+							.build());
+		}
+		return dtos;
 	}
 }

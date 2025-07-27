@@ -44,6 +44,11 @@ public class TripController {
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(settlementService.getSettlementProgress(expenseId)));
     }
 
+    @GetMapping("/settlement")
+    public ResponseEntity<ApiResponse<?>> settle(@RequestParam Long expenseId){
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(settlementService.getSettlementInfo(expenseId)));
+    }
+
     @PostMapping("/settlement")
     public ResponseEntity<ApiResponse<?>> settle(@RequestBody SettlementRequestDto dto){
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(settlementService.settle(dto)));

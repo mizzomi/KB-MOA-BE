@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class TripMemberResponseDto {
     private Long memberId;
     private String memberName;
+    private String memberEmail;
 }

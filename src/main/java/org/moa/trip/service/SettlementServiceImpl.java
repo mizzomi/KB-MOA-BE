@@ -9,6 +9,7 @@ import org.moa.global.type.StatusCode;
 import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
 import org.moa.trip.dto.settlement.ProgressAndMemberNameResponse;
+import org.moa.trip.dto.settlement.SettlementInfoResponseDto;
 import org.moa.trip.dto.settlement.SettlementProgressResponseDto;
 import org.moa.trip.dto.settlement.SettlementRequestDto;
 import org.moa.trip.entity.Expense;
@@ -16,6 +17,8 @@ import org.moa.trip.entity.SettlementNotes;
 import org.moa.trip.mapper.ExpenseMapper;
 import org.moa.trip.mapper.SettlementMapper;
 import org.springframework.dao.DataAccessException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +62,28 @@ public class SettlementServiceImpl implements  SettlementService {
             throw new BusinessException(StatusCode.INTERNAL_ERROR, "정산 저장 중 서버에 문제가 발생했습니다.");
         }
         return true;
+    }
+
+    @Override
+    @Transactional
+    public SettlementInfoResponseDto getSettlementInfo(Long expenseId){
+        // 1. 결제에 있는 결제자 ID = 보내야 하는사람 ID
+        log.info("expenseId : {}",expenseId);
+        Expense expense = expenseMapper.searchByExpenseId(expenseId);
+        Member receiver = memberMapper.getByMemberId(expense.getMemberId());
+        log.info("receiverId : {}",expense.getMemberId());
+        // 2. 내 계좌번호 찾기(SecurityContext 에서 가져오기로 수정해야함)
+        UserDetails userDetails = (UserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Member sender = memberMapper.getByEmail(userDetails.getUsername());
+        log.info("senderId : {}",sender.getMemberId());
+        Account myaccount = accountMapper.searchAccountByMemberId(sender.getMemberId());
+        log.info("account's owner Id : {}",myaccount.getMemberId());
+        SettlementNotes settlementNotes = settlementMapper.searchByMemberIdAndExpenseId(expenseId,sender.getMemberId());
+        return SettlementInfoResponseDto.builder()
+                .receiverName(receiver.getName())
+                .balance(myaccount.getBalance())
+                .shareAmount(settlementNotes.getShareAmount())
+                .build();
     }
 
     @Override

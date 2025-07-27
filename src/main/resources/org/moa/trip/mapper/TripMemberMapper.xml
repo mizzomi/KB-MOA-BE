@@ -18,4 +18,9 @@
                  #{joinedAt}
                  )
     </insert>
+    <select id="searchTripMembersByTripId" resultType="org.moa.trip.entity.TripMember">
+        SELECT *
+        FROM TRIP_MEMBER
+        WHERE trip_id = #{tripId}
+    </select>
 </mapper>

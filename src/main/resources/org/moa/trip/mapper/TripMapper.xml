@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.moa.trip.mapper.TripMapper">
-    <select id="selectTripById" resultType="org.moa.trip.entity.Trip">
+    <select id="searchTripById" resultType="org.moa.trip.entity.Trip">
         SELECT *
         FROM TRIP
         WHERE trip_id = #{tripId}

@@ -76,7 +76,7 @@ class ExpenseServiceImplTest {
                     .tripLocation(Location.BUSAN)
                     .build();
 
-            when(tripMapper.selectTripById(any(Long.class))).thenReturn(mockTrip);
+            when(tripMapper.searchTripById(any(Long.class))).thenReturn(mockTrip);
 
             doAnswer(invocation -> {
                 Expense capturedExpense = invocation.getArgument(0);
@@ -99,7 +99,7 @@ class ExpenseServiceImplTest {
             //then
             assertThat(result).isTrue();
 
-            verify(tripMapper, times(1)).selectTripById(eq(dto.getTripId()));
+            verify(tripMapper, times(1)).searchTripById(eq(dto.getTripId()));
 
             ArgumentCaptor<Expense> expenseCaptor = ArgumentCaptor.forClass(Expense.class);
             verify(expenseMapper, times(1)).insert(expenseCaptor.capture());

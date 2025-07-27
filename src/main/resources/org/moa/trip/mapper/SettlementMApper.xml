@@ -32,4 +32,9 @@
         FROM SETTLEMENT_NOTES
         WHERE expense_id = #{expenseId}
     </select>
+    <select id="searchByMemberIdAndExpenseId" resultType="org.moa.trip.entity.SettlementNotes">
+        SELECT *
+        FROM SETTLEMENT_NOTES
+        WHERE expense_id = #{expenseId} AND member_id = #{memberId}
+    </select>
 </mapper>
