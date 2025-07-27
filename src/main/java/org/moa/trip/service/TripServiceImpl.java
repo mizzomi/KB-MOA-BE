@@ -32,10 +32,9 @@ public class TripServiceImpl implements TripService {
                 .tripName(dto.getTripName())
                 .startDate(dto.getStartTime())
                 .endDate(dto.getEndTime())
-                // DTO location String 필드를 대문자로 바꾼뒤 Location.valueOf() 사용
                 .tripLocation(location)
-                .startDate(LocalDateTime.now()) // 입력받기
-                .endDate(LocalDateTime.now()) // 입력받기 22
+                .startDate(dto.getStartTime())
+                .endDate(dto.getEndTime())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .tripMembers(new ArrayList<>())

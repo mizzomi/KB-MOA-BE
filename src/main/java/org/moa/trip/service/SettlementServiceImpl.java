@@ -104,6 +104,8 @@ public class SettlementServiceImpl implements  SettlementService {
         // 간단한 계산 로직
         BigDecimal amount = verificationAmount(dto, senderAccount, receiverAccount);
         accountMapper.transactionBalance(receiverId,senderId,amount);
+        // 정산 내역 완료 처리(isPayed -> true)
+        // 비용에 대한 완료 처리(isSettleCompleted -> true)
         return true;
     }
 
@@ -146,7 +148,7 @@ public class SettlementServiceImpl implements  SettlementService {
             Member member = memberMapper.getByMemberId(s.getMemberId());
             progresses.add(ProgressAndMemberNameResponse.builder()
                     .name(member.getName())
-                    .status(getString(s,expense,s.getReceived()))
+                    .status(s.getIsPayed()?"정산 완료":"정산 진행중")
                     .build());
         }
 

@@ -10,6 +10,7 @@
                                       member_id,
                                       share_amount,
                                       is_payed,
+                                      received,
                                       created_at,
                                       updated_at
         )
@@ -18,6 +19,7 @@
                 #{memberId},
                 #{shareAmount},
                 #{isPayed},
+                #{received},
                 #{createdAt},
                 #{updatedAt}
                )
