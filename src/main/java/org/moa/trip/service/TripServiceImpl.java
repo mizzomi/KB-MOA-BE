@@ -2,7 +2,9 @@ package org.moa.trip.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.moa.trip.dto.trip.PageResponse;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
+import org.moa.trip.dto.trip.TripListResponseDto;
 import org.moa.trip.entity.Trip;
 import org.moa.trip.entity.TripMember;
 import org.moa.trip.mapper.TripMapper;
@@ -12,8 +14,11 @@ import org.moa.trip.type.TripRole;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -70,4 +75,13 @@ public class TripServiceImpl implements TripService {
         return true;
     }
 
+    @Override
+    public PageResponse<TripListResponseDto> getTripList(Long memberId, int page, int size) {
+        int offset = (page - 1) * size;
+
+        List<TripListResponseDto> trips = tripMapper.getTripsByMemberIdPaged(memberId, offset, size);
+        int total = tripMapper.countTripsByMemberId(memberId);
+
+        return new PageResponse<>(page, size, total, trips);
+    }
 }
