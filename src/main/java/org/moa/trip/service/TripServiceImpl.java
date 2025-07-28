@@ -82,39 +82,6 @@ public class TripServiceImpl implements TripService {
         List<TripListResponseDto> trips = tripMapper.getTripsByMemberIdPaged(memberId, offset, size);
         int total = tripMapper.countTripsByMemberId(memberId);
 
-        LocalDate now = LocalDate.now();
-
-        // 여행 상태 결정
-        for(TripListResponseDto trip : trips){
-            if (now.isBefore(trip.getStartDate())){
-                trip.setStatus("여행예정");
-            } else if (now.isAfter(trip.getEndDate())){
-                trip.setStatus("여행종료");
-            } else {
-                trip.setStatus("여행중");
-            }
-        }
-
-        // 여행 목록 정렬: 상태 기준으로 정렬 여행중 ASC > 여행예정 ASC > 여행종료 DESC
-        trips.sort(Comparator
-                // 1차 정렬: status에 따른 우선순위 정렬
-                .comparing((TripListResponseDto trip) -> {
-                    switch (trip.getStatus()) {
-                        case "여행중": return 0;
-                        case "여행예정": return 1;
-                        case "여행종료": return 2;
-                        default: return 3;
-                    }
-                })
-                // 2차 정렬: 날짜 기준 정렬
-                .thenComparing(trip -> {
-                    if (trip.getStatus().equals("여행종료")) {
-                        return trip.getStartDate().toEpochDay() * -1; // DESC
-                    } else {
-                        return trip.getEndDate().toEpochDay(); // ASC
-                    }
-                })
-        );
         return new PageResponse<>(page, size, total, trips);
     }
 }
