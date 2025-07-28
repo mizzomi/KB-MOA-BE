@@ -2,6 +2,7 @@ package org.moa.trip.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.moa.global.response.ApiResponse;
+import org.moa.member.service.MemberService;
 import org.moa.global.security.domain.CustomUser;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.trip.PageResponse;
@@ -23,6 +24,7 @@ import java.util.List;
 @RequestMapping("/api/public")
 @RequiredArgsConstructor
 public class TripController {
+    private final MemberService memberService;
     private final TripService tripService;
     private final ExpenseService expenseService;
     private final SettlementService settlementService;
@@ -59,8 +61,18 @@ public class TripController {
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(settlementService.getSettlementProgress(expenseId)));
     }
 
+    @GetMapping("/settlement")
+    public ResponseEntity<ApiResponse<?>> settle(@RequestParam Long expenseId){
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(settlementService.getSettlementInfo(expenseId)));
+    }
+
     @PostMapping("/settlement")
     public ResponseEntity<ApiResponse<?>> settle(@RequestBody SettlementRequestDto dto){
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(settlementService.settle(dto)));
+    }
+
+    @GetMapping("/trip-members")
+    public ResponseEntity<ApiResponse<?>> getTripMembers(@RequestParam Long tripId){
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(memberService.getTripMembers(tripId)));
     }
 }

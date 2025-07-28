@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.moa.trip.dto.expense.AmountAndMemberIdRequest;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.expense.ExpenseResponseDto;
 import org.moa.trip.entity.Expense;
@@ -62,8 +63,11 @@ class ExpenseServiceImplTest {
                     .memberId(1L)
                     .expenseName("점심 식사 값")
                     .amount(new BigDecimal("30000.00"))
-                    .memberIds(Arrays.asList(1L,2L,3L))
-                    .amounts(Arrays.asList(new BigDecimal("10000.00"),new BigDecimal("10000.00"),new BigDecimal("10000.00")))
+                    .expenses(Arrays.asList(
+                            new AmountAndMemberIdRequest(1L,new BigDecimal(10000.00)),
+                            new AmountAndMemberIdRequest(1L,new BigDecimal(10000.00)),
+                            new AmountAndMemberIdRequest(1L,new BigDecimal(10000.00))
+                    ))
                     .build();
 
             mockTrip = Trip.builder()
@@ -72,7 +76,7 @@ class ExpenseServiceImplTest {
                     .tripLocation(Location.BUSAN)
                     .build();
 
-            when(tripMapper.selectTripById(any(Long.class))).thenReturn(mockTrip);
+            when(tripMapper.searchTripById(any(Long.class))).thenReturn(mockTrip);
 
             doAnswer(invocation -> {
                 Expense capturedExpense = invocation.getArgument(0);
@@ -95,7 +99,7 @@ class ExpenseServiceImplTest {
             //then
             assertThat(result).isTrue();
 
-            verify(tripMapper, times(1)).selectTripById(eq(dto.getTripId()));
+            verify(tripMapper, times(1)).searchTripById(eq(dto.getTripId()));
 
             ArgumentCaptor<Expense> expenseCaptor = ArgumentCaptor.forClass(Expense.class);
             verify(expenseMapper, times(1)).insert(expenseCaptor.capture());
@@ -111,7 +115,7 @@ class ExpenseServiceImplTest {
 
             log.info("임시 생성 아이디:{}",capturedExpense.getExpenseId());
 
-            verify(settlementService, times(dto.getMemberIds().size()))
+            verify(settlementService, times(dto.getExpenses().size()))
                     .createSettlement(
                             eq(capturedExpense.getExpenseId()), // 리플렉션으로 설정된 expenseId가 전달됨
                             eq(dto.getTripId()),

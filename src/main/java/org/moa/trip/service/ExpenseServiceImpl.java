@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.global.handler.BusinessException;
 import org.moa.global.type.StatusCode;
+import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.expense.ExpenseResponseDto;
@@ -14,6 +15,8 @@ import org.moa.trip.mapper.ExpenseMapper;
 import org.moa.trip.mapper.SettlementMapper;
 import org.moa.trip.mapper.TripMapper;
 import org.springframework.dao.DataAccessException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +35,7 @@ public class ExpenseServiceImpl implements ExpenseService{
     private final TripMapper tripMapper;
     private final ExpenseMapper expenseMapper;
     private final SettlementMapper settlementMapper;
+    private final MemberMapper memberMapper;
 
     @Override
     @Transactional
@@ -39,22 +43,23 @@ public class ExpenseServiceImpl implements ExpenseService{
         log.info("createExpense : DTO = {}",dto);
 
         // 1. DTO 필수 필드 null 체크 및 금액 유효성 검사
-        if (dto.getTripId() == null || dto.getMemberId() == null ||
+        if (dto.getTripId() == null ||
                 dto.getExpenseName() == null || dto.getExpenseName().trim().isEmpty() ||
                 dto.getAmount() == null || dto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException(StatusCode.BAD_REQUEST, "필수 입력값이 누락되었거나 지출 금액이 유효하지 않습니다.");
         }
 
         // 2. 여행 정보 조회 및 존재 여부 검사
-        Trip trip = tripMapper.selectTripById(dto.getTripId());
+        Trip trip = tripMapper.searchTripById(dto.getTripId());
         if (trip == null) {
             throw new BusinessException(StatusCode.NOT_FOUND, "해당 ID의 여행을 찾을 수 없습니다.");
         }
-
+        UserDetails userDetails = (UserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Member member = memberMapper.getByEmail(userDetails.getUsername());
         // 3. Expense 엔티티 빌드
         Expense newExpense = Expense.builder()
                 .tripId(dto.getTripId())
-                .memberId(dto.getMemberId()) // DTO에서 받는 결제자 ID
+                .memberId(member.getMemberId()) // DTO에서 받는 결제자 ID
                 .expenseName(dto.getExpenseName())
                 .amount(dto.getAmount())
                 .location(trip.getTripLocation()) // 한 번 조회한 trip 객체 재사용
@@ -75,10 +80,10 @@ public class ExpenseServiceImpl implements ExpenseService{
         }
 
         // 각 member 에 대해 공유 금액만큼 정산 생성
-        for(int i=0;i<dto.getMemberIds().size();i++){
-            Long creatorId = dto.getMemberId();
-            Long memberId = dto.getMemberIds().get(i);
-            BigDecimal amount = dto.getAmounts().get(i);
+        for(int i=0;i<dto.getExpenses().size();i++){
+            Long creatorId = member.getMemberId();
+            Long memberId = dto.getExpenses().get(i).getMemberId();
+            BigDecimal amount = dto.getExpenses().get(i).getAmount();
             settlementService.createSettlement(newExpense.getExpenseId(), newExpense.getTripId(), creatorId , memberId, amount);
         }
         return true;

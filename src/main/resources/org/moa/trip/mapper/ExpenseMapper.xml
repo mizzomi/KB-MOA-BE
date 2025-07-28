@@ -11,7 +11,6 @@
                             amount,
                             location,
                             settlement_completed,
---                             expense_date,
                             created_at,
                             updated_at
         )
@@ -21,7 +20,6 @@
                 #{amount},
                 #{location},
                 #{settlementCompleted},
---                 #{expenseDate},
                 #{createdAt},
                 #{updatedAt}
         )
@@ -31,4 +29,9 @@
         FROM EXPENSE
         WHERE expense_id = #{expenseId}
     </select>
+    <update id="updateSettlementCompleted">
+        UPDATE EXPENSE
+        SET settlement_completed = #{completed}
+        WHERE expense_id = #{expenseId}
+    </update>
 </mapper>

@@ -17,6 +17,5 @@ public class SettlementProgressResponseDto {
     private String expenseName;
     private LocalDateTime expenseDate;
     private BigDecimal amount;
-    private List<String> names;
-    private List<String> statuses;
+    private List<ProgressAndMemberNameResponse> progresses;
 }
