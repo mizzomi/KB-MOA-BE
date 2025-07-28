@@ -29,4 +29,9 @@
         FROM EXPENSE
         WHERE expense_id = #{expenseId}
     </select>
+    <update id="updateSettlementCompleted">
+        UPDATE EXPENSE
+        SET settlement_completed = #{completed}
+        WHERE expense_id = #{expenseId}
+    </update>
 </mapper>

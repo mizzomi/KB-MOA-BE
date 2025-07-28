@@ -24,6 +24,11 @@
                 #{updatedAt}
                )
     </insert>
+    <update id="updateIsPayedByExpenseIdAndMemberID">
+        UPDATE SETTLEMENT_NOTES
+        SET is_payed = true
+        WHERE expense_id = #{expenseId} AND member_id = #{memberId}
+    </update>
     <select id="searchByMemberIdAndTripId" resultType="org.moa.trip.entity.SettlementNotes">
         SELECT *
         FROM SETTLEMENT_NOTES

@@ -28,14 +28,12 @@
         WHERE member_id = #{memberId}
     </select>
     <update id="transactionBalance" >
-        -- 1. 수신자(receiverId)의 계좌 잔액을 amount만큼 증가시킵니다.
         UPDATE ACCOUNT
-        SET balance = balance + #{amount}
-        WHERE member_id = #{receiverId};
-
-        -- 2. 송신자(senderId)의 계좌 잔액을 amount만큼 감소시킵니다.
-        UPDATE ACCOUNT
-        SET balance = balance - #{amount}
-        WHERE member_id = #{senderId};
+        SET balance = CASE
+                          WHEN member_id = #{receiverId} THEN balance + #{amount}
+                          WHEN member_id = #{senderId} THEN balance - #{amount}
+                          ELSE balance
+            END
+        WHERE member_id IN (#{receiverId}, #{senderId})
     </update>
 </mapper>
