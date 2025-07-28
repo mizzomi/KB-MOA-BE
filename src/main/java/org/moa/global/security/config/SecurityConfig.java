@@ -20,6 +20,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.web.access.channel.ChannelProcessingFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CsrfFilter;
@@ -34,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @EnableWebSecurity
-@MapperScan(basePackages = {"org.moa.member.mapper", "org.moa.global.mapper"})
+@MapperScan(basePackages = {"org.moa.member.mapper"})
 @ComponentScan(basePackages = {"org.moa.global.security"})
 @RequiredArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
@@ -55,6 +56,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Bean
 	public BCryptPasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder(); // 보안 설정의 일환
+	}
+
+	@Bean
+	@SuppressWarnings("deprecation") // NoOpPasswordEncoder는 deprecated
+	public NoOpPasswordEncoder encoder() {
+		return (NoOpPasswordEncoder)NoOpPasswordEncoder.getInstance();
 	}
 
 	//AuthenticationManager 빈 등록
@@ -141,6 +148,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 		auth
 			.userDetailsService(userDetailsService)
-			.passwordEncoder(passwordEncoder()); // 여기까지가 DB 인증 방식
+			// .passwordEncoder(passwordEncoder()); // 암호화 방식
+			.passwordEncoder(encoder()); // 암호화 방식
 	}
 }

@@ -15,6 +15,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 public class IdCard {
+	private Long idCardId;
 	private Long memberId;
 	private String idCardNumber;
 	private String name;

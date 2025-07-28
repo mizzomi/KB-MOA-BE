@@ -71,13 +71,24 @@ public class MemberServiceImpl implements MemberService {
 			throw new IllegalArgumentException("일치하는 계좌 정보가 없습니다.");
 		}
 
-		// Member 생성 및 저장
+		// // Member 생성 및 저장
+		// Member member = Member.builder()
+		// 	.memberType(dto.getRole())
+		// 	.email(dto.getEmail())
+		// 	.password(hashUtil.hash(dto.getPassword()))
+		// 	.name(dto.getName())
+		// 	.idCardNumber(hashUtil.hash(dto.getIdCardNumber()))
+		// 	.createdAt(java.time.LocalDateTime.now())
+		// 	.updatedAt(java.time.LocalDateTime.now())
+		// 	.build();
+
+		// Member 생성 및 저장 -> 비밀번호 평문으로
 		Member member = Member.builder()
 			.memberType(dto.getRole())
 			.email(dto.getEmail())
-			.password(hashUtil.hash(dto.getPassword()))
+			.password(dto.getPassword())
 			.name(dto.getName())
-			.idCardNumber(hashUtil.hash(dto.getIdCardNumber()))
+			.idCardNumber(dto.getIdCardNumber())
 			.createdAt(java.time.LocalDateTime.now())
 			.updatedAt(java.time.LocalDateTime.now())
 			.build();
