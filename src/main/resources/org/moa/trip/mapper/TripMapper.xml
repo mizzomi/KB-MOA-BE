@@ -4,6 +4,49 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.moa.trip.mapper.TripMapper">
+    <!--    사용자가 생성하거나 참여한 여행 총 개수-->
+    <select id="countTripsByMemberId" resultType="int">
+        SELECT COUNT(*)
+        FROM trip t
+                 INNER JOIN trip_member tm ON t.trip_id = tm.trip_id
+        WHERE tm.member_id = #{memberId}
+    </select>
+    <!--    사용자가 생성하거나 참여한 여행 페이징 된 리스트-->
+    <select id="getTripsByMemberIdPaged" resultType="org.moa.trip.dto.trip.TripListResponseDto">
+        SELECT
+            t.trip_id     AS tripId,
+            t.trip_name   AS tripName,
+            t.start_date  AS startDate,
+            t.end_date    AS endDate,
+            t.trip_location AS locationName,
+
+            -- 여행 상태 결정
+            CASE
+                WHEN CURDATE() BETWEEN t.start_date AND t.end_date THEN '여행중'
+                WHEN CURDATE() &lt; t.start_date THEN '여행예정'
+                WHEN CURDATE() &gt; t.end_date THEN '여행종료'
+                ELSE '여행중'
+                END AS status
+
+        FROM trip t
+                 INNER JOIN trip_member tm ON t.trip_id = tm.trip_id
+        WHERE tm.member_id = #{memberId}
+
+        ORDER BY
+            -- 여행 1차 정렬: 여행중 > 여행예정 > 여행종료
+            CASE
+                WHEN CURDATE() BETWEEN t.start_date AND t.end_date THEN 1
+                WHEN CURDATE() &lt; t.start_date THEN 2
+                WHEN CURDATE() &gt; t.end_date THEN 3
+                ELSE 1
+                END,
+            -- 2차 정렬: 여행중, 여행예정 -> 시작날짜일 기준으로 오름차순, 여행종료 -> 종료 날짜일 기준 내림차순
+            CASE WHEN CURDATE() &lt; t.start_date THEN t.start_date END,
+            CASE WHEN CURDATE() BETWEEN t.start_date AND t.end_date THEN t.start_date END,
+            CASE WHEN CURDATE() &gt; t.end_date THEN t.end_date END DESC
+
+            LIMIT #{size} OFFSET #{offset}
+    </select>
     <select id="searchTripById" resultType="org.moa.trip.entity.Trip">
         SELECT *
         FROM TRIP
