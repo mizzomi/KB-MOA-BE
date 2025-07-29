@@ -21,7 +21,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/public")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class TripController {
     private final MemberService memberService;
@@ -30,13 +30,13 @@ public class TripController {
     private final SettlementService settlementService;
 
 
-    @PostMapping("/trip")
+    @PostMapping("/trips")
     public ResponseEntity<ApiResponse<?>> createTrip(@Valid @RequestBody TripCreateRequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(tripService.createTrip(dto)));
     }
 
 
-    @GetMapping("/trip")
+    @GetMapping("/trips")
     public ResponseEntity<ApiResponse<PageResponse<TripListResponseDto>>> getTripList(@AuthenticationPrincipal CustomUser customUser,
                                                                               @RequestParam(defaultValue = "1") int page,
                                                                               @RequestParam(defaultValue = "10") int size
