@@ -19,4 +19,6 @@ public interface AccountMapper {
 	void updateMemberIdByAccountNumber(@Param("accountNumber") String accountNumber, @Param("memberId") Long memberId);
 
 	Account searchAccountByMemberId(@Param("memberId") Long memberId);
+
+	void withdraw(@Param("accountNumber") String accountNumber, @Param("amount") BigDecimal amount);
 }

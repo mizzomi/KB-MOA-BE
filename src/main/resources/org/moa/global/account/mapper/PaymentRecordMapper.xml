@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.moa.global.account.mapper.PaymentRecordMapper">
+
+    <insert id="insert">
+        INSERT INTO payment_record(
+                                   account_id,
+                                   member_id,
+                                   payment_name,
+                                   payment_price,
+                                   payment_date,
+                                   payment_location
+        ) VALUES(
+                 #{accountId},
+                 #{memberId},
+                 #{paymentName},
+                 #{paymentPrice},
+                 #{paymentDate},
+                 #{paymentLocation}
+                        )
+    </insert>
+</mapper>
