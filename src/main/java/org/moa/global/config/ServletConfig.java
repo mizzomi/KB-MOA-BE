@@ -18,10 +18,9 @@ import java.util.List;
 @EnableWebMvc
 @ComponentScan(basePackages = {
 	"org.moa.global",
-	"org.moa.member.controller", //member controller 추가
-	"org.moa.member.service",
-	"org.moa.member.mapper",
-	"org.moa.trip.controller"
+	"org.moa.member",
+	"org.moa.trip.controller",
+	"org.moa.reservation.transport"
 })
 public class ServletConfig implements WebMvcConfigurer {
 
