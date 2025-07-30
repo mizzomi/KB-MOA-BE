@@ -36,6 +36,9 @@ dependencies {
     implementation 'org.aspectj:aspectjrt:1.9.20'
     implementation 'org.aspectj:aspectjweaver:1.9.20'
 
+    // Page, Pageable 클래스 사용
+    implementation 'org.springframework.data:spring-data-commons:2.7.18'
+
     // JSP, SERVLET, JSTL
     compileOnly('javax.servlet:javax.servlet-api:4.0.1')
     compileOnly 'javax.servlet.jsp:jsp-api:2.1'
