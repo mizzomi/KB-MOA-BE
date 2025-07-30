@@ -14,9 +14,11 @@ public interface AccountMapper {
 	boolean existsByNameAndAccountNumberAndAccountPassword(@Param("name") String name,
 		@Param("accountNumber") String accountNumber, @Param("accountPassword") String accountPassword);
 
-	void transactionBalance(@Param("receiverId")Long receiverId,@Param("senderId") Long senderId,@Param("amount") BigDecimal amount);
+	void transactionBalance(@Param("receiverId")Long receiverId, @Param("senderId") Long senderId, @Param("amount") BigDecimal amount);
 
 	void updateMemberIdByAccountNumber(@Param("accountNumber") String accountNumber, @Param("memberId") Long memberId);
 
 	Account searchAccountByMemberId(@Param("memberId") Long memberId);
+
+	void withdraw(@Param("accountNumber") String accountNumber, @Param("amount") BigDecimal amount);
 }

@@ -23,7 +23,7 @@ public class Trip {
     // 여행 멤버들
     private List<TripMember> tripMembers;
     // 여행 기록들
-    private List<TripRecords> tripRecords;
+    private List<TripRecord> tripRecords;
     // 여행 비용들
     private List<Expense> expenses;
     // 여행 날짜들

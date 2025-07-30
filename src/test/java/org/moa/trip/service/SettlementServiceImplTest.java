@@ -12,6 +12,7 @@ import org.moa.global.handler.BusinessException;
 import org.moa.global.type.StatusCode;
 import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
+import org.moa.trip.dto.settlement.ProgressAndMemberNameResponse;
 import org.moa.trip.dto.settlement.SettlementProgressResponseDto;
 import org.moa.trip.dto.settlement.SettlementRequestDto;
 import org.moa.trip.entity.Expense;
@@ -138,6 +139,7 @@ class SettlementServiceImplTest {
                     .amount(new BigDecimal("60000.00"))
                     .settlementCompleted(false) // 아직 정산 진행중이라고 가정
                     .build();
+
             when(expenseMapper.searchByExpenseId(eq(mockExpenseId))).thenReturn(mockExpense);
 
             // 2. settlementMapper.searchByExpenseId 호출 시 반환될 가상의 SettlementNotes 리스트
@@ -168,15 +170,18 @@ class SettlementServiceImplTest {
             assertThat(result.getExpenseDate()).isEqualTo(mockExpense.getExpenseDate());
             assertThat(result.getAmount()).isEqualTo(mockExpense.getAmount());
 
-            // names와 statuses 리스트 검증 (순서가 중요한 경우)
-            // SettlementNotes가 조회되는 순서에 따라 names와 statuses의 순서가 결정됩니다.
-            // Mock 데이터의 순서에 맞춰 검증합니다.
-            assertThat(result.getNames()).containsExactly("김철수", "이영희", "박민수");
-            // 상태 로직에 따라 예상되는 상태 텍스트 검증
-            // 100L(김철수): received=false, isPayed=true(관계없음), expense.settlementCompleted=false -> "정산 진행중"
-            // 200L(이영희): received=true, isPayed=true, expense.settlementCompleted=false -> "정산 진행중"
-            // 300L(박민수): received=true, isPayed=false, expense.settlementCompleted=false -> "정산 하기"
-            assertThat(result.getStatuses()).containsExactly("정산 진행중", "정산 진행중", "정산 하기");
+            // 변경된 progresses 리스트 검증
+            assertThat(result.getProgresses()).isNotNull();
+            assertThat(result.getProgresses()).hasSize(3);
+
+            // 예상되는 ProgressAndMemberNameResponse 리스트 생성
+            List<ProgressAndMemberNameResponse> expectedProgresses = Arrays.asList(
+                    ProgressAndMemberNameResponse.builder().name("김철수").status("정산 진행중").build(),
+                    ProgressAndMemberNameResponse.builder().name("이영희").status("정산 진행중").build(),
+                    ProgressAndMemberNameResponse.builder().name("박민수").status("정산 하기").build()
+            );
+            // 리스트 내부 객체의 필드 값까지 비교하기 위해 usingRecursiveComparison() 사용
+            assertThat(result.getProgresses()).usingRecursiveComparison().isEqualTo(expectedProgresses);
 
             // 매퍼 호출 횟수 검증
             verify(expenseMapper, times(1)).searchByExpenseId(eq(mockExpenseId));

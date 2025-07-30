@@ -10,6 +10,7 @@
                                       member_id,
                                       share_amount,
                                       is_payed,
+                                      received,
                                       created_at,
                                       updated_at
         )
@@ -18,10 +19,16 @@
                 #{memberId},
                 #{shareAmount},
                 #{isPayed},
+                #{received},
                 #{createdAt},
                 #{updatedAt}
                )
     </insert>
+    <update id="updateIsPayedByExpenseIdAndMemberID">
+        UPDATE SETTLEMENT_NOTES
+        SET is_payed = true
+        WHERE expense_id = #{expenseId} AND member_id = #{memberId}
+    </update>
     <select id="searchByMemberIdAndTripId" resultType="org.moa.trip.entity.SettlementNotes">
         SELECT *
         FROM SETTLEMENT_NOTES
@@ -31,5 +38,10 @@
         SELECT *
         FROM SETTLEMENT_NOTES
         WHERE expense_id = #{expenseId}
+    </select>
+    <select id="searchByMemberIdAndExpenseId" resultType="org.moa.trip.entity.SettlementNotes">
+        SELECT *
+        FROM SETTLEMENT_NOTES
+        WHERE expense_id = #{expenseId} AND member_id = #{memberId}
     </select>
 </mapper>

@@ -17,6 +17,9 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Account {
+
+	private Long accountId;
+
 	private Long memberId;
 	private String accountNumber;
 	private String accountPassword;

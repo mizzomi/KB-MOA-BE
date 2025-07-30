@@ -3,17 +3,23 @@ package org.moa.trip.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
+import org.moa.trip.dto.trip.TripListResponseDto;
 import org.moa.trip.entity.Trip;
 import org.moa.trip.entity.TripMember;
 import org.moa.trip.mapper.TripMapper;
 import org.moa.trip.mapper.TripMemberMapper;
 import org.moa.trip.type.Location;
 import org.moa.trip.type.TripRole;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -30,12 +36,9 @@ public class TripServiceImpl implements TripService {
         Trip newTrip = Trip.builder()
                 .memberId(dto.getMemberId()) // 여행 생성자 ID
                 .tripName(dto.getTripName())
+                .tripLocation(location)
                 .startDate(dto.getStartTime())
                 .endDate(dto.getEndTime())
-                // DTO location String 필드를 대문자로 바꾼뒤 Location.valueOf() 사용
-                .tripLocation(location)
-                .startDate(LocalDateTime.now()) // 입력받기
-                .endDate(LocalDateTime.now()) // 입력받기 22
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .tripMembers(new ArrayList<>())
@@ -70,4 +73,13 @@ public class TripServiceImpl implements TripService {
         return true;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TripListResponseDto> getTripList(Long memberId, Pageable pageable) {
+
+        List<TripListResponseDto> trips = tripMapper.findTripsByMemberId(memberId, pageable);
+        int total = tripMapper.countTripsByMemberId(memberId);
+
+        return new PageImpl<>(trips, pageable, total);
+    }
 }

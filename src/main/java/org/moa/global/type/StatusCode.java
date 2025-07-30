@@ -23,6 +23,9 @@ public enum StatusCode {
 	DUPLICATE_ENTRY(400, "B401", "Duplicate Entry"),
 	DUPLICATE_REQUEST(429, "B429", "Duplicate Request"),
 
+	INSUFFICIENT_BALANCE(400, "B402", "잔액이 부족합니다."),
+	ACCOUNT_NOT_FOUND(404, "B404", "등록된 계좌가 없습니다."),
+
 	// Server Errors
 	INTERNAL_ERROR(500, "E500", "Internal Server Error"),
 	SERVICE_UNAVAILABLE(503, "E503", "Service Unavailable");

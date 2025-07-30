@@ -8,17 +8,25 @@ import org.moa.member.entity.Member;
 import org.moa.member.mapper.DriverLicenseMapper;
 import org.moa.member.mapper.IdCardMapper;
 import org.moa.member.mapper.MemberMapper;
+import org.moa.trip.dto.trip.TripMemberResponseDto;
+import org.moa.trip.entity.Trip;
+import org.moa.trip.entity.TripMember;
+import org.moa.trip.mapper.TripMemberMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService {
 	private final MemberMapper memberMapper;
+	private final TripMemberMapper tripMemberMapper;
 	private final IdCardMapper idCardMapper;
 	private final AccountMapper accountMapper;
 	private final DriverLicenseMapper driverLicenseMapper;
@@ -71,13 +79,24 @@ public class MemberServiceImpl implements MemberService {
 			throw new IllegalArgumentException("일치하는 계좌 정보가 없습니다.");
 		}
 
-		// Member 생성 및 저장
+		// // Member 생성 및 저장
+		// Member member = Member.builder()
+		// 	.memberType(dto.getRole())
+		// 	.email(dto.getEmail())
+		// 	.password(hashUtil.hash(dto.getPassword()))
+		// 	.name(dto.getName())
+		// 	.idCardNumber(hashUtil.hash(dto.getIdCardNumber()))
+		// 	.createdAt(java.time.LocalDateTime.now())
+		// 	.updatedAt(java.time.LocalDateTime.now())
+		// 	.build();
+
+		// Member 생성 및 저장 -> 비밀번호 평문으로
 		Member member = Member.builder()
 			.memberType(dto.getRole())
 			.email(dto.getEmail())
-			.password(hashUtil.hash(dto.getPassword()))
+			.password(dto.getPassword())
 			.name(dto.getName())
-			.idCardNumber(hashUtil.hash(dto.getIdCardNumber()))
+			.idCardNumber(dto.getIdCardNumber())
 			.createdAt(java.time.LocalDateTime.now())
 			.updatedAt(java.time.LocalDateTime.now())
 			.build();
@@ -114,5 +133,24 @@ public class MemberServiceImpl implements MemberService {
 	@Override
 	public Long searchUserIdByEmail(String email) {
 		return memberMapper.getByEmail(email).getMemberId();
+	}
+
+	@Override
+	public List<TripMemberResponseDto> getTripMembers(Long tripId){
+		// 1. tripId를 기반으로 TRIP_MEMBER 에서 member_id 들 뽑기
+		List<TripMember> tripMembers = tripMemberMapper.searchTripMembersByTripId(tripId);
+
+		List<TripMemberResponseDto> dtos = new ArrayList<>();
+
+		for(TripMember m : tripMembers){
+			Member member = memberMapper.getByMemberId(m.getMemberId());
+			// 2. member_id 를 기반으로 MEMBER 에서 member_name 뽑기
+			dtos.add(TripMemberResponseDto.builder()
+							.memberId(member.getMemberId())
+							.memberName(member.getName())
+							.memberEmail(member.getEmail())
+							.build());
+		}
+		return dtos;
 	}
 }

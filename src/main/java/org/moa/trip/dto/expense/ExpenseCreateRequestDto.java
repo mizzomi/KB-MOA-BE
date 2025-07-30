@@ -13,10 +13,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExpenseCreateRequestDto {
-    private Long memberId;
     private Long tripId;
     private BigDecimal amount;
     private String expenseName;
-    private List<Long> memberIds;
-    private List<BigDecimal> amounts;
+    private List<AmountAndMemberIdRequest> expenses;
 }
