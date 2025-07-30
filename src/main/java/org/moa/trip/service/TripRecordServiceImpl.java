@@ -2,6 +2,7 @@ package org.moa.trip.service;
 
 import lombok.RequiredArgsConstructor;
 import org.moa.trip.dto.record.TripRecordCardDto;
+import org.moa.trip.dto.record.TripRecordDetailResponseDto;
 import org.moa.trip.dto.record.TripRecordRequestDto;
 import org.moa.trip.dto.record.TripRecordResponseDto;
 import org.moa.trip.entity.TripRecord;
@@ -62,5 +63,19 @@ public class TripRecordServiceImpl implements TripRecordService {
         int total = tripRecordMapper.countRecordsByDate(tripId, date);
 
         return new PageImpl<>(records, pageable, total);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TripRecordDetailResponseDto getRecordDetail(Long tripId, Long recordId) {
+        // tripId와 recordId를 모두 사용해서 조회
+        TripRecord tripRecord = tripRecordMapper.findRecordByTripIdAndRecordId(tripId, recordId);
+        if (tripRecord == null) {
+            throw new RuntimeException("해당 여행 기록을 찾을 수 없습니다.");
+        }
+        // recordId로 연관된 이미지 URL 목록 조회
+        List<String> imageUrls = tripRecordMapper.findImageUrlsByRecordId(recordId);
+        // 조회된 정보들을 DTO로 조합하여 반환
+        return TripRecordDetailResponseDto.of(tripRecord, imageUrls);
     }
 }
