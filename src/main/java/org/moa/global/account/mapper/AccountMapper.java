@@ -3,6 +3,7 @@ package org.moa.global.account.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.moa.global.account.entity.Account;
+import org.springframework.security.core.parameters.P;
 
 import java.math.BigDecimal;
 
@@ -19,4 +20,5 @@ public interface AccountMapper {
 	void updateMemberIdByAccountNumber(@Param("accountNumber") String accountNumber, @Param("memberId") Long memberId);
 
 	Account searchAccountByMemberId(@Param("memberId") Long memberId);
+	Account searchAccountByMemberIdForUpdate(@Param("memberId") Long memberId);
 }

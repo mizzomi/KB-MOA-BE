@@ -21,7 +21,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/public")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class TripController {
     private final MemberService memberService;

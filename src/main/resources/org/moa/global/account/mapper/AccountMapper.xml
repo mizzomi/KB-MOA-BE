@@ -27,6 +27,22 @@
         FROM ACCOUNT
         WHERE member_id = #{memberId}
     </select>
+    <select id="searchAccountByMemberIdForUpdate" resultType="org.moa.global.account.entity.Account">
+        SELECT
+            account_id,
+            member_id,
+            name,
+            account_number,
+            account_password,
+            bank_name,
+            balance,
+            is_active,
+            created_at,
+            updated_at
+        FROM ACCOUNT
+        WHERE member_id = #{memberId}
+        FOR UPDATE
+    </select>
     <update id="transactionBalance" >
         UPDATE ACCOUNT
         SET balance = CASE
