@@ -13,5 +13,4 @@ public class TransportInfoResponse {
 	private Long transportId;
 	private String departureName;
 	private String trainNo;
-
 }

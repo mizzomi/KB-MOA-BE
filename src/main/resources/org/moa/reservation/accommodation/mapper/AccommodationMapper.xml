@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.moa.reservation.accommodation.mapper.AccommodationMapper">
+    <select id="searchAvailableAccomms" resultType="org.moa.reservation.accommodation.entity.AccommodationInfo">
+        SELECT DISTINCT
+        a.accom_id,
+        a.hotel_name,
+        a.address,
+        a.room_remain,
+        a.latitude,
+        a.longitude,
+        a.description,
+        a.hotel_image_url
+        FROM
+        ACCOMMODATION_INFO a
+        WHERE
+        a.room_remain > 0
+        AND NOT EXISTS (
+        SELECT 1
+        FROM ACCOM_RES r
+        WHERE
+        r.accom_id = a.accom_id
+        AND r.status = 'CONFIRMED'  -- CONFIRMED인 예약이 있으면 제외
+        AND r.checkout_day > #{checkinDay}
+        AND r.checkin_day < #{checkoutDay}
+        )
+        LIMIT #{pageable.pageSize} OFFSET #{pageable.offset}
+    </select>
+</mapper>
