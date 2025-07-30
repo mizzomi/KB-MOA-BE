@@ -12,7 +12,7 @@
         WHERE tm.member_id = #{memberId}
     </select>
     <!--    사용자가 생성하거나 참여한 여행 페이징 된 리스트-->
-    <select id="getTripsByMemberIdPaged" resultType="org.moa.trip.dto.trip.TripListResponseDto">
+    <select id="findTripsByMemberId" resultType="org.moa.trip.dto.trip.TripListResponseDto">
         SELECT
             t.trip_id     AS tripId,
             t.trip_name   AS tripName,
@@ -45,7 +45,7 @@
             CASE WHEN CURDATE() BETWEEN t.start_date AND t.end_date THEN t.start_date END,
             CASE WHEN CURDATE() &gt; t.end_date THEN t.end_date END DESC
 
-            LIMIT #{size} OFFSET #{offset}
+            LIMIT #{pageable.pageSize} OFFSET #{pageable.offset}
     </select>
     <select id="searchTripById" resultType="org.moa.trip.entity.Trip">
         SELECT *

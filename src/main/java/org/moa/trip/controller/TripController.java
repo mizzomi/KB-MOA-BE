@@ -5,13 +5,14 @@ import org.moa.global.response.ApiResponse;
 import org.moa.member.service.MemberService;
 import org.moa.global.security.domain.CustomUser;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
-import org.moa.trip.dto.trip.PageResponse;
 import org.moa.trip.dto.settlement.SettlementRequestDto;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
 import org.moa.trip.dto.trip.TripListResponseDto;
 import org.moa.trip.service.ExpenseService;
 import org.moa.trip.service.SettlementService;
 import org.moa.trip.service.TripService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -37,12 +38,11 @@ public class TripController {
 
 
     @GetMapping("/trips")
-    public ResponseEntity<ApiResponse<PageResponse<TripListResponseDto>>> getTripList(@AuthenticationPrincipal CustomUser customUser,
-                                                                              @RequestParam(defaultValue = "1") int page,
-                                                                              @RequestParam(defaultValue = "10") int size
+    public ResponseEntity<ApiResponse<Page<TripListResponseDto>>> getTripList(@AuthenticationPrincipal CustomUser customUser,
+                                                                              Pageable pageable
     ) {
         Long memberId = customUser.getMember().getMemberId();
-        PageResponse<TripListResponseDto> tripPage = tripService.getTripList(memberId, page, size);
+        Page<TripListResponseDto> tripPage = tripService.getTripList(memberId, pageable);
         return ResponseEntity.ok(ApiResponse.of(tripPage));
     }
 
