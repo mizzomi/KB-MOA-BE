@@ -31,6 +31,7 @@ public class TripRecordServiceImpl implements TripRecordService {
         // 요청 DTO를 엔티티로 변환
         TripRecord newRecord = TripRecord.builder()
                 .tripId(tripId)
+                .memberId(memberId)
                 .title(dto.getTitle())
                 .recordDate(dto.getRecordDate())
                 .content(dto.getContent())
@@ -38,6 +39,7 @@ public class TripRecordServiceImpl implements TripRecordService {
 
         tripRecordMapper.insertTripRecord(newRecord);
 
+        // 이미지가 있으면 이미지 저장
         List<String> imageUrls = dto.getImageUrls();
         if (imageUrls != null && !imageUrls.isEmpty()) {
             for (String url : imageUrls) {
@@ -55,6 +57,7 @@ public class TripRecordServiceImpl implements TripRecordService {
         return TripRecordResponseDto.fromEntity(savedRecord);
     }
 
+
     // 여행 기록 일자별로 조회
     @Override
     public Page<TripRecordCardDto> getRecordsByDate(Long tripId, LocalDate date, Pageable pageable) {
@@ -65,6 +68,8 @@ public class TripRecordServiceImpl implements TripRecordService {
         return new PageImpl<>(records, pageable, total);
     }
 
+
+    // 여행기록 상세 조회
     @Override
     @Transactional(readOnly = true)
     public TripRecordDetailResponseDto getRecordDetail(Long tripId, Long recordId) {
@@ -77,5 +82,74 @@ public class TripRecordServiceImpl implements TripRecordService {
         List<String> imageUrls = tripRecordMapper.findImageUrlsByRecordId(recordId);
         // 조회된 정보들을 DTO로 조합하여 반환
         return TripRecordDetailResponseDto.of(tripRecord, imageUrls);
+    }
+
+
+    // 여행기록 수정 - TODO: [REFACTOR] 예외 처리들을 RecordNotFoundException과 같은 구체적인 예외로 변경
+    @Override
+    @Transactional
+    public TripRecordResponseDto updateRecord(Long tripId, Long recordId, Long memberId, TripRecordRequestDto dto) {
+        // 수정하려는 기록이 존재하는지 확인
+        TripRecord existingRecord = tripRecordMapper.findRecordByTripIdAndRecordId(tripId, recordId);
+        if (existingRecord == null) {
+            throw new RuntimeException("해당 여행 기록을 찾을 수 없습니다.");
+        }
+        // 기록의 작성자와 현재 로그인한 사용자가 같은지 확인
+        if (!existingRecord.getMemberId().equals(memberId)) {
+            throw new RuntimeException("수정할 권한이 없습니다.");
+        }
+
+        // DTO 내용으로 기존 엔티티 정보 업데이트
+        TripRecord updateRecord = TripRecord.builder()
+                .recordId(recordId)
+                .title(dto.getTitle())
+                .content(dto.getContent())
+                .recordDate(dto.getRecordDate())
+                .build();
+        tripRecordMapper.updateTripRecord(updateRecord);
+
+        // 이미지 정보 업데이트( 기존 이미지 모두 삭제 후 새로 추가 )
+        tripRecordImageMapper.deleteImagesByRecordId(recordId);
+
+        List<String> imageUrls = dto.getImageUrls();
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            for (String url : imageUrls) {
+                TripRecordImage recordImage = TripRecordImage.builder()
+                        .recordId(recordId)
+                        .imageUrl(url)
+                        .build();
+                tripRecordImageMapper.insertTripRecordImage(recordImage);
+
+            }
+        }
+
+        // 업데이트된 정보를 다시 조회하여 반환
+        TripRecord finalRecord = tripRecordMapper.findRecordById(recordId);
+        return TripRecordResponseDto.fromEntity(finalRecord);
+    }
+
+
+    // 여행 기록 삭제 - TODO: [REFACTOR] 예외 처리들을 RecordNotFoundException과 같은 구체적인 예외로 변경
+    @Override
+    @Transactional
+    public void deleteRecord(Long tripId, Long recordId, Long memberId) {
+        // 삭제하려는 기록이 존재하는지 확인
+        TripRecord existingRecord = tripRecordMapper.findRecordByTripIdAndRecordId(tripId, recordId);
+        if (existingRecord == null) {
+            throw new RuntimeException("해당 여행 기록을 찾을 수 없습니다.");
+            // return; // 그냥 종료
+        }
+
+        // 기록의 작성자와 현재 로그인한 사용자가 같은지 확인
+        if (!existingRecord.getMemberId().equals(memberId)) {
+            throw new RuntimeException("삭제할 권한이 없습니다.");
+        }
+
+        // 자식 테이블(이미지) 데이터 먼저 삭제
+        // ON DELETE CASCADE 때문에 안해도 될듯
+        // tripRecordImageMapper.deleteImagesByRecordId(recordId);
+
+        // 부모 테이블(기록) 데이터 삭제
+        tripRecordMapper.deleteTripRecord(recordId);
     }
 }
