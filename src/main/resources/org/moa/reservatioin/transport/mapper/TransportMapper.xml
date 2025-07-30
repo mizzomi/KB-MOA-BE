@@ -37,4 +37,18 @@
             AND departure_time = #{departureDateTime}
         </if>
     </select>
+    <select id="selectSeatsByTransportId"
+            parameterType="long"
+            resultType="org.moa.reservation.transport.dto.TransportSeatsInfoResponse">
+        SELECT
+            tran_res_id   AS tranResId,
+            seat_room_no  AS seatRoomNo,
+            seat_number   AS seatNumber,
+            seat_type     AS seatType,
+            status        AS status,
+            price         AS price
+        FROM tran_res
+        WHERE transport_id = #{transportId}
+        ORDER BY seat_room_no, seat_number
+    </select>
 </mapper>

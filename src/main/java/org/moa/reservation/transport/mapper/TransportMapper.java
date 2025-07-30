@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.moa.reservation.transport.dto.TransportInfoResponse;
+import org.moa.reservation.transport.dto.TransportSeatsInfoResponse;
 
 @Mapper
 public interface TransportMapper {
@@ -23,5 +24,9 @@ public interface TransportMapper {
 		@Param("departureName")     String        departureName,
 		@Param("destinationName")   String        destinationName,
 		@Param("departureDateTime") LocalDateTime departureDateTime
+	);
+
+	List<TransportSeatsInfoResponse> selectSeatsByTransportId(
+		@Param("transportId") Long transportId
 	);
 }
