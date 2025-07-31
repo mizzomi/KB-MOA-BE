@@ -9,4 +9,12 @@
         VALUES (#{tripDayId}, #{resKind})
     </insert>
 
+    <select id="findMemberIdByReservationId" parameterType="long" resultType="long">
+        SELECT t.member_id
+        FROM reservation r
+                 JOIN trip_day td ON r.trip_day_id = td.trip_day_id
+                 JOIN trip t ON td.trip_id = t.trip_id
+        WHERE r.reservation_id = #{reservationId}
+    </select>
+
 </mapper>

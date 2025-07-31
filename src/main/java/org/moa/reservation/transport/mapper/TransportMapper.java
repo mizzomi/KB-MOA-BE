@@ -1,5 +1,6 @@
 package org.moa.reservation.transport.mapper;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,6 +35,13 @@ public interface TransportMapper {
 	List<TranResStatusDto> findStatusesByIds(@Param("list") List<Long> tranResIds);
 
 	void updateSeatsToPending(@Param("reservationId") Long reservationId,
+		@Param("tripDayId") Long tripDayId,
 		@Param("tranResIds") List<Long> tranResIds,
 		@Param("bookedAt") LocalDateTime bookedAt);
+
+	BigDecimal getTotalPriceByReservationId(@Param("reservationId") Long reservationId);
+
+	String selectTrainNoByReservationId(@Param("reservationId") Long reservationId);
+
+	int confirmSeatsByReservationId(@Param("reservationId") Long reservationId);
 }
