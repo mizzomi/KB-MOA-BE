@@ -30,12 +30,10 @@ public class TripController {
     private final ExpenseService expenseService;
     private final SettlementService settlementService;
 
-
     @PostMapping("/trips")
     public ResponseEntity<ApiResponse<?>> createTrip(@Valid @RequestBody TripCreateRequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(tripService.createTrip(dto)));
     }
-
 
     @GetMapping("/trips")
     public ResponseEntity<ApiResponse<Page<TripListResponseDto>>> getTripList(@AuthenticationPrincipal CustomUser customUser,
@@ -52,8 +50,8 @@ public class TripController {
     }
 
     @GetMapping("/expense")
-    public ResponseEntity<ApiResponse<?>> getExpenses(@RequestParam Long memberId,  @RequestParam Long tripId) {
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(expenseService.getExpenses(memberId,tripId)));
+    public ResponseEntity<ApiResponse<?>> getExpenses(@RequestParam Long tripId) {
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(expenseService.getExpenses(tripId)));
     }
 
     @GetMapping("/settlement-progress")

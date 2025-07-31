@@ -41,7 +41,6 @@ class TripServiceImplTest {
         Long id = insertTemporaryMembers(hostMemberId);
 
         dto = TripCreateRequestDto.builder()
-                .memberId(id)
                 .tripName("부산 여행")
                 .startTime(LocalDateTime.of(2025, 8, 1, 10, 0))
                 .endTime(LocalDateTime.of(2025, 8, 5, 18, 0))
