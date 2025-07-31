@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.moa.reservation.transport.dto.TranResStatusDto;
 import org.moa.reservation.transport.dto.TransportInfoResponse;
 import org.moa.reservation.transport.dto.TransportSeatsInfoResponse;
 
@@ -29,4 +30,10 @@ public interface TransportMapper {
 	List<TransportSeatsInfoResponse> selectSeatsByTransportId(
 		@Param("transportId") Long transportId
 	);
+
+	List<TranResStatusDto> findStatusesByIds(@Param("list") List<Long> tranResIds);
+
+	void updateSeatsToPending(@Param("reservationId") Long reservationId,
+		@Param("tranResIds") List<Long> tranResIds,
+		@Param("bookedAt") LocalDateTime bookedAt);
 }

@@ -7,6 +7,7 @@ import java.util.Map;
 import org.moa.global.response.ApiResponse;
 import org.moa.global.type.StatusCode;
 import org.moa.reservation.transport.dto.TransportInfoResponse;
+import org.moa.reservation.transport.dto.TransportReservationRequestDto;
 import org.moa.reservation.transport.dto.TransportSeatsInfoResponse;
 import org.moa.reservation.transport.service.TransportService;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -57,5 +60,12 @@ public class TransportController {
 		);
 
 		return ResponseEntity.status(StatusCode.OK.getStatus()).body(ApiResponse.of(page));
+	}
+
+	@PostMapping("/seats")
+	public ResponseEntity<ApiResponse<?>> reserveSeats(
+		@RequestBody TransportReservationRequestDto dto
+	) {
+		return ResponseEntity.status(StatusCode.OK.getStatus()).body(ApiResponse.of(transportService.reserveTransportSeats(dto)));
 	}
 }
