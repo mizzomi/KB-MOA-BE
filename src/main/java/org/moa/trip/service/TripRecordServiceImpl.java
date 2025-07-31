@@ -7,6 +7,7 @@ import org.moa.trip.dto.record.TripRecordRequestDto;
 import org.moa.trip.dto.record.TripRecordResponseDto;
 import org.moa.trip.entity.TripRecord;
 import org.moa.trip.entity.TripRecordImage;
+import org.moa.trip.mapper.TripMemberMapper;
 import org.moa.trip.mapper.TripRecordImageMapper;
 import org.moa.trip.mapper.TripRecordMapper;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ import java.util.List;
 public class TripRecordServiceImpl implements TripRecordService {
     private final TripRecordMapper tripRecordMapper;
     private final TripRecordImageMapper tripRecordImageMapper;
+    private final TripMemberMapper tripMemberMapper;
 
     // 여행 기록 생성
     @Override
@@ -94,8 +96,8 @@ public class TripRecordServiceImpl implements TripRecordService {
         if (existingRecord == null) {
             throw new RuntimeException("해당 여행 기록을 찾을 수 없습니다.");
         }
-        // 기록의 작성자와 현재 로그인한 사용자가 같은지 확인
-        if (!existingRecord.getMemberId().equals(memberId)) {
+        // 여행 멤버인지 확인
+        if (tripMemberMapper.isMemberOfTrip(tripId, memberId)== 0) {
             throw new RuntimeException("수정할 권한이 없습니다.");
         }
 
