@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.moa.global.response.ApiResponse;
+import org.moa.global.security.domain.CustomUser;
 import org.moa.global.type.StatusCode;
+import org.moa.reservation.transport.dto.TransPaymentRequestDto;
 import org.moa.reservation.transport.dto.TransportInfoResponse;
 import org.moa.reservation.transport.dto.TransportReservationRequestDto;
 import org.moa.reservation.transport.dto.TransportSeatsInfoResponse;
@@ -16,6 +18,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -67,5 +70,17 @@ public class TransportController {
 		@RequestBody TransportReservationRequestDto dto
 	) {
 		return ResponseEntity.status(StatusCode.OK.getStatus()).body(ApiResponse.of(transportService.reserveTransportSeats(dto)));
+	}
+
+	@PostMapping("/pay")
+	public ResponseEntity<ApiResponse<?>> pay(
+		@AuthenticationPrincipal CustomUser customUser,
+		@RequestBody TransPaymentRequestDto dto
+	) {
+		Long memberId = customUser.getMember().getMemberId();
+
+		return ResponseEntity
+			.status(StatusCode.OK.getStatus())
+			.body(ApiResponse.of(transportService.seatPayment(memberId, dto)));
 	}
 }

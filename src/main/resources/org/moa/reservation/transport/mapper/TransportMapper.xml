@@ -60,16 +60,38 @@
             #{id}
         </foreach>
     </select>
+    <select id="getTotalPriceByReservationId" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(price), 0)
+        FROM TRAN_RES
+        WHERE reservation_id = #{reservationId} AND status = 'PENDING'
+    </select>
+    <select id="selectTrainNoByReservationId" resultType="java.lang.String">
+        SELECT I.train_no
+        FROM TRANSPORT_INFO I
+        WHERE I.transport_id = (SELECT R.transport_id
+                                FROM TRAN_RES R
+                                WHERE R.reservation_id = #{reservationId}
+                                LIMIT 1);
+    </select>
 
     <update id="updateSeatsToPending">
         UPDATE TRAN_RES
         SET
         reservation_id = #{reservationId},
+        trip_day_id = #{tripDayId},
         booked_at = #{bookedAt},
         status = 'PENDING'
         WHERE tran_res_id IN
         <foreach item="id" collection="tranResIds" open="(" separator="," close=")">
             #{id}
         </foreach>
+    </update>
+    <update id="confirmSeatsByReservationId">
+        UPDATE TRAN_RES
+        SET status = 'CONFIRMED',
+            updated_at = CURRENT_TIMESTAMP,
+            booked_at = CURRENT_TIMESTAMP
+        WHERE reservation_id = #{reservationId}
+          AND status = 'PENDING'
     </update>
 </mapper>
