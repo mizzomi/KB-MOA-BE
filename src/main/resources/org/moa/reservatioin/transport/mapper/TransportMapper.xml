@@ -37,4 +37,39 @@
             AND departure_time = #{departureDateTime}
         </if>
     </select>
+    <select id="selectSeatsByTransportId"
+            parameterType="long"
+            resultType="org.moa.reservation.transport.dto.TransportSeatsInfoResponse">
+        SELECT
+            tran_res_id   AS tranResId,
+            seat_room_no  AS seatRoomNo,
+            seat_number   AS seatNumber,
+            seat_type     AS seatType,
+            status        AS status,
+            price         AS price
+        FROM tran_res
+        WHERE transport_id = #{transportId}
+        ORDER BY seat_room_no, seat_number
+    </select>
+
+    <select id="findStatusesByIds" parameterType="list" resultType="org.moa.reservation.transport.dto.TranResStatusDto">
+        SELECT tran_res_id, status
+        FROM TRAN_RES
+        WHERE tran_res_id IN
+        <foreach item="id" collection="list" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <update id="updateSeatsToPending">
+        UPDATE TRAN_RES
+        SET
+        reservation_id = #{reservationId},
+        booked_at = #{bookedAt},
+        status = 'PENDING'
+        WHERE tran_res_id IN
+        <foreach item="id" collection="tranResIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
 </mapper>
