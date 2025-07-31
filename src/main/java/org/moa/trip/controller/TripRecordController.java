@@ -6,6 +6,7 @@ import org.moa.global.response.ApiResponse;
 import org.moa.global.security.domain.CustomUser;
 import org.moa.member.entity.Member;
 import org.moa.trip.dto.record.TripRecordCardDto;
+import org.moa.trip.dto.record.TripRecordDetailResponseDto;
 import org.moa.trip.dto.record.TripRecordRequestDto;
 import org.moa.trip.dto.record.TripRecordResponseDto;
 import org.moa.trip.service.TripRecordService;
@@ -29,6 +30,7 @@ public class TripRecordController {
 
     private final TripRecordService tripRecordService;
 
+    // 여행 기록 생성
     @PostMapping
     public ResponseEntity<ApiResponse<TripRecordResponseDto>> createTripRecord(
             @PathVariable Long tripId,
@@ -43,6 +45,7 @@ public class TripRecordController {
                 .body(ApiResponse.of(createdRecord, "여행 기록이 성공적으로 생성되었습니다."));
     }
 
+    // 일자별 여행 기록 조회
     @GetMapping
     public ResponseEntity<ApiResponse<Page<TripRecordCardDto>>> getTripRecordsByDate(
             @PathVariable Long tripId,
@@ -51,4 +54,40 @@ public class TripRecordController {
         Page<TripRecordCardDto> recordPage = tripRecordService.getRecordsByDate(tripId, date, pageable);
         return ResponseEntity.ok(ApiResponse.of(recordPage));
     }
+
+    // 여행 기록 상세 조회
+    @GetMapping("/{recordId}")
+    public ResponseEntity<ApiResponse<TripRecordDetailResponseDto>> getTripRecordDetail(
+            @PathVariable Long tripId,
+            @PathVariable Long recordId
+    ) {
+        TripRecordDetailResponseDto recordDetail = tripRecordService.getRecordDetail(tripId, recordId);
+        return ResponseEntity.ok(ApiResponse.of(recordDetail));
+    }
+
+    // 여행 기록 수정
+    @PutMapping("/{recordId}")
+    public ResponseEntity<ApiResponse<TripRecordResponseDto>> updateTripRecord(
+            @PathVariable Long tripId,
+            @PathVariable Long recordId,
+            @AuthenticationPrincipal CustomUser loginUser,
+            @Valid @RequestBody TripRecordRequestDto requestDto) {
+
+        Long memberId = loginUser.getMember().getMemberId();
+        TripRecordResponseDto updatedRecord = tripRecordService.updateRecord(tripId, recordId, memberId, requestDto);
+        return ResponseEntity.ok(ApiResponse.of(updatedRecord, "여행 기록이 성공적으로 수정되었습니다."));
+    }
+
+    // 여행 기록 삭제
+    @DeleteMapping("/{recordId}")
+    public ResponseEntity<ApiResponse<String>> deleteTripRecord(
+            @PathVariable Long tripId,
+            @PathVariable Long recordId,
+            @AuthenticationPrincipal CustomUser loginUser) {
+
+        Long memberId = loginUser.getMember().getMemberId();
+        tripRecordService.deleteRecord(tripId, recordId, memberId);
+        return ResponseEntity.ok(ApiResponse.of("여행 기록이 성공적으로 삭제되었습니다."));
+    }
+
 }
