@@ -1,15 +1,19 @@
 package org.moa.reservation.transport.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.LinkedHashMap;
 
+import org.moa.global.account.dto.payment.PaymentResponseDto;
+import org.moa.global.account.service.AccountService;
 import org.moa.global.type.ResKind;
 import org.moa.reservation.entity.Reservation;
 import org.moa.reservation.mapper.ReservationMapper;
 import org.moa.reservation.transport.dto.TranResStatusDto;
+import org.moa.reservation.transport.dto.TransPaymentRequestDto;
 import org.moa.reservation.transport.dto.TransportInfoResponse;
 import org.moa.reservation.transport.dto.TransportReservationRequestDto;
 import org.moa.reservation.transport.dto.TransportSeatsInfoResponse;
@@ -30,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class TransportServiceImpl implements TransportService {
 
+	private final AccountService accountService;
+
 	private final ReservationMapper reservationMapper;
 	private final TransportMapper transportMapper;
 	private final TripMapper tripMapper;
@@ -39,7 +45,7 @@ public class TransportServiceImpl implements TransportService {
 		// 목록 조회
 		List<TransportSeatsInfoResponse> transportSeatsInfos = transportMapper.selectSeatsByTransportId(transportId);
 
-		// 2) seatRoomNo 기준으로 묶어서 LinkedHashMap 으로 반환
+		// seatRoomNo 기준으로 묶어서 LinkedHashMap 으로 반환
 		return transportSeatsInfos.stream()
 			.collect(Collectors.groupingBy(
 				TransportSeatsInfoResponse::getSeatRoomNo,
@@ -96,10 +102,43 @@ public class TransportServiceImpl implements TransportService {
 		//4. 좌석들 업데이트
 		transportMapper.updateSeatsToPending(
 			reservationId,
+			tripDayId,
 			dto.getTranResIds(),
 			LocalDateTime.now()
 		);
 
 		return reservationId;
+	}
+
+	@Transactional
+	public Boolean seatPayment(Long memberId, TransPaymentRequestDto dto) {
+		Long reservationId = dto.getReservationId();
+		BigDecimal amount = dto.getPrice();
+
+		Long ownerMemberId = reservationMapper.findMemberIdByReservationId(reservationId);
+
+		if (ownerMemberId == null) {
+			throw new IllegalArgumentException("해당 reservationId [" + reservationId + "] 에 해당하는 예약이 존재하지 않습니다.");
+		}
+		if (!ownerMemberId.equals(memberId)) {
+			throw new IllegalStateException("해당 사용자의 예약건이 아닙니다.");
+		}
+
+		BigDecimal totalPrice = transportMapper.getTotalPriceByReservationId(reservationId);
+		if(totalPrice.compareTo(dto.getPrice()) != 0) {
+			throw new IllegalArgumentException("입력된 금액이 실제 결제될 금액과 다릅니다.");
+		}
+
+		String trainNo = transportMapper.selectTrainNoByReservationId(reservationId);
+
+		//실질적인 결제 프로세스 -> 향후 외부 PG 연동 가능성 확보
+		PaymentResponseDto result = accountService.makePayment(memberId, amount, trainNo);
+
+		int updated = transportMapper.confirmSeatsByReservationId(reservationId);
+		if(updated == 0) {
+			throw new IllegalStateException("예약확정으로 변경된 좌석이 없습니다. 다시 시도해주세요.");
+		}
+
+		return true;
 	}
 }
