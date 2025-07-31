@@ -91,11 +91,15 @@ public class ExpenseServiceImpl implements ExpenseService{
 
     @Override
     @Transactional
-    public List<ExpenseResponseDto> getExpenses(Long memberId, Long tripId){
-        log.info("getExpenses 호출: memberId={}, tripId={}", memberId, tripId);
-        if (memberId == null || tripId == null) {
+    public List<ExpenseResponseDto> getExpenses(Long tripId){
+        log.info("getExpenses 호출: tripId={}",tripId);
+        if (tripId == null) {
             throw new BusinessException(StatusCode.BAD_REQUEST, "회원 ID 또는 여행 ID가 누락되었습니다.");
         }
+
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long memberId = memberMapper.getByEmail(userDetails.getUsername()).getMemberId();
+
         // 해당 여행의 해당 유저의 정산 내역을 불러옴
         List<SettlementNotes> settlementNotes;
         try {

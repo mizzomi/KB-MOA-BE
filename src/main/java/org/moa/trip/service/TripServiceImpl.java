@@ -42,7 +42,6 @@ public class TripServiceImpl implements TripService {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Member member = memberMapper.getByEmail(userDetails.getUsername());
 
-
         log.info("createTrip : DTO = {}",dto);
         Location location = Location.valueOf(dto.getLocation().toUpperCase());
         Trip newTrip = Trip.builder()

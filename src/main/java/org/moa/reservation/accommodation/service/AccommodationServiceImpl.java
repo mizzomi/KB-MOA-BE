@@ -7,10 +7,12 @@ import org.moa.global.handler.BusinessException;
 import org.moa.global.type.StatusCode;
 import org.moa.reservation.accommodation.dto.AccommodationDetailResponse;
 import org.moa.reservation.accommodation.dto.AccommodationInfoResponse;
+import org.moa.reservation.accommodation.dto.AccommodationReservationRequestDto;
 import org.moa.reservation.accommodation.dto.AccommodationRoomsResponse;
 import org.moa.reservation.accommodation.entity.AccomRes;
 import org.moa.reservation.accommodation.entity.AccommodationInfo;
 import org.moa.reservation.accommodation.mapper.AccommodationMapper;
+import org.moa.trip.entity.TripDay;
 import org.moa.trip.mapper.TripMapper;
 import org.moa.trip.type.Location;
 import org.springframework.data.domain.Page;
@@ -103,5 +105,22 @@ public class AccommodationServiceImpl implements AccommodationService {
             accommodationRoomsResponses.add(accommodationRoomsResponse);
         }
         return accommodationRoomsResponses;
+    }
+
+    @Override
+    @Transactional
+    public Long reserveRoom(AccommodationReservationRequestDto dto){
+        // 1. trip_day 조회
+        Long tripDayId = tripMapper.findTripDayId(dto.getTripId(),dto.getCheckinDay());
+        if(tripDayId == null){
+            throw new IllegalArgumentException("해당 날짜의 trip_day가 존재하지 않습니다.");
+        }
+
+        // 2. reservation 생성
+        // 3. Accom_res (방 정보) 수정
+        // 4. Accommodation_info 남은 방수 최신화
+        // 5. 결제 로직!
+
+        return null;
     }
 }
