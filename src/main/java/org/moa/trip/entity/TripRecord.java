@@ -13,6 +13,7 @@ import java.util.List;
 public class TripRecord {
     private Long recordId; // 기록 ID (PK)
     private Long tripId; // 여행 ID (FK)
+    private Long memberId; // 작성자 ID (FK)
     private String title; // 제목
     private LocalDate recordDate; // 기록 날짜
     private String content; // 내용

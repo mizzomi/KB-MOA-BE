@@ -12,7 +12,9 @@ import java.util.List;
 
 @Mapper
 public interface TripRecordMapper {
+    // 여행 기록 생성 메소드
     void insertTripRecord(TripRecord record);
+
     TripRecord findRecordById(Long recordId);
 
     // 특정 날짜의 여행 기록 목록을 페이지네이션과 함께 조회하는 메소드
@@ -25,4 +27,16 @@ public interface TripRecordMapper {
     int countRecordsByDate(
             @Param("tripId") Long tripId,
             @Param("date") LocalDate date);
+
+    // 특정 여행 기록에 속한 이미지 URL 목록 조회
+    List<String> findImageUrlsByRecordId(Long recordId);
+
+    // 여행ID + 기록ID 모두 만족하는 여행기록만 조회
+    TripRecord findRecordByTripIdAndRecordId(@Param("tripId") Long tripId, @Param("recordId") Long recordId);
+
+    // 여행 기록 수정 메소드
+    void updateTripRecord(TripRecord tripRecord);
+
+    // 여행 기록 삭제 메소드
+    void deleteTripRecord(Long recordId);
 }
