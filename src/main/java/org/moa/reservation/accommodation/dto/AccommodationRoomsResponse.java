@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccommodationRoomsResponse {
-    private String accomResId;
+    private Long accomResId;
     private Integer maxGuests;
     private String hotelName;
     private BigDecimal price;
