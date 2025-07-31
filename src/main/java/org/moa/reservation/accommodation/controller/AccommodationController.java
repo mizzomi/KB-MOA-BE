@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.moa.global.response.ApiResponse;
 import org.moa.reservation.accommodation.dto.AccommodationDetailResponse;
 import org.moa.reservation.accommodation.dto.AccommodationInfoResponse;
+import org.moa.reservation.accommodation.dto.AccommodationReservationRequestDto;
 import org.moa.reservation.accommodation.dto.AccommodationRoomsResponse;
 import org.moa.reservation.accommodation.mapper.AccommodationMapper;
 import org.moa.reservation.accommodation.service.AccommodationService;
@@ -13,10 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -62,5 +60,10 @@ public class AccommodationController {
     ){
         List<AccommodationRoomsResponse> accommodationRoomsResponses = accommodationService.getRooms(accomId, tripId, checkinDay, checkoutDay, guests);
         return ResponseEntity.ok(ApiResponse.of(accommodationRoomsResponses));
+    }
+
+    @PostMapping("/accommodation")
+    public ResponseEntity<ApiResponse<?>> reserveRoom(@RequestBody AccommodationReservationRequestDto dto){
+        return ResponseEntity.ok(ApiResponse.of(accommodationService.reserveRoom(dto)));
     }
 }
