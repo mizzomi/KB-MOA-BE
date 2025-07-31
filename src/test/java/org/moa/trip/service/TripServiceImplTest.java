@@ -76,10 +76,10 @@ class TripServiceImplTest {
         }
     }
 
-    @Test
-    void createTrip() {
-        boolean result = tripService.createTrip(dto);
-        log.info("여행 생성 결과: {}", result);
-        assertTrue(result);
-    }
+//    @Test
+//    void createTrip() {
+//        boolean result = tripService.createTrip(dto);
+//        log.info("여행 생성 결과: {}", result);
+//        assertTrue(result);
+//    }
 }

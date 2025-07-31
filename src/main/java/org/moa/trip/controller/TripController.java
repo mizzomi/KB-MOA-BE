@@ -75,4 +75,9 @@ public class TripController {
     public ResponseEntity<ApiResponse<?>> getTripMembers(@RequestParam Long tripId){
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(memberService.getTripMembers(tripId)));
     }
+
+    @GetMapping("/trip-locations")
+    public ResponseEntity<ApiResponse<?>> getTripLocations(){
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(tripService.getTripLocations()));
+    }
 }

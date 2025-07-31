@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class TripLocation {
     private Long locationId;
-    private Location location;
+    private Location locationName;
     private BigDecimal latitude;
     private BigDecimal longitude;
     private String address;

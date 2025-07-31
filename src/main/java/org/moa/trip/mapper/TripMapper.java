@@ -4,6 +4,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.moa.trip.dto.trip.TripListResponseDto;
 import org.moa.trip.entity.Trip;
+import org.moa.trip.entity.TripDay;
+import org.moa.trip.entity.TripLocation;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
@@ -21,4 +23,6 @@ public interface TripMapper {
     int countTripsByMemberId(@Param("memberId") Long memberId);
 
     Long findTripDayId(@Param("tripId") Long tripId, @Param("day") LocalDate departureDate);
+
+    List<TripLocation> searchTripLocations();
 }
