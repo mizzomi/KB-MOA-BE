@@ -33,6 +33,7 @@
         SELECT *
         FROM SETTLEMENT_NOTES
         WHERE member_id = #{memberId} AND trip_id = #{tripId}
+        LIMIT #{pageable.pageSize} OFFSET #{pageable.offset}
     </select>
     <select id="searchByExpenseId" resultType="org.moa.trip.entity.SettlementNotes">
         SELECT *

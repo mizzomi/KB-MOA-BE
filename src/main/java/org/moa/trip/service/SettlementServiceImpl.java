@@ -104,8 +104,9 @@ public class SettlementServiceImpl implements  SettlementService {
             throw new BusinessException(StatusCode.INTERNAL_ERROR, "정산 처리 중 내부 데이터 오류가 발생했습니다. (관련 비용을 찾을 수 없음)");
         }
 
+        UserDetails userDetails = (UserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long senderId = memberMapper.getByEmail(userDetails.getUsername()).getMemberId();
         Long receiverId = expense.getMemberId();
-        Long senderId = dto.getMemberId();
 
         Account receiverAccount;
         Account senderAccount;
