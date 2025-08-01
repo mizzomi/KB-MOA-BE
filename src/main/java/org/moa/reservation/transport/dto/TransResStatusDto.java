@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TranResStatusDto {
+public class TransResStatusDto {
 	private Long tranResId;
 	private Status status;
 }

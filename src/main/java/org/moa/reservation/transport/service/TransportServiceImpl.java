@@ -2,6 +2,7 @@ package org.moa.reservation.transport.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -12,11 +13,12 @@ import org.moa.global.account.service.AccountService;
 import org.moa.global.type.ResKind;
 import org.moa.reservation.entity.Reservation;
 import org.moa.reservation.mapper.ReservationMapper;
-import org.moa.reservation.transport.dto.TranResStatusDto;
+import org.moa.reservation.transport.dto.TransResCancelRequestDto;
+import org.moa.reservation.transport.dto.TransResStatusDto;
 import org.moa.reservation.transport.dto.TransPaymentRequestDto;
-import org.moa.reservation.transport.dto.TransportInfoResponse;
-import org.moa.reservation.transport.dto.TransportReservationRequestDto;
-import org.moa.reservation.transport.dto.TransportSeatsInfoResponse;
+import org.moa.reservation.transport.dto.TranstInfoResponse;
+import org.moa.reservation.transport.dto.TransResRequestDto;
+import org.moa.reservation.transport.dto.TransSeatsInfoResponse;
 import org.moa.reservation.transport.mapper.TransportMapper;
 import org.moa.reservation.transport.type.Status;
 import org.moa.trip.mapper.TripMapper;
@@ -41,28 +43,28 @@ public class TransportServiceImpl implements TransportService {
 	private final TripMapper tripMapper;
 
 	@Override
-	public Map<Integer, List<TransportSeatsInfoResponse>> getSeats(Long transportId) {
+	public Map<Integer, List<TransSeatsInfoResponse>> getSeats(Long transportId) {
 		// 목록 조회
-		List<TransportSeatsInfoResponse> transportSeatsInfos = transportMapper.selectSeatsByTransportId(transportId);
+		List<TransSeatsInfoResponse> transportSeatsInfos = transportMapper.selectSeatsByTransportId(transportId);
 
 		// seatRoomNo 기준으로 묶어서 LinkedHashMap 으로 반환
 		return transportSeatsInfos.stream()
 			.collect(Collectors.groupingBy(
-				TransportSeatsInfoResponse::getSeatRoomNo,
+				TransSeatsInfoResponse::getSeatRoomNo,
 				LinkedHashMap::new,       // insertion-order 유지
 				Collectors.toList()
 			));
 	}
 
 	@Override
-	public Page<TransportInfoResponse> searchTransports(
+	public Page<TranstInfoResponse> searchTransports(
 		String departureName,
 		String destinationName,
 		LocalDateTime departureDateTime,
 		Pageable pageable
 	) {
 		// 목록 조회
-		List<TransportInfoResponse> transportInfos = transportMapper.selectTransports(
+		List<TranstInfoResponse> transportInfos = transportMapper.selectTransports(
 			departureName, destinationName, departureDateTime, pageable.getPageNumber() * pageable.getPageSize(), pageable.getPageSize()
 		);
 
@@ -76,7 +78,7 @@ public class TransportServiceImpl implements TransportService {
 	}
 
 	@Transactional
-	public Long reserveTransportSeats(TransportReservationRequestDto dto) {
+	public Long reserveTransportSeats(TransResRequestDto dto) {
 		// 1. trip_day_id 조회
 		Long tripDayId = tripMapper.findTripDayId(dto.getTripId(), dto.getDepartureDateTime().toLocalDate());
 		if(tripDayId == null) {
@@ -84,11 +86,25 @@ public class TransportServiceImpl implements TransportService {
 		}
 
 		//2. 좌석 상태 확인
-		List<TranResStatusDto> seatStatuses = transportMapper.findStatusesByIds(dto.getTranResIds());
+		log.info("업데이트할 tran_res_id 목록: {}", dto.getTranResIds());
+		List<TransResStatusDto> seatStatuses = transportMapper.findStatusesByIds(dto.getTranResIds());
+
 		boolean allAvailable = seatStatuses.stream()
 			.allMatch(seat -> seat.getStatus() == Status.AVAILABLE);
 		if(!allAvailable) {
 			throw new IllegalStateException("선택한 좌석 중 이미 예약 중인 좌석이 있습니다.");
+		}
+
+		List<Long> inputIds = dto.getTranResIds();
+		List<Long> existingIds = transportMapper.findExistingTranResIds(inputIds);
+
+		if (existingIds.size() != inputIds.size()) {
+			// 누락된 ID 확인
+			List<Long> missingIds = new ArrayList<>(inputIds);
+			missingIds.removeAll(existingIds);
+
+
+			throw new IllegalArgumentException("선택한 좌석 중 존재하지 않는 좌석이 있습니다. 다시 확인해 주세요.");
 		}
 
 		//3. Reservation 저장
@@ -100,13 +116,15 @@ public class TransportServiceImpl implements TransportService {
 		Long reservationId = reservation.getReservationId();
 
 		//4. 좌석들 업데이트
-		transportMapper.updateSeatsToPending(
+		int updatedCount = transportMapper.updateSeatsToPending(
 			reservationId,
 			tripDayId,
 			dto.getTranResIds(),
 			LocalDateTime.now()
 		);
+		log.info("예약 상태로 변경된 좌석 수: {}", updatedCount);
 
+		log.info("TransportService.reserveTransportSeats reservationId={} ==== 좌석 예약 완료(결제전)", reservationId);
 		return reservationId;
 	}
 
@@ -140,5 +158,28 @@ public class TransportServiceImpl implements TransportService {
 		}
 
 		return true;
+	}
+
+	@Transactional
+	public int cancelReservation(Long memberId, TransResCancelRequestDto dto) {
+		Long reservationId = dto.getReservationId();
+
+		//예약 소유자 확인
+		Long ownerMemberId = reservationMapper.findMemberIdByReservationId(reservationId);
+		if(ownerMemberId == null || !ownerMemberId.equals(memberId)) {
+			throw new IllegalArgumentException("본인의 예약만 취소할 수 있습니다.");
+		}
+
+		// 좌석 상태 초기화 (단, status = 'PENDING'인 것만)
+		int cancelSeats = transportMapper.cancelSeatsByReservationId(reservationId);
+		if (cancelSeats == 0) {
+			throw new IllegalStateException("취소 가능한 좌석이 없습니다. 이미 결제되었거나 취소된 상태입니다.");
+		}
+
+		// 예약 정보 삭제
+		int cancelReservation = reservationMapper.cancelReservationByReservationId(reservationId);
+
+		log.info("TransportService.cancelReservation: memberId = {} }의 예약을 취소하였습니다.", memberId);
+		return cancelSeats;
 	}
 }
