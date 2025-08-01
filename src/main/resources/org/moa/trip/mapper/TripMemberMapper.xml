@@ -23,4 +23,10 @@
         FROM TRIP_MEMBER
         WHERE trip_id = #{tripId}
     </select>
+
+    <select id="isMemberOfTrip" resultType="int">
+        SELECT COUNT(*)
+        FROM trip_member
+        WHERE trip_id = #{tripId} AND member_id = #{memberId}
+    </select>
 </mapper>

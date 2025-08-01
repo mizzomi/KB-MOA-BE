@@ -60,7 +60,6 @@ class ExpenseServiceImplTest {
         void setUpCreateExpense() {
             dto = ExpenseCreateRequestDto.builder()
                     .tripId(1L)
-                    .memberId(1L)
                     .expenseName("점심 식사 값")
                     .amount(new BigDecimal("30000.00"))
                     .expenses(Arrays.asList(
@@ -106,7 +105,6 @@ class ExpenseServiceImplTest {
             Expense capturedExpense = expenseCaptor.getValue();
 
             assertThat(capturedExpense.getTripId()).isEqualTo(dto.getTripId());
-            assertThat(capturedExpense.getMemberId()).isEqualTo(dto.getMemberId());
             assertThat(capturedExpense.getExpenseName()).isEqualTo(dto.getExpenseName());
             assertThat(capturedExpense.getAmount()).isEqualTo(dto.getAmount());
             assertThat(capturedExpense.getLocation()).isEqualTo(mockTrip.getTripLocation());
@@ -188,7 +186,7 @@ class ExpenseServiceImplTest {
 
 
             // when (테스트 대상 메서드 실행)
-            List<ExpenseResponseDto> result = expenseService.getExpenses(mockMemberId, mockTripId);
+            List<ExpenseResponseDto> result = expenseService.getExpenses(mockTripId);
 
             // then (결과 검증)
             assertThat(result).isNotNull();

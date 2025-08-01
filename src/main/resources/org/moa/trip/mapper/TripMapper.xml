@@ -77,4 +77,8 @@
         WHERE trip_id = #{tripId}
                   AND day = #{day}
     </select>
+    <select id="searchTripLocations" resultType="org.moa.trip.entity.TripLocation">
+        SELECT *
+        FROM TRIP_LOCATION
+    </select>
 </mapper>

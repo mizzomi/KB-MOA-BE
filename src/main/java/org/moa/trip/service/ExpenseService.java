@@ -9,5 +9,5 @@ import java.util.List;
 @Service
 public interface ExpenseService {
     boolean createExpense(ExpenseCreateRequestDto dto);
-    List<ExpenseResponseDto> getExpenses(Long memberId, Long tripId);
+    List<ExpenseResponseDto> getExpenses(Long tripId);
 }
