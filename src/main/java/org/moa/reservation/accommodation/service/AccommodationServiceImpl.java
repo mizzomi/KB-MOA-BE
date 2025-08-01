@@ -4,6 +4,7 @@ import com.beust.ah.A;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.global.handler.BusinessException;
+import org.moa.global.type.ResKind;
 import org.moa.global.type.StatusCode;
 import org.moa.reservation.accommodation.dto.AccommodationDetailResponse;
 import org.moa.reservation.accommodation.dto.AccommodationInfoResponse;
@@ -11,7 +12,10 @@ import org.moa.reservation.accommodation.dto.AccommodationReservationRequestDto;
 import org.moa.reservation.accommodation.dto.AccommodationRoomsResponse;
 import org.moa.reservation.accommodation.entity.AccomRes;
 import org.moa.reservation.accommodation.entity.AccommodationInfo;
+import org.moa.reservation.accommodation.mapper.AccomResMapper;
 import org.moa.reservation.accommodation.mapper.AccommodationMapper;
+import org.moa.reservation.entity.Reservation;
+import org.moa.reservation.mapper.ReservationMapper;
 import org.moa.trip.entity.TripDay;
 import org.moa.trip.mapper.TripMapper;
 import org.moa.trip.type.Location;
@@ -32,6 +36,8 @@ import java.util.List;
 public class AccommodationServiceImpl implements AccommodationService {
     private final AccommodationMapper accommodationMapper;
     private final TripMapper tripMapper;
+    private final ReservationMapper reservationMapper;
+    private final AccomResMapper accomResMapper;
 
     @Override
     @Transactional
@@ -117,7 +123,15 @@ public class AccommodationServiceImpl implements AccommodationService {
         }
 
         // 2. reservation 생성
+        Reservation reservation = Reservation.builder()
+                .tripDayId(tripDayId)
+                .resKind(ResKind.ACCOMODATION)
+                .build();
+        reservationMapper.insertReservation(reservation);
+        Long reservationId = reservation.getReservationId();
+
         // 3. Accom_res (방 정보) 수정
+        accomResMapper.updateAccomRes(reservationId,tripDayId,dto.getGuests());
         // 4. Accommodation_info 남은 방수 최신화
         // 5. 결제 로직!
 
