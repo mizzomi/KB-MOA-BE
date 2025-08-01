@@ -8,6 +8,11 @@
         INSERT INTO RESERVATION (trip_day_id, res_kind)
         VALUES (#{tripDayId}, #{resKind})
     </insert>
+    <delete id="cancelReservationByReservationId">
+        DELETE
+        FROM RESERVATION
+        WHERE reservation_id = #{reservationId}
+    </delete>
 
     <select id="findMemberIdByReservationId" parameterType="long" resultType="long">
         SELECT t.member_id

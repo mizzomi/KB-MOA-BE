@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TransportReservationRequestDto {
+public class TransResRequestDto {
 	@NotNull(message="여행 ID는 필수입니다.")
 	Long tripId;
 	@NotEmpty(message="예약슬롯 ID목록은 비어있을 수 없습니다.")
