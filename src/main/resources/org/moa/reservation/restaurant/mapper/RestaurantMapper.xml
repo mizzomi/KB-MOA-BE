@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.moa.reservation.restaurant.mapper.RestaurantMapper">
+
+    <select id="findAvailableRestaurant" resultType="org.moa.reservation.restaurant.dto.RestaurantListResponseDto">
+        SELECT rest_id, rest_name, address, rest_image_url, phone, description
+        FROM RESTAURANT_INFO
+        WHERE category = #{category}
+          AND rest_id IN (
+            SELECT rest_id
+            FROM TRIP_DAY td
+                     JOIN TRIP t ON td.trip_id = t.trip_id
+            WHERE t.trip_id = #{tripId}
+              AND td.day = #{date}
+        )
+        LIMIT #{pageable.pageSize} OFFSET #{pageable.offset}
+    </select>
+
+    <select id="countAvailableRestaurants" resultType="int">
+        SELECT COUNT(*)
+        FROM RESTAURANT_INFO
+        WHERE category = #{category}
+          AND rest_id IN (
+            SELECT rest_id
+            FROM TRIP_DAY td
+                     JOIN TRIP t ON td.trip_id = t.trip_id
+            WHERE t.trip_id = #{tripId}
+              AND td.day = #{date}
+        )
+    </select>
+
+</mapper>
