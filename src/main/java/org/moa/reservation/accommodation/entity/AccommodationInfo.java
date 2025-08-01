@@ -16,7 +16,6 @@ public class AccommodationInfo {
     private String hotelName;
     private String address;
     private Location location;
-    private Integer roomRemain;
     private BigDecimal latitude;
     private BigDecimal longitude;
     private String description;

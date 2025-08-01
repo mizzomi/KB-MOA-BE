@@ -5,12 +5,11 @@
 
 <mapper namespace="org.moa.reservation.accommodation.mapper.AccommodationMapper">
     <select id="searchAvailableAccomms" resultType="org.moa.reservation.accommodation.entity.AccommodationInfo">
-        SELECT
+        SELECT DISTINCT
             a.accom_id,
             a.hotel_name,
             a.address,
             a.location,
-            a.room_remain,
             a.latitude,
             a.longitude,
             a.description,
@@ -18,21 +17,17 @@
         FROM
             ACCOMMODATION_INFO a
         WHERE
-            NOT EXISTS (
-                SELECT 1
-                FROM ACCOM_RES r
-                WHERE
-                    r.accom_id = a.accom_id
-                  AND r.status = 'CONFIRMED'
-                  AND r.checkin_day &gt;= #{checkinDay}
-                  AND r.checkin_day &lt; #{checkoutDay}
-                GROUP BY
-                    r.checkin_day
-                HAVING
-                    COUNT(r.accom_id) &gt;= a.room_remain
+            EXISTS (
+            SELECT 1
+            FROM ACCOM_RES av
+            WHERE
+                av.accom_id = a.accom_id
+                AND av.status = 'AVAILABLE'
+                AND av.checkin_day &gt;= #{checkinDay}
+                AND av.checkin_day &lt; #{checkoutDay}
             )
             AND a.location = #{location}
-            LIMIT #{pageable.pageSize} OFFSET #{pageable.offset}
+        LIMIT #{pageable.pageSize} OFFSET #{pageable.offset}
     </select>
     <select id="searchAvailableRooms" resultType="org.moa.reservation.accommodation.entity.AccomRes">
         SELECT

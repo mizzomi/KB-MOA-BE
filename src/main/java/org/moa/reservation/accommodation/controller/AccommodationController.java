@@ -3,21 +3,21 @@ package org.moa.reservation.accommodation.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.global.response.ApiResponse;
+import org.moa.global.security.domain.CustomUser;
 import org.moa.reservation.accommodation.dto.AccommodationDetailResponse;
 import org.moa.reservation.accommodation.dto.AccommodationInfoResponse;
 import org.moa.reservation.accommodation.dto.AccommodationReservationRequestDto;
 import org.moa.reservation.accommodation.dto.AccommodationRoomsResponse;
-import org.moa.reservation.accommodation.mapper.AccommodationMapper;
 import org.moa.reservation.accommodation.service.AccommodationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -30,7 +30,7 @@ public class AccommodationController {
     // 입실 날짜와 퇴실 날짜에 따른, 예약 가능한 숙소들을 조회하는 API 입니다.
     @GetMapping("/accommodation")
     public ResponseEntity<ApiResponse<Page<AccommodationInfoResponse>>> searchAccommodations(
-            @PageableDefault(size = 10, sort = "accomId") Pageable pageable,
+            @PageableDefault(sort = "accomId") Pageable pageable,
             @RequestParam Long tripId,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate checkinDay,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate checkoutDay
@@ -63,7 +63,12 @@ public class AccommodationController {
     }
 
     @PostMapping("/accommodation")
-    public ResponseEntity<ApiResponse<?>> reserveRoom(@RequestBody AccommodationReservationRequestDto dto){
-        return ResponseEntity.ok(ApiResponse.of(accommodationService.reserveRoom(dto)));
+    public ResponseEntity<ApiResponse<?>> reserveRoom(
+            @AuthenticationPrincipal CustomUser customUser,
+            @RequestBody AccommodationReservationRequestDto dto
+    ){
+        Long memberId = customUser.getMember().getMemberId();
+
+        return ResponseEntity.ok(ApiResponse.of(accommodationService.reserveRoom(memberId, dto)));
     }
 }

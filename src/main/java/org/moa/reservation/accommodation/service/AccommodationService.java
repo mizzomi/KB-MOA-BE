@@ -14,5 +14,5 @@ public interface AccommodationService {
     Page<AccommodationInfoResponse> searchAccommodations(Long tripId, LocalDate checkinDay, LocalDate checkoutDay, Pageable pageable);
     AccommodationDetailResponse getAccommodation(Long accomId);
     List<AccommodationRoomsResponse>  getRooms(Long accomId, Long tripId, LocalDate checkinDay, LocalDate checkoutDay, Integer guests);
-    Long reserveRoom(AccommodationReservationRequestDto dto);
+    Long reserveRoom(Long memberId, AccommodationReservationRequestDto dto);
 }
