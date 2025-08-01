@@ -70,4 +70,15 @@
                 #{updatedAt}
                )
     </insert>
+
+    <select id="findTripDayId" resultType="long">
+        SELECT trip_day_id
+        FROM TRIP_DAY
+        WHERE trip_id = #{tripId}
+                  AND day = #{day}
+    </select>
+    <select id="searchTripLocations" resultType="org.moa.trip.entity.TripLocation">
+        SELECT *
+        FROM TRIP_LOCATION
+    </select>
 </mapper>

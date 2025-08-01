@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.moa.reservation.mapper.ReservationMapper">
+    <insert id="insertReservation" useGeneratedKeys="true" keyProperty="reservationId">
+        INSERT INTO RESERVATION (trip_day_id, res_kind)
+        VALUES (#{tripDayId}, #{resKind})
+    </insert>
+
+    <select id="findMemberIdByReservationId" parameterType="long" resultType="long">
+        SELECT t.member_id
+        FROM reservation r
+                 JOIN trip_day td ON r.trip_day_id = td.trip_day_id
+                 JOIN trip t ON td.trip_id = t.trip_id
+        WHERE r.reservation_id = #{reservationId}
+    </select>
+
+</mapper>

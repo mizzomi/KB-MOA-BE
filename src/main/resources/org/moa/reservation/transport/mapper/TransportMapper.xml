@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.moa.reservation.transport.mapper.TransportMapper">
+    <select id="selectTransports" resultType="org.moa.reservation.transport.dto.TransportInfoResponse">
+        SELECT
+        transport_id    AS transportId,
+        departure_name  AS departureName,
+        train_no        AS trainNo
+        FROM transport_info
+        WHERE is_visible = TRUE
+        <if test="departureName != null and departureName.trim() != ''">
+            AND departure_name LIKE CONCAT('%', #{departureName}, '%')
+        </if>
+        <if test="destinationName != null and destinationName.trim() != ''">
+            AND arrival_name   LIKE CONCAT('%', #{destinationName}, '%')
+        </if>
+        <if test="departureDateTime != null">
+            AND departure_time = #{departureDateTime}
+        </if>
+        ORDER BY transport_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countTransports" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM transport_info
+        WHERE is_visible = TRUE
+        <if test="departureName != null and departureName.trim() != ''">
+            AND departure_name LIKE CONCAT('%', #{departureName}, '%')
+        </if>
+        <if test="destinationName != null and destinationName.trim() != ''">
+            AND arrival_name   LIKE CONCAT('%', #{destinationName}, '%')
+        </if>
+        <if test="departureDateTime != null">
+            AND departure_time = #{departureDateTime}
+        </if>
+    </select>
+    <select id="selectSeatsByTransportId"
+            parameterType="long"
+            resultType="org.moa.reservation.transport.dto.TransportSeatsInfoResponse">
+        SELECT
+            tran_res_id   AS tranResId,
+            seat_room_no  AS seatRoomNo,
+            seat_number   AS seatNumber,
+            seat_type     AS seatType,
+            status        AS status,
+            price         AS price
+        FROM tran_res
+        WHERE transport_id = #{transportId}
+        ORDER BY seat_room_no, seat_number
+    </select>
+
+    <select id="findStatusesByIds" parameterType="list" resultType="org.moa.reservation.transport.dto.TranResStatusDto">
+        SELECT tran_res_id, status
+        FROM TRAN_RES
+        WHERE tran_res_id IN
+        <foreach item="id" collection="list" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="getTotalPriceByReservationId" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(price), 0)
+        FROM TRAN_RES
+        WHERE reservation_id = #{reservationId} AND status = 'PENDING'
+    </select>
+    <select id="selectTrainNoByReservationId" resultType="java.lang.String">
+        SELECT I.train_no
+        FROM TRANSPORT_INFO I
+        WHERE I.transport_id = (SELECT R.transport_id
+                                FROM TRAN_RES R
+                                WHERE R.reservation_id = #{reservationId}
+                                LIMIT 1);
+    </select>
+
+    <update id="updateSeatsToPending">
+        UPDATE TRAN_RES
+        SET
+        reservation_id = #{reservationId},
+        trip_day_id = #{tripDayId},
+        booked_at = #{bookedAt},
+        status = 'PENDING'
+        WHERE tran_res_id IN
+        <foreach item="id" collection="tranResIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    <update id="confirmSeatsByReservationId">
+        UPDATE TRAN_RES
+        SET status = 'CONFIRMED',
+            updated_at = CURRENT_TIMESTAMP,
+            booked_at = CURRENT_TIMESTAMP
+        WHERE reservation_id = #{reservationId}
+          AND status = 'PENDING'
+    </update>
+</mapper>

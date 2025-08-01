@@ -1,11 +1,14 @@
 package org.moa.reservation.transport.mapper;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.moa.reservation.transport.dto.TranResStatusDto;
 import org.moa.reservation.transport.dto.TransportInfoResponse;
+import org.moa.reservation.transport.dto.TransportSeatsInfoResponse;
 
 @Mapper
 public interface TransportMapper {
@@ -24,4 +27,21 @@ public interface TransportMapper {
 		@Param("destinationName")   String        destinationName,
 		@Param("departureDateTime") LocalDateTime departureDateTime
 	);
+
+	List<TransportSeatsInfoResponse> selectSeatsByTransportId(
+		@Param("transportId") Long transportId
+	);
+
+	List<TranResStatusDto> findStatusesByIds(@Param("list") List<Long> tranResIds);
+
+	void updateSeatsToPending(@Param("reservationId") Long reservationId,
+		@Param("tripDayId") Long tripDayId,
+		@Param("tranResIds") List<Long> tranResIds,
+		@Param("bookedAt") LocalDateTime bookedAt);
+
+	BigDecimal getTotalPriceByReservationId(@Param("reservationId") Long reservationId);
+
+	String selectTrainNoByReservationId(@Param("reservationId") Long reservationId);
+
+	int confirmSeatsByReservationId(@Param("reservationId") Long reservationId);
 }
