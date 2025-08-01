@@ -5,6 +5,28 @@
 
 <mapper namespace="org.moa.reservation.accommodation.mapper.AccomResMapper">
     <update id="updateAccomRes">
-        // 추후 작성 필요
+        UPDATE ACCOM_RES
+        SET
+            reservation_id = #{reservationId},
+            trip_day_id = #{tripDayId},
+            guests = #{guests},
+            status = 'CONFIRMED'
+        WHERE
+            accom_res_id = #{accomResId}
+            AND status = 'AVAILABLE'
+            AND checkin_day &gt;= #{checkinDay}
+            AND checkin_day &lt; #{checkoutDay}
+        LIMIT #{nights}
     </update>
+    <select id="searchHotelNameByAccomResId" resultType="string">
+        SELECT ac.hotel_name
+        FROM ACCOMMODATION_INFO ac
+                 JOIN ACCOM_RES ar ON ac.accom_id = ar.accom_id
+        WHERE ar.accom_res_id = #{accomResId}
+    </select>
+    <select id="searchHotelPriceById" resultType="decimal">
+        SELECT price
+        FROM ACCOM_RES
+        WHERE accom_res_id = #{accomResId}
+    </select>
 </mapper>

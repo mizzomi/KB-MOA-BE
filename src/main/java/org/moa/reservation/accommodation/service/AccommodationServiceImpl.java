@@ -3,9 +3,14 @@ package org.moa.reservation.accommodation.service;
 import com.beust.ah.A;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.moa.global.account.dto.payment.PaymentResponseDto;
+import org.moa.global.account.mapper.AccountMapper;
+import org.moa.global.account.service.AccountService;
 import org.moa.global.handler.BusinessException;
 import org.moa.global.type.ResKind;
 import org.moa.global.type.StatusCode;
+import org.moa.member.entity.Member;
+import org.moa.member.mapper.MemberMapper;
 import org.moa.reservation.accommodation.dto.AccommodationDetailResponse;
 import org.moa.reservation.accommodation.dto.AccommodationInfoResponse;
 import org.moa.reservation.accommodation.dto.AccommodationReservationRequestDto;
@@ -25,8 +30,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +45,7 @@ public class AccommodationServiceImpl implements AccommodationService {
     private final TripMapper tripMapper;
     private final ReservationMapper reservationMapper;
     private final AccomResMapper accomResMapper;
+    private final AccountService accountService;
 
     @Override
     @Transactional
@@ -115,7 +123,14 @@ public class AccommodationServiceImpl implements AccommodationService {
 
     @Override
     @Transactional
-    public Long reserveRoom(AccommodationReservationRequestDto dto){
+    public Long reserveRoom(Long memberId, AccommodationReservationRequestDto dto){
+        log.info("checkinDay : {} , checkoutDay : {}",dto.getCheckinDay(),dto.getCheckoutDay());
+
+        BigDecimal hotelPrice = accomResMapper.searchHotelPriceById(dto.getAccomResId());
+        if(hotelPrice.compareTo(dto.getPrice()) != 0) {
+            throw new IllegalArgumentException("입력된 금액이 실제 결제될 금액과 다릅니다.");
+        }
+
         // 1. trip_day 조회
         Long tripDayId = tripMapper.findTripDayId(dto.getTripId(),dto.getCheckinDay());
         if(tripDayId == null){
@@ -125,16 +140,29 @@ public class AccommodationServiceImpl implements AccommodationService {
         // 2. reservation 생성
         Reservation reservation = Reservation.builder()
                 .tripDayId(tripDayId)
-                .resKind(ResKind.ACCOMODATION)
+                .resKind(ResKind.ACCOMMODATION)
                 .build();
         reservationMapper.insertReservation(reservation);
         Long reservationId = reservation.getReservationId();
 
         // 3. Accom_res (방 정보) 수정
-        accomResMapper.updateAccomRes(reservationId,tripDayId,dto.getGuests());
-        // 4. Accommodation_info 남은 방수 최신화
-        // 5. 결제 로직!
 
-        return null;
+        Period period = Period.between(dto.getCheckinDay(), dto.getCheckoutDay());
+        int nights = period.getDays();
+
+        accomResMapper.updateAccomRes(
+                reservationId,
+                tripDayId,
+                dto.getGuests(),
+                dto.getAccomResId(),
+                dto.getCheckinDay(),
+                dto.getCheckoutDay(),
+                nights);
+
+        // 4. 결제 로직
+        String hotelName = accomResMapper.searchHotelNameByAccomResId(dto.getAccomResId());
+        PaymentResponseDto result = accountService.makePayment(memberId, dto.getPrice(), hotelName);
+
+        return reservationId;
     }
 }
