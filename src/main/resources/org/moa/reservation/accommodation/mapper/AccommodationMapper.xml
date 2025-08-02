@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.moa.reservation.accommodation.mapper.AccommodationMapper">
+    <select id="searchAvailableAccomms" resultType="org.moa.reservation.accommodation.entity.AccommodationInfo">
+        SELECT DISTINCT
+            a.accom_id,
+            a.hotel_name,
+            a.address,
+            a.location,
+            a.latitude,
+            a.longitude,
+            a.description,
+            a.hotel_image_url
+        FROM
+            ACCOMMODATION_INFO a
+        WHERE
+            EXISTS (
+            SELECT 1
+            FROM ACCOM_RES av
+            WHERE
+                av.accom_id = a.accom_id
+                AND av.status = 'AVAILABLE'
+                AND av.checkin_day &gt;= #{checkinDay}
+                AND av.checkin_day &lt; #{checkoutDay}
+            )
+            AND a.location = #{location}
+        LIMIT #{pageable.pageSize} OFFSET #{pageable.offset}
+    </select>
+    <select id="searchAvailableRooms" resultType="org.moa.reservation.accommodation.entity.AccomRes">
+        SELECT
+            MAX(ar.accom_res_id) AS accomResId,
+            ar.hotel_name AS hotelName,
+            ar.room_type AS roomType,
+            ar.room_image_url AS roomImageUrl,
+            ar.max_guests AS maxGuests,
+            ar.price AS price
+        FROM
+            ACCOM_RES ar
+                LEFT JOIN
+            ACCOMMODATION_INFO a ON ar.accom_id = a.accom_id
+        WHERE
+            a.accom_id = #{accomId}
+          AND a.location = #{location}
+          AND ar.status = 'AVAILABLE'
+          AND ar.max_guests &gt;= #{guests}
+          AND ar.checkin_day &gt;= #{checkinTime}
+          AND ar.checkin_day &lt; #{checkoutTime}
+        GROUP BY
+            ar.hotel_name, ar.room_type, ar.room_image_url, ar.max_guests, ar.price
+        HAVING
+            COUNT(*) &gt; 0
+    </select>
+    <select id="searchAccommById" resultType="org.moa.reservation.accommodation.entity.AccommodationInfo">
+        SELECT
+            accom_id,
+            hotel_name,
+            address,
+            hotel_image_url
+        FROM ACCOMMODATION_INFO
+        WHERE accom_id = #{accomId}
+    </select>
+</mapper>

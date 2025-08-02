@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.moa.global.response.ApiResponse;
 import org.moa.member.service.MemberService;
 import org.moa.global.security.domain.CustomUser;
+import org.moa.reservation.accommodation.dto.AccommodationInfoResponse;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
+import org.moa.trip.dto.expense.ExpenseResponseDto;
 import org.moa.trip.dto.settlement.SettlementRequestDto;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
 import org.moa.trip.dto.trip.TripListResponseDto;
@@ -13,12 +15,15 @@ import org.moa.trip.service.SettlementService;
 import org.moa.trip.service.TripService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -30,12 +35,10 @@ public class TripController {
     private final ExpenseService expenseService;
     private final SettlementService settlementService;
 
-
     @PostMapping("/trips")
     public ResponseEntity<ApiResponse<?>> createTrip(@Valid @RequestBody TripCreateRequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(tripService.createTrip(dto)));
     }
-
 
     @GetMapping("/trips")
     public ResponseEntity<ApiResponse<Page<TripListResponseDto>>> getTripList(@AuthenticationPrincipal CustomUser customUser,
@@ -52,8 +55,11 @@ public class TripController {
     }
 
     @GetMapping("/expense")
-    public ResponseEntity<ApiResponse<?>> getExpenses(@RequestParam Long memberId,  @RequestParam Long tripId) {
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(expenseService.getExpenses(memberId,tripId)));
+    public ResponseEntity<ApiResponse<?>> getExpenses(
+            @PageableDefault(sort = "expenseId") Pageable pageable,
+            @RequestParam Long tripId) {
+        Page<ExpenseResponseDto> page = expenseService.getExpenses(tripId,pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(page));
     }
 
     @GetMapping("/settlement-progress")
@@ -74,5 +80,10 @@ public class TripController {
     @GetMapping("/trip-members")
     public ResponseEntity<ApiResponse<?>> getTripMembers(@RequestParam Long tripId){
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(memberService.getTripMembers(tripId)));
+    }
+
+    @GetMapping("/trip-locations")
+    public ResponseEntity<ApiResponse<?>> getTripLocations(){
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(tripService.getTripLocations()));
     }
 }

@@ -12,6 +12,5 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class SettlementRequestDto {
     private Long expenseId;
-    private Long memberId;
     private BigDecimal amount;
 }

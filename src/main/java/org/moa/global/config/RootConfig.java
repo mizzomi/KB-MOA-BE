@@ -21,7 +21,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 @Configuration
 @PropertySource({"classpath:/application.properties"})
-@MapperScan(basePackages = {"org.moa.global.account.mapper", "org.moa.member.mapper","org.moa.trip.mapper", "org.moa.reservation.transport.mapper", "org.moa.reservation.mapper"})
+@MapperScan(basePackages = {"org.moa.global.account.mapper", "org.moa.member.mapper","org.moa.trip.mapper", "org.moa.reservation.transport.mapper", "org.moa.reservation.mapper", "org.moa.reservation.accommodation.mapper", "org.moa.reservation.restaurant.mapper"})
 @ComponentScan(basePackages = {"org.moa"})
 public class RootConfig {
 	private final Properties envProperties = new Properties();
