@@ -31,7 +31,11 @@ bin/
 !**/src/test/**/bin/
 
 ### 설정 파일 추가
-src/main/resources/application.properties
+/src/main/resources/application.properties
+
+### firebase key ###
+/src/main/resources/firebase/*.json
+/src/main/resources/firebase/firebase/moa-firebase-service-account-key.json
 
 ### NetBeans ###
 /nbproject/private/
