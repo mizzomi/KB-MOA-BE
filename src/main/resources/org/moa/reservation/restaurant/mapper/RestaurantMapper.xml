@@ -4,6 +4,7 @@
 
 <mapper namespace="org.moa.reservation.restaurant.mapper.RestaurantMapper">
 
+    <!-- 1. 예약 가능한 식당 목록 -->
     <select id="findAvailableRestaurant" resultType="org.moa.reservation.restaurant.dto.RestaurantListResponseDto">
         SELECT rest_id, rest_name, address, rest_image_url, phone, description
         FROM RESTAURANT_INFO
@@ -15,9 +16,10 @@
             WHERE t.trip_id = #{tripId}
               AND td.day = #{date}
         )
-        LIMIT #{pageable.pageSize} OFFSET #{pageable.offset}
+            LIMIT #{pageable.pageSize} OFFSET #{pageable.offset}
     </select>
 
+    <!-- 2. 페이지네이션을 위한 총 개수 -->
     <select id="countAvailableRestaurants" resultType="int">
         SELECT COUNT(*)
         FROM RESTAURANT_INFO
@@ -31,4 +33,30 @@
         )
     </select>
 
+    <!-- 3. 예약 가능한 시간대 조회 -->
+    <select id="findTimeSlot" resultType="string">
+        SELECT res_time
+        FROM REST_TIME_SLOT
+        WHERE rest_id = #{restId}
+    </select>
+
+    <!-- 4. 특정 시간에 예약된 인원 수 -->
+    <select id="findReservedCount" resultType="int">
+        SELECT COALESCE(SUM(r.res_num), 0)
+        FROM REST_RES r
+                 JOIN REST_TIME_SLOT s ON r.rest_time_id = s.rest_time_id
+        WHERE r.rest_id = #{restId}
+          AND r.trip_day_id IN (
+            SELECT trip_day_id FROM TRIP_DAY WHERE day = #{date}
+            )
+        AND s.res_time = #{time}
+    </select>
+
+    <!-- 5. 특정 시간대의 최대 예약 가능 인원 -->
+    <select id="findMaxCapacity" resultType="int">
+        SELECT max_capacity
+        FROM REST_TIME_SLOT
+        WHERE rest_id = #{restId}
+          AND res_time = #{time}
+    </select>
 </mapper>
