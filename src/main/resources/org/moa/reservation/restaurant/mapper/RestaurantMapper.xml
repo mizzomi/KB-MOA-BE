@@ -38,6 +38,17 @@
         )
     </select>
 
+    <!-- 식당 정보 조회 -->
+    <select id="findRestaurantInfo" resultType="org.moa.reservation.restaurant.dto.RestaurantInfoResponseDto">
+        SELECT
+            rest_id AS restId,
+            rest_name AS restName,
+            rest_image_url AS restImageUrl,
+            address
+        FROM RESTAURANT_INFO
+        WHERE rest_id = #{restId}
+    </select>
+
     <!-- 예약 가능한 시간대 조회 -->
     <select id="findTimeSlot" resultType="string">
         SELECT res_time

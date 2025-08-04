@@ -25,6 +25,9 @@ public interface RestaurantMapper {
             @Param("category") String category
     );
 
+    // 식당 정보 조회
+    RestaurantInfoResponseDto findRestaurantInfo(Long restId);
+
     // 예약 가능한 시간대 조회
     List<String> findTimeSlot(@Param("restId") Long restId);
 
