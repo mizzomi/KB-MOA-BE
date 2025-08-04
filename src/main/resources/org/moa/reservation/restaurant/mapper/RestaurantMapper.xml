@@ -4,9 +4,14 @@
 
 <mapper namespace="org.moa.reservation.restaurant.mapper.RestaurantMapper">
 
-    <!-- 1. 예약 가능한 식당 목록 -->
+    <!-- 예약 가능한 식당 목록 -->
     <select id="findAvailableRestaurant" resultType="org.moa.reservation.restaurant.dto.RestaurantListResponseDto">
-        SELECT rest_id, rest_name, address, rest_image_url, phone, description
+        SELECT rest_id,
+               rest_name,
+               address,
+               rest_image_url,
+               phone,
+               description
         FROM RESTAURANT_INFO
         WHERE category = #{category}
           AND rest_id IN (
@@ -19,7 +24,7 @@
             LIMIT #{pageable.pageSize} OFFSET #{pageable.offset}
     </select>
 
-    <!-- 2. 페이지네이션을 위한 총 개수 -->
+    <!-- 페이지네이션을 위한 총 개수 -->
     <select id="countAvailableRestaurants" resultType="int">
         SELECT COUNT(*)
         FROM RESTAURANT_INFO
@@ -33,30 +38,119 @@
         )
     </select>
 
-    <!-- 3. 예약 가능한 시간대 조회 -->
+    <!-- 예약 가능한 시간대 조회 -->
     <select id="findTimeSlot" resultType="string">
         SELECT res_time
         FROM REST_TIME_SLOT
         WHERE rest_id = #{restId}
     </select>
 
-    <!-- 4. 특정 시간에 예약된 인원 수 -->
+    <!-- 특정 시간에 예약된 인원 수 -->
     <select id="findReservedCount" resultType="int">
-        SELECT COALESCE(SUM(r.res_num), 0)
-        FROM REST_RES r
-                 JOIN REST_TIME_SLOT s ON r.rest_time_id = s.rest_time_id
-        WHERE r.rest_id = #{restId}
-          AND r.trip_day_id IN (
-            SELECT trip_day_id FROM TRIP_DAY WHERE day = #{date}
-            )
-        AND s.res_time = #{time}
+        SELECT COALESCE(SUM(res_num), 0)
+        FROM REST_RES
+        WHERE rest_time_id = #{restTimeId}
     </select>
 
-    <!-- 5. 특정 시간대의 최대 예약 가능 인원 -->
+    <!-- 특정 시간대의 최대 예약 가능 인원 -->
     <select id="findMaxCapacity" resultType="int">
         SELECT max_capacity
         FROM REST_TIME_SLOT
+        WHERE rest_time_id = #{restTimeId}
+    </select>
+
+    <!-- restTimeId 조회 -->
+    <select id="findRestTimeId" resultType="long">
+        SELECT rest_time_id
+        FROM rest_time_slot
         WHERE rest_id = #{restId}
           AND res_time = #{time}
     </select>
+
+    <!-- tripDayId 조회-->
+    <select id="findTripDayId" resultType="long">
+        SELECT trip_day_id
+        FROM TRIP_DAY
+        WHERE trip_id = #{tripId}
+                  AND day = #{date}
+    </select>
+
+    <!-- reservationId 조회 -->
+    <select id="findLastInsertedReservationId" resultType="long">
+        SELECT LAST_INSERT_ID()
+    </select>
+
+    <!-- 예약 생성 -->
+    <insert id="insertReservation" useGeneratedKeys="true" keyProperty="reservationId">
+        INSERT INTO reservation (trip_day_id, res_kind)
+        VALUES (#{tripDayId}, 'RESTAURANT')
+    </insert>
+
+    <!-- 식당 예약 생성 -->
+    <insert id="insertRestaurantReservation">
+        INSERT INTO REST_RES (
+            reservation_id,
+            trip_day_id,
+            rest_id,
+            rest_time_id,
+            res_num,
+            status,
+            created_at
+        )
+        VALUES (
+                   #{reservationId},
+                   #{tripDayId},
+                   #{restId},
+                   #{restTimeId},
+                   #{resNum},
+                   'reserved',
+                   NOW()
+               )
+    </insert>
+
+
+    <!-- 여행별 식당 예약 조회 -->
+    <select id="findReservations" resultType="org.moa.reservation.restaurant.dto.RestaurantReservationResponseDto">
+        SELECT
+            rr.reservation_id AS reservationId,
+            ri.rest_id AS restId,
+            ri.rest_name AS restName,
+            td.day AS date,
+        rts.res_time AS time,
+        rr.res_num AS resNum,
+        rr.status
+        FROM
+            REST_RES rr
+            JOIN RESTAURANT_INFO ri ON rr.rest_id = ri.rest_id
+            JOIN TRIP_DAY td ON rr.trip_day_id = td.trip_day_id
+            JOIN REST_TIME_SLOT rts ON rr.rest_time_id = rts.rest_time_id
+        WHERE
+            td.trip_id = #{tripId}
+        ORDER BY td.day, rts.res_time
+    </select>
+
+    <!-- 식당 예약 상세 조회 -->
+    <select id="findReservationDetail" resultType="org.moa.reservation.restaurant.dto.RestaurantReservationDetailDto">
+        SELECT
+            rr.rest_res_id     AS restResId,
+            rr.reservation_id  AS reservationId,
+            rr.trip_day_id     AS tripDayId,
+            ri.rest_id         AS restId,
+            ri.rest_name       AS restName,
+            ri.address         AS address,
+            ri.category        AS category,
+            ri.rest_image_url  AS imageUrl,
+            td.day             AS date,
+        rts.res_time       AS time,
+        rr.res_num         AS resNum,
+        rr.status          AS status
+        FROM
+            REST_RES rr
+            JOIN RESTAURANT_INFO ri ON rr.rest_id = ri.rest_id
+            JOIN TRIP_DAY td ON rr.trip_day_id = td.trip_day_id
+            JOIN REST_TIME_SLOT rts ON rr.rest_time_id = rts.rest_time_id
+        WHERE
+            rr.rest_res_id = #{restResId}
+    </select>
+
 </mapper>

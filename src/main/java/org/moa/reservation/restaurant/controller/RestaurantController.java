@@ -3,14 +3,17 @@ package org.moa.reservation.restaurant.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.global.response.ApiResponse;
-import org.moa.reservation.restaurant.dto.AvailableTimeResponseDto;
-import org.moa.reservation.restaurant.dto.RestaurantListResponseDto;
+import org.moa.global.security.domain.CustomUser;
+import org.moa.global.type.StatusCode;
+import org.moa.reservation.restaurant.dto.*;
 import org.moa.reservation.restaurant.service.RestaurantService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,7 +47,7 @@ public class RestaurantController {
 
     // 예약 가능한 시간 목록 조회 API
     @GetMapping("{restId}/times")
-    public ApiResponse<List<AvailableTimeResponseDto>> getAvailableTime(
+    public ResponseEntity<ApiResponse<List<AvailableTimeResponseDto>>> getAvailableTime(
             @PathVariable Long restId,
             @RequestParam("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date
     ) {
@@ -52,6 +55,36 @@ public class RestaurantController {
 
         List<AvailableTimeResponseDto> times = restaurantService.getAvailableTime(restId, date);
 
-        return ApiResponse.of(times);
+        return ResponseEntity.ok(ApiResponse.of(times));
     }
+
+    // 식당 예약 생성 API
+    @PostMapping
+    public ResponseEntity<ApiResponse<String>> createReservation(
+            @AuthenticationPrincipal CustomUser user, // 로그인 사용자
+            @RequestBody RestaurantReservationRequestDto request
+    ) {
+        Long memberId = user.getMember().getMemberId();
+        restaurantService.createReservation(memberId, request);
+        return ResponseEntity.ok(ApiResponse.of("식당 예약이 완료되었습니다."));
+    }
+
+    // 여행별 식당 예약 조회 API
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<RestaurantReservationResponseDto>>> getReservations(
+            @RequestParam Long tripId
+    ) {
+        List<RestaurantReservationResponseDto> reservations = restaurantService.getReservations(tripId);
+        return ResponseEntity.ok(ApiResponse.of(reservations));
+    }
+
+    // 식당 예약 상세 조회 API
+    @GetMapping("/{restResId}")
+    public ResponseEntity<ApiResponse<RestaurantReservationDetailDto>> getReservationDetail(
+            @PathVariable Long restResId
+    ) {
+        RestaurantReservationDetailDto detail = restaurantService.getReservationDetail(restResId);
+        return ResponseEntity.ok(ApiResponse.of(detail));
+    }
+
 }

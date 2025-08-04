@@ -11,6 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AvailableTimeResponseDto {
     private String time;
+    private Long restTimeId;
     private int maxNum;
     private int reservedNum;
     private int availableNum;
