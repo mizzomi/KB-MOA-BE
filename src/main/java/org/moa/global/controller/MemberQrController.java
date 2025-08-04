@@ -3,10 +3,12 @@ package org.moa.global.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.global.response.ApiResponse;
+import org.moa.global.security.domain.CustomUser;
 import org.moa.global.service.qr.QrService;
 import org.moa.global.type.StatusCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,8 +26,9 @@ public class MemberQrController {
 
     // 사용자 주민등록증 QR 생성
     @GetMapping("/qr-idcard")
-    public ResponseEntity<ApiResponse<?>> generateIdCardQr(@RequestParam("memberId") Long memberId) {
+    public ResponseEntity<ApiResponse<?>> generateIdCardQr(@AuthenticationPrincipal CustomUser user) {
         try {
+            Long memberId = user.getMember().getMemberId(); // 로그인된 사용자
             String base64Qr = qrService.generateIdCardQr(memberId);
 
             if (base64Qr == null) {
