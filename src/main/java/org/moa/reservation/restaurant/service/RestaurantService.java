@@ -11,6 +11,9 @@ public interface RestaurantService {
     // 예약 가능한 식당 조회
     Page<RestaurantListResponseDto> getAvailableRestaurants(Long tripId, LocalDate date, String category, Pageable pageable);
 
+    // 식당 정보 조회
+    RestaurantInfoResponseDto getRestaurantInfo(Long restId);
+
     // 예약 가능한 시간대 조회
     List<AvailableTimeResponseDto> getAvailableTime(Long restId, LocalDate date);
 

@@ -2,6 +2,7 @@ package org.moa.reservation.restaurant.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
 import org.moa.global.response.ApiResponse;
 import org.moa.global.security.domain.CustomUser;
 import org.moa.global.type.StatusCode;
@@ -43,6 +44,22 @@ public class RestaurantController {
         Page<RestaurantListResponseDto> page =
                 restaurantService.getAvailableRestaurants(tripId, date, category, pageable);
         return ResponseEntity.ok(ApiResponse.of(page));
+    }
+
+    // 식당 정보 조회 API
+    @GetMapping("/restId")
+    public ResponseEntity<ApiResponse<?>> getRestaurantInfo(@RequestParam("restId") Long restId) {
+
+        log.info("RestaurantController ==== getRestaurantInfo restId={}", restId);
+
+        RestaurantInfoResponseDto restaurant = restaurantService.getRestaurantInfo(restId);
+
+        if (restaurant == null) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(StatusCode.NOT_FOUND, "해당 식당 정보를 찾을 수 없습니다."));
+        }
+        return ResponseEntity.ok(ApiResponse.of(restaurant));
     }
 
     // 예약 가능한 시간 목록 조회 API

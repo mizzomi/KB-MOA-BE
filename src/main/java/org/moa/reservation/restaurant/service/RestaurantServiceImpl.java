@@ -40,6 +40,12 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     }
 
+    // 식당 정보 조회
+    @Override
+    public RestaurantInfoResponseDto getRestaurantInfo(Long restId) {
+        return restaurantMapper.findRestaurantInfo(restId);
+    }
+
     // 예약 가능한 시간대 조회
     @Override
     public List<AvailableTimeResponseDto> getAvailableTime(Long restId, LocalDate date) {
