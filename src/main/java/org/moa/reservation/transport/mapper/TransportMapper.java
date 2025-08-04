@@ -6,14 +6,14 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.moa.reservation.transport.dto.TranResStatusDto;
-import org.moa.reservation.transport.dto.TransportInfoResponse;
-import org.moa.reservation.transport.dto.TransportSeatsInfoResponse;
+import org.moa.reservation.transport.dto.TransResStatusDto;
+import org.moa.reservation.transport.dto.TranstInfoResponse;
+import org.moa.reservation.transport.dto.TransSeatsInfoResponse;
 
 @Mapper
 public interface TransportMapper {
 	// 페이징 조회용: offset, limit
-	List<TransportInfoResponse> selectTransports(
+	List<TranstInfoResponse> selectTransports(
 		@Param("departureName")     String        departureName,
 		@Param("destinationName")   String        destinationName,
 		@Param("departureDateTime") LocalDateTime departureDateTime,
@@ -28,13 +28,14 @@ public interface TransportMapper {
 		@Param("departureDateTime") LocalDateTime departureDateTime
 	);
 
-	List<TransportSeatsInfoResponse> selectSeatsByTransportId(
+	List<TransSeatsInfoResponse> selectSeatsByTransportId(
 		@Param("transportId") Long transportId
 	);
 
-	List<TranResStatusDto> findStatusesByIds(@Param("list") List<Long> tranResIds);
+	List<TransResStatusDto> findStatusesByIds(@Param("list") List<Long> tranResIds);
 
-	void updateSeatsToPending(@Param("reservationId") Long reservationId,
+	int updateSeatsToPending(
+		@Param("reservationId") Long reservationId,
 		@Param("tripDayId") Long tripDayId,
 		@Param("tranResIds") List<Long> tranResIds,
 		@Param("bookedAt") LocalDateTime bookedAt);
@@ -44,4 +45,8 @@ public interface TransportMapper {
 	String selectTrainNoByReservationId(@Param("reservationId") Long reservationId);
 
 	int confirmSeatsByReservationId(@Param("reservationId") Long reservationId);
+
+	int cancelSeatsByReservationId(@Param("reservationId") Long reservationId);
+
+	List<Long> findExistingTranResIds(@Param("tranResIds") List<Long> tranResIds);
 }

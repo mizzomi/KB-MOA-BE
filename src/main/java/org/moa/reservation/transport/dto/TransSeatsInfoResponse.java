@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TransportSeatsInfoResponse {
+public class TransSeatsInfoResponse {
 	private Long tranResId;
 	private Integer seatRoomNo;
 	private String seatNumber;

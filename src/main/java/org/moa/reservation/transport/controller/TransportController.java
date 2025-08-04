@@ -4,19 +4,21 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import javax.validation.Valid;
+
 import org.moa.global.response.ApiResponse;
 import org.moa.global.security.domain.CustomUser;
 import org.moa.global.type.StatusCode;
 import org.moa.reservation.transport.dto.TransPaymentRequestDto;
-import org.moa.reservation.transport.dto.TransportInfoResponse;
-import org.moa.reservation.transport.dto.TransportReservationRequestDto;
-import org.moa.reservation.transport.dto.TransportSeatsInfoResponse;
+import org.moa.reservation.transport.dto.TransResCancelRequestDto;
+import org.moa.reservation.transport.dto.TranstInfoResponse;
+import org.moa.reservation.transport.dto.TransResRequestDto;
+import org.moa.reservation.transport.dto.TransSeatsInfoResponse;
 import org.moa.reservation.transport.service.TransportService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,14 +41,14 @@ public class TransportController {
 	private final TransportService transportService;
 
 	@GetMapping("/seats")
-	public ResponseEntity<ApiResponse<Map<Integer, List<TransportSeatsInfoResponse>>>> getSeas(
+	public ResponseEntity<ApiResponse<Map<Integer, List<TransSeatsInfoResponse>>>> getSeas(
 		@RequestParam Long transportId
 	) {
 		return ResponseEntity.status(StatusCode.OK.getStatus()).body(ApiResponse.of(transportService.getSeats(transportId)));
 	}
 
 	@GetMapping
-	public ResponseEntity<ApiResponse<Page<TransportInfoResponse>>> searchTransport(
+	public ResponseEntity<ApiResponse<Page<TranstInfoResponse>>> searchTransport(
 		@PageableDefault(size = 10, sort = "transportId") Pageable pageable,
 		@RequestParam String departureName,
 		@RequestParam String destinationName,
@@ -58,7 +60,7 @@ public class TransportController {
 			pageable.getPageNumber(), pageable.getSort(),
 			 departureName, destinationName, departureDateTime);
 
-		Page<TransportInfoResponse> page = transportService.searchTransports(
+		Page<TranstInfoResponse> page = transportService.searchTransports(
 			 departureName, destinationName, departureDateTime, pageable
 		);
 
@@ -67,7 +69,7 @@ public class TransportController {
 
 	@PostMapping("/seats")
 	public ResponseEntity<ApiResponse<?>> reserveSeats(
-		@RequestBody TransportReservationRequestDto dto
+		@RequestBody TransResRequestDto dto
 	) {
 		return ResponseEntity.status(StatusCode.OK.getStatus()).body(ApiResponse.of(transportService.reserveTransportSeats(dto)));
 	}
@@ -82,5 +84,18 @@ public class TransportController {
 		return ResponseEntity
 			.status(StatusCode.OK.getStatus())
 			.body(ApiResponse.of(transportService.seatPayment(memberId, dto)));
+	}
+
+	@PostMapping("/cancel")
+	public ResponseEntity<ApiResponse<?>> cancel(
+		@AuthenticationPrincipal CustomUser customUser,
+		@RequestBody @Valid TransResCancelRequestDto dto
+	) {
+		Long memberId = customUser.getMember().getMemberId();
+
+
+		return ResponseEntity
+			.status(StatusCode.OK.getStatus())
+			.body(ApiResponse.of(transportService.cancelReservation(memberId, dto)));
 	}
 }

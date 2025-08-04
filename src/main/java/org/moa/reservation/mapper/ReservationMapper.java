@@ -9,4 +9,6 @@ public interface ReservationMapper {
 	void insertReservation(Reservation reservation);
 
 	Long findMemberIdByReservationId(@Param("reservationId") Long reservationId);
+
+	int cancelReservationByReservationId(@Param("reservationId") Long reservationId);
 }
