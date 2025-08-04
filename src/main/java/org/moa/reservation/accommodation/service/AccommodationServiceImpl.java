@@ -58,7 +58,7 @@ public class AccommodationServiceImpl implements AccommodationService {
         // 1. ACCOMMODATION 중 남은 방이 있는 애들 AND 입실 날짜~퇴실 날짜 사이의 방들이 비어있는 애들을 페이징하여 찾기
         List<AccommodationInfo> accomms = accommodationMapper.searchAvailableAccomms(location,checkinTime,checkoutTime,pageable);
         if(accomms.isEmpty()){
-            throw new BusinessException(StatusCode.BAD_REQUEST,"해당 날짜에 빈 방이 있는 숙박시설이 없습니다");
+            return new PageImpl<>(new ArrayList<>(), pageable, 0);
         }
         for(AccommodationInfo accomm : accomms){
             log.info("id : {} , name : {}, address : {}, location : {}"
@@ -81,7 +81,6 @@ public class AccommodationServiceImpl implements AccommodationService {
                     .build();
             accommodationInfoResponses.add(accommResponse);
         }
-
         return new PageImpl<>(accommodationInfoResponses, pageable, total);
     }
 
