@@ -13,6 +13,6 @@ import java.util.List;
 @Service
 public interface TripService {
     Long createTrip(TripCreateRequestDto dto);
-    Page<TripListResponseDto> getTripList(Long memberId, Pageable pageable);
+    Page<TripListResponseDto> getTripList(Long memberId, String locationName, Pageable pageable);
     List<TripLocationResponseDto> getTripLocations();
 }
