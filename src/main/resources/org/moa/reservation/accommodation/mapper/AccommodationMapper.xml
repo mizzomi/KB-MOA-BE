@@ -62,4 +62,17 @@
         FROM ACCOMMODATION_INFO
         WHERE accom_id = #{accomId}
     </select>
+
+    <select id="getAccommodationReservationsByTripId" resultType="org.moa.reservation.dto.ReservationItemResponseDto">
+        SELECT
+            ar.hotel_name as name,
+            ar.accom_id as itemId,
+            td.day as date,
+        'ACCOMMODATION' as resKind
+        FROM ACCOM_RES ar
+            JOIN TRIP_DAY td ON ar.trip_day_id = td.trip_day_id
+        WHERE td.trip_id = #{tripId}
+          AND ar.status = 'CONFIRMED'
+        ORDER BY td.day
+    </select>
 </mapper>

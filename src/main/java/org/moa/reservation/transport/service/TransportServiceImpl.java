@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import org.moa.global.account.dto.payment.PaymentResponseDto;
 import org.moa.global.account.service.AccountService;
 import org.moa.global.type.ResKind;
+import org.moa.reservation.dto.ReservationItemResponseDto;
 import org.moa.reservation.entity.Reservation;
 import org.moa.reservation.mapper.ReservationMapper;
 import org.moa.reservation.transport.dto.TransResCancelRequestDto;
@@ -181,5 +182,10 @@ public class TransportServiceImpl implements TransportService {
 
 		log.info("TransportService.cancelReservation: memberId = {} }의 예약을 취소하였습니다.", memberId);
 		return cancelSeats;
+	}
+
+	@Override
+	public List<ReservationItemResponseDto> getTransportReservations(Long tripId) {
+		return transportMapper.getTransportReservationsByTripId(tripId);
 	}
 }

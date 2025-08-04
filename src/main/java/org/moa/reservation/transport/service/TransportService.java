@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import org.moa.reservation.dto.ReservationItemResponseDto;
 import org.moa.reservation.transport.dto.TransPaymentRequestDto;
 import org.moa.reservation.transport.dto.TransResCancelRequestDto;
 import org.moa.reservation.transport.dto.TranstInfoResponse;
@@ -27,4 +28,6 @@ public interface TransportService {
 	Boolean seatPayment(Long memberId, TransPaymentRequestDto dto);
 
 	int cancelReservation(Long memberId, TransResCancelRequestDto dto);
+
+	List<ReservationItemResponseDto> getTransportReservations(Long tripId);
 }
