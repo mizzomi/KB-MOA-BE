@@ -20,6 +20,7 @@ import java.util.List;
 	"org.moa.global",
 	"org.moa.member",
 	"org.moa.trip.controller",
+	"org.moa.reservation.controller",
 	"org.moa.reservation.transport",
 	"org.moa.reservation.accommodation",
 	"org.moa.reservation.restaurant"

@@ -164,4 +164,18 @@
             rr.rest_res_id = #{restResId}
     </select>
 
+    <select id="getRestaurantReservationsByTripId" resultType="org.moa.reservation.dto.ReservationItemResponseDto">
+        SELECT
+            ri.rest_name as name,
+            rr.rest_id as itemId,
+            td.day as date,
+            'RESTAURANT' as resKind
+        FROM REST_RES rr
+            JOIN RESTAURANT_INFO ri ON rr.rest_id = ri.rest_id
+            JOIN TRIP_DAY td ON rr.trip_day_id = td.trip_day_id
+        WHERE td.trip_id = #{tripId}
+          AND rr.status IN ('reserved', 'checked_in', 'completed')
+        ORDER BY td.day
+    </select>
+
 </mapper>

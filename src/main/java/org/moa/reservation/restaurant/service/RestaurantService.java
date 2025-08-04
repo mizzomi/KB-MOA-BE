@@ -1,5 +1,6 @@
 package org.moa.reservation.restaurant.service;
 
+import org.moa.reservation.dto.ReservationItemResponseDto;
 import org.moa.reservation.restaurant.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,4 +26,7 @@ public interface RestaurantService {
 
     // 식당 예약 상세 조회
     RestaurantReservationDetailDto getReservationDetail(Long restResId);
+
+    //tripId로 식당 예약 리스트 조회
+    List<ReservationItemResponseDto> getRestaurantReservations(Long tripId);
 }

@@ -2,6 +2,7 @@ package org.moa.reservation.restaurant.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.moa.reservation.dto.ReservationItemResponseDto;
 import org.moa.reservation.restaurant.dto.*;
 import org.springframework.data.domain.Pageable;
 
@@ -57,4 +58,6 @@ public interface RestaurantMapper {
 
     // 식당 예약 상세 조회
     RestaurantReservationDetailDto findReservationDetail(@Param("restResId") Long restResId);
+
+    List<ReservationItemResponseDto> getRestaurantReservationsByTripId(@Param("tripId") Long tripId);
 }
