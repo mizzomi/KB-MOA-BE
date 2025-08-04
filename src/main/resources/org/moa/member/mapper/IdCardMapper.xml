@@ -34,5 +34,17 @@
         WHERE member_id = #{memberId}
     </select>
 
+    <select id="findIdCardByMemberId" resultType="org.moa.member.dto.idcard.IdCardRawData">
+        SELECT
+            name,
+            address,
+            image_url AS imageUrl,
+            id_card_number AS idCardNumber
+        FROM
+            ID_CARD
+        WHERE
+            member_id = #{memberId}
+    </select>
+
 
 </mapper>
