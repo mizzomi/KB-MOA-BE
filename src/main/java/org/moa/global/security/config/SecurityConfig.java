@@ -131,8 +131,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.permitAll()
 			.antMatchers("/api/public/**")
 			.permitAll()
-			.antMatchers("/api/member/**")
-			.permitAll() // 모두 허용
 			.antMatchers("/api/member")
 			.access("hasRole('ROLE_USER')")
 			.antMatchers("/api/admin")
