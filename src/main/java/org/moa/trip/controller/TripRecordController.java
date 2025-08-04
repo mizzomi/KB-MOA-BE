@@ -1,6 +1,9 @@
 package org.moa.trip.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.moa.global.account.dto.payment.LinkPaymentRecordsToTripDto;
+import org.moa.global.account.service.AccountService;
 import org.moa.global.response.ApiResponse;
 import org.moa.global.security.domain.CustomUser;
 import org.moa.global.type.StatusCode;
@@ -25,12 +28,15 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/trips/{tripId}/records")
 @RequiredArgsConstructor
 public class TripRecordController {
 
     private final TripRecordService tripRecordService;
+
+    private final AccountService accountService;
 
     /** 여행 기록 생성 **/
     @PostMapping
@@ -119,4 +125,19 @@ public class TripRecordController {
         return null;
     }
 
+    @GetMapping("/payment-records")
+    public ResponseEntity<ApiResponse<?>>  getPaymentRecords(
+            @PathVariable Long tripId
+    ){
+        System.out.println("log : "+ tripId.toString());
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(accountService.getPaymentRecords(tripId)));
+    }
+
+    @PostMapping("/payment-records")
+    public ResponseEntity<ApiResponse<?>> LinkPaymentRecordToTrip(
+            @PathVariable Long tripId,
+            LinkPaymentRecordsToTripDto dto
+    ){
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(accountService.LinkPaymentRecordToTrip(tripId,dto)));
+    }
 }

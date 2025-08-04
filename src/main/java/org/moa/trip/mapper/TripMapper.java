@@ -9,6 +9,7 @@ import org.moa.trip.entity.TripLocation;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -22,7 +23,13 @@ public interface TripMapper {
 
     int countTripsByMemberId(@Param("memberId") Long memberId);
 
+    List<LocalDateTime> searchDayByTripId(Long tripId);
+
     Long findTripDayId(@Param("tripId") Long tripId, @Param("day") LocalDate departureDate);
 
     List<TripLocation> searchTripLocations();
+
+    List<Long> searchIdsByDays(@Param("recordDays")List<LocalDateTime> recordDays);
+
+    List<TripDay> searchByTripId(@Param("tripId") Long tripId);
 }
