@@ -86,10 +86,10 @@ public class TripServiceImpl implements TripService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TripListResponseDto> getTripList(Long memberId, Pageable pageable) {
+    public Page<TripListResponseDto> getTripList(Long memberId, String locationName, Pageable pageable) {
 
-        List<TripListResponseDto> trips = tripMapper.findTripsByMemberId(memberId, pageable);
-        int total = tripMapper.countTripsByMemberId(memberId);
+        List<TripListResponseDto> trips = tripMapper.findTripsByMemberId(memberId, locationName, pageable);
+        int total = tripMapper.countTripsByMemberId(memberId, locationName);
 
         return new PageImpl<>(trips, pageable, total);
     }

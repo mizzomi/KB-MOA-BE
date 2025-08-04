@@ -42,10 +42,11 @@ public class TripController {
 
     @GetMapping("/trips")
     public ResponseEntity<ApiResponse<Page<TripListResponseDto>>> getTripList(@AuthenticationPrincipal CustomUser customUser,
+                                                                              @RequestParam(required = false) String locationName,
                                                                               Pageable pageable
     ) {
         Long memberId = customUser.getMember().getMemberId();
-        Page<TripListResponseDto> tripPage = tripService.getTripList(memberId, pageable);
+        Page<TripListResponseDto> tripPage = tripService.getTripList(memberId, locationName, pageable);
         return ResponseEntity.ok(ApiResponse.of(tripPage));
     }
 
