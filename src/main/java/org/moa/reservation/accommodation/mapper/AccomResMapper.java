@@ -2,19 +2,23 @@ package org.moa.reservation.accommodation.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.moa.reservation.accommodation.entity.AccomRes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Mapper
 public interface AccomResMapper {
-   void updateAccomRes(@Param("reservationId") Long reservationId,
-                        @Param("tripDayId") Long tripDayId,
-                        @Param("guests") Integer guests,
-                        @Param("accomResId") Long accomResId,
-                        @Param("checkinDay") LocalDate checkinDay,
-                        @Param("checkoutDay") LocalDate checkoutDay,
-                        @Param("nights") Integer nights); // 숙박 일수(nights) 파라미터 추가
+   Long searchAccomIdByAccomResId(@Param("accomResId") Long accomResId);
+   void updateAccomResByDate(@Param("reservationId") Long reservationId,
+                             @Param("tripDayId") Long tripDayId,
+                             @Param("accomResId") Long accomResId,
+                             @Param("guests") Integer guests,
+                             @Param("checkInTime") LocalDateTime checkInTime,
+                             @Param("checkOutTime") LocalDateTime checkOutTime);
+   int checkAvailability(@Param("accomResId")Long accomResId, @Param("checkInDate")LocalDate checkInDate, @Param("checkOutDate")LocalDate checkOutDate, @Param("guests") Integer guests);
    String searchHotelNameByAccomResId(@Param("accomResId") Long accomResId);
    BigDecimal searchHotelPriceById(@Param("accomResId")  Long accomResId);
 }

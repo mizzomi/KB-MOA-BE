@@ -130,6 +130,20 @@ public class AccommodationServiceImpl implements AccommodationService {
             throw new IllegalArgumentException("입력된 금액이 실제 결제될 금액과 다릅니다.");
         }
 
+        Period period = Period.between(dto.getCheckinDay(), dto.getCheckoutDay());
+        int nights = period.getDays();
+
+        int availableCount = accomResMapper.checkAvailability(
+                dto.getAccomResId(),
+                dto.getCheckinDay(),
+                dto.getCheckoutDay(),
+                dto.getGuests()
+        );
+
+        if(availableCount < nights) {
+            throw new IllegalArgumentException("해당 기간에 예약 가능한 방이 부족합니다. 필요: " + nights + ", 가능: " + availableCount);
+        }
+
         // 1. trip_day 조회
         Long tripDayId = tripMapper.findTripDayId(dto.getTripId(),dto.getCheckinDay());
         if(tripDayId == null){
@@ -144,19 +158,30 @@ public class AccommodationServiceImpl implements AccommodationService {
         reservationMapper.insertReservation(reservation);
         Long reservationId = reservation.getReservationId();
 
-        // 3. Accom_res (방 정보) 수정
+        LocalDate currentDate = dto.getCheckinDay();
 
-        Period period = Period.between(dto.getCheckinDay(), dto.getCheckoutDay());
-        int nights = period.getDays();
+        while (!currentDate.isAfter(dto.getCheckoutDay().minusDays(1))) {
+            // 현재 날짜의 trip_day_id 조회
+            Long currentTripDayId = tripMapper.findTripDayId(dto.getTripId(), currentDate);
+            if(currentTripDayId == null){
+                throw new IllegalArgumentException("해당 날짜의 trip_day가 존재하지 않습니다: " + currentDate);
+            }
 
-        accomResMapper.updateAccomRes(
-                reservationId,
-                tripDayId,
-                dto.getGuests(),
-                dto.getAccomResId(),
-                dto.getCheckinDay(),
-                dto.getCheckoutDay(),
-                nights);
+            // 현재 날짜에 해당하는 체크인/체크아웃 시간을 가진 방 찾아서 업데이트
+            LocalDateTime checkInTime = currentDate.atTime(15, 0);
+            LocalDateTime checkOutTime = currentDate.plusDays(1).atTime(11, 0);
+
+            accomResMapper.updateAccomResByDate(
+                    reservationId,  // 동일한 reservationId 사용
+                    currentTripDayId,  // 각 날짜별 trip_day_id 사용
+                    dto.getAccomResId(),
+                    dto.getGuests(),
+                    checkInTime,
+                    checkOutTime
+            );
+
+            currentDate = currentDate.plusDays(1);
+        }
 
         // 4. 결제 로직
         String hotelName = accomResMapper.searchHotelNameByAccomResId(dto.getAccomResId());
