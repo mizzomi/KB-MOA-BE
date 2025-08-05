@@ -60,4 +60,9 @@ public interface RestaurantMapper {
     RestaurantReservationDetailDto findReservationDetail(@Param("restResId") Long restResId);
 
     List<ReservationItemResponseDto> getRestaurantReservationsByTripId(@Param("tripId") Long tripId);
+    
+    List<ReservationItemResponseDto> getRestaurantReservationsByDateAndMember(
+        @Param("memberId") Long memberId, 
+        @Param("tripId") Long tripId, 
+        @Param("date") LocalDate date);
 }

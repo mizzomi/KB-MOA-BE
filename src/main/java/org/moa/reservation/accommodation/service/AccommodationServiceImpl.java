@@ -171,4 +171,9 @@ public class AccommodationServiceImpl implements AccommodationService {
     public List<ReservationItemResponseDto> getAccommodationReservations(Long tripId) {
         return accommodationMapper.getAccommodationReservationsByTripId(tripId);
     }
+
+    @Override
+    public List<ReservationItemResponseDto> getAccommodationReservationsByDateAndMember(Long memberId, Long tripId, java.time.LocalDate date) {
+        return accommodationMapper.getAccommodationReservationsByDateAndMember(memberId, tripId, date);
+    }
 }

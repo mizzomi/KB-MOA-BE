@@ -29,4 +29,7 @@ public interface RestaurantService {
 
     //tripId로 식당 예약 리스트 조회
     List<ReservationItemResponseDto> getRestaurantReservations(Long tripId);
+    
+    //날짜별, 멤버별 식당 예약 리스트 조회
+    List<ReservationItemResponseDto> getRestaurantReservationsByDateAndMember(Long memberId, Long tripId, java.time.LocalDate date);
 }
