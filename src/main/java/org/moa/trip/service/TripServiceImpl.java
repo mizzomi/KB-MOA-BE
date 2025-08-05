@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
+import org.moa.trip.dto.trip.TripDetailResponseDto;
 import org.moa.trip.dto.trip.TripListResponseDto;
 import org.moa.trip.dto.trip.TripLocationResponseDto;
 import org.moa.trip.entity.Trip;
@@ -48,8 +49,8 @@ public class TripServiceImpl implements TripService {
                 .memberId(member.getMemberId()) // 여행 생성자 ID
                 .tripName(dto.getTripName())
                 .tripLocation(location)
-                .startDate(dto.getStartTime())
-                .endDate(dto.getEndTime())
+                .startDate(dto.getStartTime().toLocalDate())
+                .endDate(dto.getEndTime().toLocalDate())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .tripMembers(new ArrayList<>())
@@ -111,5 +112,43 @@ public class TripServiceImpl implements TripService {
             tripLocationResponseDtos.add(tripLocationResponseDto);
         }
         return tripLocationResponseDtos;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TripDetailResponseDto getTripDetail(Long tripId) {
+        log.info("여행 상세 조회 시작 - tripId: {}", tripId);
+        
+        Trip trip = tripMapper.searchTripById(tripId);
+        if (trip == null) {
+            throw new IllegalArgumentException("해당 ID의 여행을 찾을 수 없습니다: " + tripId);
+        }
+        
+        // 여행 상태 판단 로직
+        String status = determineStatus(trip.getStartDate(), trip.getEndDate());
+        
+        TripDetailResponseDto response = TripDetailResponseDto.builder()
+                .tripId(trip.getTripId())
+                .tripName(trip.getTripName())
+                .startDate(trip.getStartDate().toString())
+                .endDate(trip.getEndDate().toString())
+                .locationName(trip.getTripLocation().toString())
+                .status(status)
+                .build();
+        
+        log.info("여행 상세 조회 완료 - tripId: {}, tripName: {}", tripId, trip.getTripName());
+        return response;
+    }
+    
+    private String determineStatus(LocalDate startDate, LocalDate endDate) {
+        LocalDate today = LocalDate.now();
+        
+        if (today.isBefore(startDate)) {
+            return "여행예정";
+        } else if (today.isAfter(endDate)) {
+            return "여행완료";
+        } else {
+            return "여행중";
+        }
     }
 }

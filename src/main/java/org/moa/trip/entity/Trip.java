@@ -3,6 +3,7 @@ package org.moa.trip.entity;
 import lombok.*;
 import org.moa.trip.type.Location;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,8 +17,8 @@ public class Trip {
     private Long memberId;
     private String tripName;
     private Location tripLocation;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     // 여행 멤버들
