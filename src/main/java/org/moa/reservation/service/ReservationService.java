@@ -1,9 +1,9 @@
 package org.moa.reservation.service;
 
-import java.util.List;
-
 import org.moa.reservation.dto.ReservationItemResponseDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface ReservationService {
-	List<ReservationItemResponseDto> getReservations(Long tripId, String resKind);
+	Page<ReservationItemResponseDto> getReservations(Long tripId, String resKind, Pageable pageable);
 }

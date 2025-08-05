@@ -1,15 +1,12 @@
 package org.moa.reservation.controller;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.moa.global.response.ApiResponse;
 import org.moa.global.type.StatusCode;
 import org.moa.reservation.dto.ReservationItemResponseDto;
-import org.moa.reservation.accommodation.service.AccommodationService;
-import org.moa.reservation.restaurant.service.RestaurantService;
 import org.moa.reservation.service.ReservationService;
-import org.moa.reservation.transport.service.TransportService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,29 +25,36 @@ public class ReservationController {
 	private final ReservationService reservationService;
 
 	/**
-	 * 예약 내역 조회 API
+	 * 예약 내역 조회 API (페이지네이션 지원)
 	 * @param tripId 여행 ID (필수)
 	 * @param resKind 예약 종류 (선택) - TRANSPORT, ACCOMMODATION, RESTAURANT
-	 * @return 예약 내역 리스트
+	 * @param pageable 페이지네이션 정보 (page, size)
+	 * @return 예약 내역 페이지
 	 */
 	@GetMapping
-	public ResponseEntity<ApiResponse<List<ReservationItemResponseDto>>> getReservations(
+	public ResponseEntity<ApiResponse<Page<ReservationItemResponseDto>>> getReservations(
 		@RequestParam Long tripId,
-		@RequestParam(required = false) String resKind) {
+		@RequestParam(required = false) String resKind,
+		@PageableDefault(sort = "date") Pageable pageable) {
 
-		log.info("예약 내역 조회 API 호출 - tripId: {}, resKind: {}", tripId, resKind);
+		log.info("예약 내역 조회 API 호출 - tripId: {}, resKind: {}, page: {}, size: {}", 
+			tripId, resKind, pageable.getPageNumber(), pageable.getPageSize());
 
 		try {
-			List<ReservationItemResponseDto> reservations = reservationService.getReservations(tripId, resKind);
+			Page<ReservationItemResponseDto> reservations = reservationService.getReservations(tripId, resKind, pageable);
 
-			log.info("예약 내역 조회 API 성공 - 결과 건수: {}", reservations.size());
+			log.info("예약 내역 조회 API 성공 - 총 {}건, 현재 페이지: {}/{}", 
+				reservations.getTotalElements(), 
+				reservations.getNumber() + 1, 
+				reservations.getTotalPages());
+				
 			return ResponseEntity.status(StatusCode.OK.getStatus())
 				.body(ApiResponse.of(reservations));
 
 		} catch (IllegalArgumentException e) {
 			log.warn("잘못된 요청 파라미터 - tripId: {}, resKind: {}, error: {}", tripId, resKind, e.getMessage());
 			return ResponseEntity.status(StatusCode.BAD_REQUEST.getStatus())
-				.body(ApiResponse.error(StatusCode.BAD_REQUEST,e.getMessage()));
+				.body(ApiResponse.error(StatusCode.BAD_REQUEST, e.getMessage()));
 
 		} catch (Exception e) {
 			log.error("예약 내역 조회 API 오류 - tripId: {}, resKind: {}", tripId, resKind, e);

@@ -7,6 +7,9 @@ import org.moa.reservation.accommodation.service.AccommodationService;
 import org.moa.reservation.dto.ReservationItemResponseDto;
 import org.moa.reservation.restaurant.service.RestaurantService;
 import org.moa.reservation.transport.service.TransportService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -22,30 +25,31 @@ public class ReservationServiceImpl implements ReservationService {
 	private final RestaurantService restaurantService;
 
 	@Override
-	public List<ReservationItemResponseDto> getReservations(Long tripId, String resKind) {
-		log.info("예약 내역 조회 시작 - tripId: {}, resKind: {}", tripId, resKind);
+	public Page<ReservationItemResponseDto> getReservations(Long tripId, String resKind, Pageable pageable) {
+		log.info("예약 내역 조회 시작 - tripId: {}, resKind: {}, page: {}, size: {}", 
+			tripId, resKind, pageable.getPageNumber(), pageable.getPageSize());
 
-		List<ReservationItemResponseDto> result = new ArrayList<>();
+		List<ReservationItemResponseDto> allReservations = new ArrayList<>();
 
 		try {
 			if (resKind == null || resKind.trim().isEmpty()) {
 				// 전체 조회 - 모든 예약 종류 조회
 				log.debug("전체 예약 내역 조회");
-				result.addAll(transportService.getTransportReservations(tripId));
-				result.addAll(accommodationService.getAccommodationReservations(tripId));
-				result.addAll(restaurantService.getRestaurantReservations(tripId));
+				allReservations.addAll(transportService.getTransportReservations(tripId));
+				allReservations.addAll(accommodationService.getAccommodationReservations(tripId));
+				allReservations.addAll(restaurantService.getRestaurantReservations(tripId));
 			} else {
 				// 특정 종류만 조회
 				log.debug("특정 예약 종류 조회: {}", resKind);
 				switch (resKind.toUpperCase().trim()) {
 					case "TRANSPORT":
-						result.addAll(transportService.getTransportReservations(tripId));
+						allReservations.addAll(transportService.getTransportReservations(tripId));
 						break;
 					case "ACCOMMODATION":
-						result.addAll(accommodationService.getAccommodationReservations(tripId));
+						allReservations.addAll(accommodationService.getAccommodationReservations(tripId));
 						break;
 					case "RESTAURANT":
-						result.addAll(restaurantService.getRestaurantReservations(tripId));
+						allReservations.addAll(restaurantService.getRestaurantReservations(tripId));
 						break;
 					default:
 						log.warn("지원하지 않는 예약 종류: {}", resKind);
@@ -54,9 +58,26 @@ public class ReservationServiceImpl implements ReservationService {
 			}
 
 			// 비즈니스 규칙: 날짜순으로 정렬
-			result.sort((a, b) -> a.getDate().compareTo(b.getDate()));
+			allReservations.sort((a, b) -> a.getDate().compareTo(b.getDate()));
 
-			log.info("예약 내역 조회 완료 - 총 {}건", result.size());
+			// 페이지네이션 적용
+			int totalElements = allReservations.size();
+			int start = (int) pageable.getOffset();
+			int end = Math.min((start + pageable.getPageSize()), totalElements);
+
+			List<ReservationItemResponseDto> pageContent = new ArrayList<>();
+			if (start < totalElements) {
+				pageContent = allReservations.subList(start, end);
+			}
+
+			Page<ReservationItemResponseDto> result = new PageImpl<>(pageContent, pageable, totalElements);
+
+			log.info("예약 내역 조회 완료 - 총 {}건, 현재 페이지: {}/{}, 페이지 내용: {}건", 
+				totalElements, 
+				pageable.getPageNumber() + 1, 
+				result.getTotalPages(),
+				pageContent.size());
+
 			return result;
 
 		} catch (Exception e) {
