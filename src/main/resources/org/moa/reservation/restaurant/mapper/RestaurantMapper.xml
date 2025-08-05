@@ -168,7 +168,9 @@
         SELECT
             ri.rest_name as name,
             rr.rest_id as itemId,
+            ri.rest_image_url as imageUrl,
             td.day as date,
+            rr.created_at as createdAt,
             'RESTAURANT' as resKind
         FROM REST_RES rr
             JOIN RESTAURANT_INFO ri ON rr.rest_id = ri.rest_id
@@ -176,6 +178,26 @@
         WHERE td.trip_id = #{tripId}
           AND rr.status IN ('reserved', 'checked_in', 'completed')
         ORDER BY td.day
+    </select>
+
+    <select id="getRestaurantReservationsByDateAndMember" resultType="org.moa.reservation.dto.ReservationItemResponseDto">
+        SELECT
+            ri.rest_name as name,
+            rr.rest_id as itemId,
+            ri.rest_image_url as imageUrl,
+            td.day as date,
+            rr.created_at as createdAt,
+            'RESTAURANT' as resKind
+        FROM REST_RES rr
+            JOIN RESTAURANT_INFO ri ON rr.rest_id = ri.rest_id
+            JOIN TRIP_DAY td ON rr.trip_day_id = td.trip_day_id
+            JOIN TRIP t ON td.trip_id = t.trip_id
+            JOIN TRIP_MEMBER tm ON t.trip_id = tm.trip_id
+        WHERE td.trip_id = #{tripId}
+          AND tm.member_id = #{memberId}
+          AND td.day = #{date}
+          AND rr.status IN ('reserved', 'checked_in', 'completed')
+        ORDER BY rr.created_at
     </select>
 
 </mapper>

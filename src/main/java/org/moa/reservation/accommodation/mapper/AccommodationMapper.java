@@ -31,4 +31,9 @@ public interface AccommodationMapper {
     AccommodationInfo searchAccommById(Long accomId);
 
     List<ReservationItemResponseDto> getAccommodationReservationsByTripId(@Param("tripId") Long tripId);
+    
+    List<ReservationItemResponseDto> getAccommodationReservationsByDateAndMember(
+        @Param("memberId") Long memberId, 
+        @Param("tripId") Long tripId, 
+        @Param("date") LocalDate date);
 }

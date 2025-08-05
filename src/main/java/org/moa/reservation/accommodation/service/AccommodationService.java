@@ -17,4 +17,5 @@ public interface AccommodationService {
     List<AccommodationRoomsResponse>  getRooms(Long accomId, Long tripId, LocalDate checkinDay, LocalDate checkoutDay, Integer guests);
     Long reserveRoom(Long memberId, AccommodationReservationRequestDto dto);
     List<ReservationItemResponseDto> getAccommodationReservations(Long tripId);
+    List<ReservationItemResponseDto> getAccommodationReservationsByDateAndMember(Long memberId, Long tripId, java.time.LocalDate date);
 }

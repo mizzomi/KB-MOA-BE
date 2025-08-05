@@ -117,13 +117,35 @@
         SELECT
             ti.train_no as name,
             tr.transport_id as itemId,
+            NULL as imageUrl,
             td.day as date,
-        'TRANSPORT' as resKind
+            tr.created_at as createdAt,
+            'TRANSPORT' as resKind
         FROM TRAN_RES tr
             JOIN TRANSPORT_INFO ti ON tr.transport_id = ti.transport_id
             JOIN TRIP_DAY td ON tr.trip_day_id = td.trip_day_id
         WHERE td.trip_id = #{tripId}
           AND tr.status = 'CONFIRMED'
         ORDER BY td.day
+    </select>
+
+    <select id="getTransportReservationsByDateAndMember" resultType="org.moa.reservation.dto.ReservationItemResponseDto">
+        SELECT
+            ti.train_no as name,
+            tr.transport_id as itemId,
+            NULL as imageUrl,
+            td.day as date,
+            tr.created_at as createdAt,
+            'TRANSPORT' as resKind
+        FROM TRAN_RES tr
+            JOIN TRANSPORT_INFO ti ON tr.transport_id = ti.transport_id
+            JOIN TRIP_DAY td ON tr.trip_day_id = td.trip_day_id
+            JOIN TRIP t ON td.trip_id = t.trip_id
+            JOIN TRIP_MEMBER tm ON t.trip_id = tm.trip_id
+        WHERE td.trip_id = #{tripId}
+          AND tm.member_id = #{memberId}
+          AND td.day = #{date}
+          AND tr.status = 'CONFIRMED'
+        ORDER BY tr.created_at
     </select>
 </mapper>

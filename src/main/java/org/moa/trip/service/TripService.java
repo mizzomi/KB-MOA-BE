@@ -1,6 +1,7 @@
 package org.moa.trip.service;
 
 import org.moa.trip.dto.trip.TripCreateRequestDto;
+import org.moa.trip.dto.trip.TripDetailResponseDto;
 import org.moa.trip.dto.trip.TripListResponseDto;
 import org.moa.trip.dto.trip.TripLocationResponseDto;
 import org.springframework.data.domain.Page;
@@ -15,4 +16,5 @@ public interface TripService {
     Long createTrip(TripCreateRequestDto dto);
     Page<TripListResponseDto> getTripList(Long memberId, String locationName, Pageable pageable);
     List<TripLocationResponseDto> getTripLocations();
+    TripDetailResponseDto getTripDetail(Long tripId);
 }
