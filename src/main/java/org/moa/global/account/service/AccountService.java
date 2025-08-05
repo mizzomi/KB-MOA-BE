@@ -16,5 +16,7 @@ public interface AccountService {
 
 	List<PaymentRecordResponseDto> getPaymentRecords(Long tripId);
 
+	List<PaymentRecordResponseDto> getLinkedRecords(Long tripId);
+
 	boolean LinkPaymentRecordToTrip(Long tripId,LinkPaymentRecordsToTripDto dto);
 }

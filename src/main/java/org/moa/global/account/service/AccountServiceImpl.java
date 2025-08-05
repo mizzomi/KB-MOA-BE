@@ -95,7 +95,6 @@ public class AccountServiceImpl implements AccountService {
 	@Transactional
 	public List<PaymentRecordResponseDto> getPaymentRecords(Long tripId){
 		log.info("tripId : {}", tripId);
-
 		UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Member member = memberMapper.getByEmail(userDetails.getUsername());
 
@@ -118,6 +117,7 @@ public class AccountServiceImpl implements AccountService {
 
 		for(PaymentRecord paymentRecord : paymentRecords){
 			PaymentRecordResponseDto paymentRecordResponseDto = PaymentRecordResponseDto.builder()
+					.paymentId(paymentRecord.getRecordId())
 					.paymentName(paymentRecord.getPaymentName())
 					.paymentDate(paymentRecord.getPaymentDate())
 					.paymentPrice(paymentRecord.getPaymentPrice())
@@ -136,7 +136,7 @@ public class AccountServiceImpl implements AccountService {
 		Member member = memberMapper.getByEmail(userDetails.getUsername());
 
 		// 2. 사용자가 연동을 요청한 PaymentRecord 리스트 조회
-		List<PaymentRecord> paymentRecords = paymentRecordMapper.searchByIdsAndMemberId(dto.getRecordIds(), member.getMemberId());
+		List<PaymentRecord> paymentRecords = paymentRecordMapper.searchByIdsAndMemberId(dto.getRecordIds());
 
 		// 3. tripId에 해당하는 모든 TripDay 정보를 미리 조회하여 Map에 저장 (효율성 개선)
 		List<TripDay> tripDays = tripMapper.searchByTripId(tripId);
@@ -169,5 +169,38 @@ public class AccountServiceImpl implements AccountService {
 		// 5. 결과 반환
 		log.info("tripId({})에 대한 총 {}건의 결제 기록이 TripDay와 연동되었습니다.", tripId, updatedCount);
 		return updatedCount > 0;
+	}
+
+	@Override
+	@Transactional
+	public List<PaymentRecordResponseDto> getLinkedRecords(Long tripId){
+		log.info("getLinkedRecords 메서드 호출: tripId = {}", tripId);
+
+		// 1. 현재 여행(tripId)에 속한 모든 TripDay의 ID를 조회
+		List<TripDay> currentTripDays = tripMapper.searchByTripId(tripId);
+		List<Long>  tripDayIds = currentTripDays.stream().map(TripDay::getTripDayId).toList();
+
+		// 2. 해당 여행에 연동된 결제 기록이 있는지 확인
+		if (tripDayIds.isEmpty()) {
+			log.warn("해당 tripId({})에 대한 연동된 결제 기록이 없습니다.", tripId);
+			return new ArrayList<>();
+		}
+
+		// 3. currentTripDayIds에 포함된 trip_day_id를 가진 모든 PaymentRecord를 조회
+		List<PaymentRecord> paymentRecords = paymentRecordMapper.searchByTripDayIds(tripDayIds);
+
+		// 4. 조회된 결제 기록을 DTO로 변환
+		List<PaymentRecordResponseDto> paymentRecordResponseDtos = paymentRecords.stream()
+				.map(record -> PaymentRecordResponseDto.builder()
+						.paymentId(record.getRecordId())
+						.paymentName(record.getPaymentName())
+						.paymentDate(record.getPaymentDate())
+						.paymentPrice(record.getPaymentPrice())
+						.build())
+				.collect(Collectors.toList());
+
+		log.info("getLinkedRecords 완료: tripId({})에 해당하는 연동 결제 기록 {}건을 반환합니다.", tripId, paymentRecordResponseDtos.size());
+
+		return paymentRecordResponseDtos;
 	}
 }

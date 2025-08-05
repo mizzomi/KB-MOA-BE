@@ -15,6 +15,6 @@ public interface PaymentRecordMapper {
 
 	List<PaymentRecord> searchByPaymentDates(@Param("paymentDates") List<LocalDateTime> paymentDates, @Param("memberId") Long memberId);
 	List<PaymentRecord> searchByIdsAndMemberId(
-			@Param("recordIds") List<Long> recordIds,
-			@Param("memberId") Long memberId);
+			@Param("recordIds") List<Long> recordIds);
+	List<PaymentRecord> searchByTripDayIds(@Param("tripDayIds") List<Long> tripDayIds);
 }

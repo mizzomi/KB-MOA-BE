@@ -136,8 +136,15 @@ public class TripRecordController {
     @PostMapping("/payment-records")
     public ResponseEntity<ApiResponse<?>> LinkPaymentRecordToTrip(
             @PathVariable Long tripId,
-            LinkPaymentRecordsToTripDto dto
+            @RequestBody LinkPaymentRecordsToTripDto dto
     ){
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(accountService.LinkPaymentRecordToTrip(tripId,dto)));
+    }
+
+    @GetMapping("/linked-records")
+    public ResponseEntity<ApiResponse<?>>  getLinkedRecords(
+            @PathVariable Long tripId
+    ){
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(accountService.getLinkedRecords(tripId)));
     }
 }

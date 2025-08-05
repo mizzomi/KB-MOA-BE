@@ -38,9 +38,16 @@
     <select id="searchByIdsAndMemberId" resultType="org.moa.global.account.entity.PaymentRecord">
         SELECT *
         FROM payment_record
-        WHERE member_id = #{memberId}
-        AND record_id IN
+        WHERE record_id IN
         <foreach collection="recordIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="searchByTripDayIds" resultType="org.moa.global.account.entity.PaymentRecord">
+        SELECT *
+        FROM payment_record
+        WHERE trip_day_id IN
+        <foreach collection="tripDayIds" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
     </select>
