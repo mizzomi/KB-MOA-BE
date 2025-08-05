@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 public class ReservationItemResponseDto {
 	private String name;        // 식당명, KTX 편명, 숙소명
 	private Long itemId;        // transport_id, rest_id, accom_id
+	private String imageUrl;    // 이미지 URL
 
 	@JsonFormat(pattern = "yyyy-MM-dd")
 	private LocalDate date;     // 예약 날짜

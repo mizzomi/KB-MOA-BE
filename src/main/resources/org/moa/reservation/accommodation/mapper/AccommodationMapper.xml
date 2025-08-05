@@ -67,11 +67,13 @@
         SELECT
             ar.hotel_name as name,
             ar.accom_id as itemId,
+            ai.hotel_image_url as imageUrl,
             td.day as date,
             ar.created_at as createdAt,
             'ACCOMMODATION' as resKind
         FROM ACCOM_RES ar
             JOIN TRIP_DAY td ON ar.trip_day_id = td.trip_day_id
+            JOIN ACCOMMODATION_INFO ai ON ar.accom_id = ai.accom_id
         WHERE td.trip_id = #{tripId}
           AND ar.status = 'CONFIRMED'
         ORDER BY td.day
@@ -81,11 +83,13 @@
         SELECT
             ar.hotel_name as name,
             ar.accom_id as itemId,
+            ai.hotel_image_url as imageUrl,
             td.day as date,
             ar.created_at as createdAt,
             'ACCOMMODATION' as resKind
         FROM ACCOM_RES ar
             JOIN TRIP_DAY td ON ar.trip_day_id = td.trip_day_id
+            JOIN ACCOMMODATION_INFO ai ON ar.accom_id = ai.accom_id
             JOIN TRIP t ON td.trip_id = t.trip_id
             JOIN TRIP_MEMBER tm ON t.trip_id = tm.trip_id
         WHERE td.trip_id = #{tripId}

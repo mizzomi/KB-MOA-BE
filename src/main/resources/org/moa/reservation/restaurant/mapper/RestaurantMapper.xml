@@ -168,6 +168,7 @@
         SELECT
             ri.rest_name as name,
             rr.rest_id as itemId,
+            ri.rest_image_url as imageUrl,
             td.day as date,
             rr.created_at as createdAt,
             'RESTAURANT' as resKind
@@ -183,6 +184,7 @@
         SELECT
             ri.rest_name as name,
             rr.rest_id as itemId,
+            ri.rest_image_url as imageUrl,
             td.day as date,
             rr.created_at as createdAt,
             'RESTAURANT' as resKind

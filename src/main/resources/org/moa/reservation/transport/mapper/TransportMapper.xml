@@ -117,6 +117,7 @@
         SELECT
             ti.train_no as name,
             tr.transport_id as itemId,
+            NULL as imageUrl,
             td.day as date,
             tr.created_at as createdAt,
             'TRANSPORT' as resKind
@@ -132,6 +133,7 @@
         SELECT
             ti.train_no as name,
             tr.transport_id as itemId,
+            NULL as imageUrl,
             td.day as date,
             tr.created_at as createdAt,
             'TRANSPORT' as resKind
