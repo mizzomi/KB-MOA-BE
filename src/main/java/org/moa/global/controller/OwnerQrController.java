@@ -16,13 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/public")
+@RequestMapping("/api/public/qr")
 public class OwnerQrController {
 
     private final QrService qrService;
 
     // 주민등록증 QR 복호화 API
-    @GetMapping(value = "/qr-idcard")
+    @GetMapping(value = "/idcard")
     public ResponseEntity<ApiResponse<?>> decryptQrData(@RequestParam("data") String encryptedText) {
         try {
             IdCardResponseDto response = qrService.decryptIdCardQr(encryptedText);

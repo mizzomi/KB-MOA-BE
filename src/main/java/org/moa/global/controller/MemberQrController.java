@@ -3,10 +3,12 @@ package org.moa.global.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.global.response.ApiResponse;
+import org.moa.global.security.domain.CustomUser;
 import org.moa.global.service.qr.QrService;
 import org.moa.global.type.StatusCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,15 +19,16 @@ import java.util.NoSuchElementException;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/member")
+@RequestMapping("/api/member/qr")
 public class MemberQrController {
 
     private final QrService qrService;
 
     // 사용자 주민등록증 QR 생성
-    @GetMapping("/qr-idcard")
-    public ResponseEntity<ApiResponse<?>> generateIdCardQr(@RequestParam("memberId") Long memberId) {
+    @GetMapping("/idcard")
+    public ResponseEntity<ApiResponse<?>> generateIdCardQr(@AuthenticationPrincipal CustomUser user) {
         try {
+            Long memberId = user.getMember().getMemberId();
             String base64Qr = qrService.generateIdCardQr(memberId);
 
             if (base64Qr == null) {
