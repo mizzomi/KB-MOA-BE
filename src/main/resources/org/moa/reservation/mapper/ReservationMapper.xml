@@ -22,4 +22,17 @@
         WHERE r.reservation_id = #{reservationId}
     </select>
 
+    <!-- 식당 예약 내역 QR -->
+    <select id="findQrInfo" resultType="org.moa.reservation.dto.QrRestaurantReservationDto">
+        SELECT
+            reservation_id AS reservationId,
+            rest_id AS restId,
+            date,
+            res_num AS resNum,
+            status
+        FROM REST_RES
+        WHERE reservation_id = #{reservationId}
+    </select>
+
+
 </mapper>
