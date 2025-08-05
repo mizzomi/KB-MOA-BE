@@ -10,6 +10,8 @@ public interface MemberMapper {
 
 	int insert(Member member);
 
+    String searchTokenById(Long memberId);
+
     Member getByMemberId(Long memberId);
 
     Member getByEmail(String email);

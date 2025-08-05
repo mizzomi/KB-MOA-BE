@@ -20,6 +20,11 @@
                 #{createdAt},
                 #{updatedAt})
     </insert>
+    <select id="searchTokenById" resultType="string">
+        SELECT fcm_token
+        FROM MEMBER
+        WHERE member_id = #{memberId}
+    </select>
     <select id="getByEmail" resultType="org.moa.member.entity.Member">
         SELECT *
         FROM MEMBER

@@ -4,8 +4,11 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import javax.annotation.PostConstruct; // jakarta -> javax 로 변경
+
+import com.google.firebase.messaging.FirebaseMessaging;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StringUtils;
@@ -54,5 +57,10 @@ public class FirebaseConfig {
         } catch (IOException e) {
             log.error("Firebase App 초기화 중 오류 발생", e);
         }
+    }
+
+    @Bean
+    public FirebaseMessaging firebaseMessaging() {
+        return FirebaseMessaging.getInstance(); // 기존 Firebase 앱 사용
     }
 }

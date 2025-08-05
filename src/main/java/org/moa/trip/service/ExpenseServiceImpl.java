@@ -3,6 +3,10 @@ package org.moa.trip.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.global.handler.BusinessException;
+import org.moa.global.notification.entity.Notification;
+import org.moa.global.notification.mapper.NotificationMapper;
+import org.moa.global.service.FcmService;
+import org.moa.global.type.NotificationType;
 import org.moa.global.type.StatusCode;
 import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
@@ -34,11 +38,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExpenseServiceImpl implements ExpenseService{
     private final SettlementService settlementService;
+    private final FcmService fcmService;
 
     private final TripMapper tripMapper;
     private final ExpenseMapper expenseMapper;
     private final SettlementMapper settlementMapper;
     private final MemberMapper memberMapper;
+    private final NotificationMapper notificationMapper;
 
     @Override
     @Transactional
@@ -88,6 +94,24 @@ public class ExpenseServiceImpl implements ExpenseService{
             Long memberId = dto.getExpenses().get(i).getMemberId();
             BigDecimal amount = dto.getExpenses().get(i).getAmount();
             settlementService.createSettlement(newExpense.getExpenseId(), newExpense.getTripId(), creatorId , memberId, amount);
+
+            String title = "정산 요청";
+            String content = member.getName() +"님이 \"" + trip.getTripName() + "\" 여행의 정산을 요청하셨습니다.";
+            // 알림 생성
+            Notification notification = Notification.builder()
+                    .memberId(memberId)
+                    .notificationType(NotificationType.SETTLE)
+                    .tripName(trip.getTripName())
+                    .title(title)
+                    .content(content)
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            // 유저들에게 정산 알림 보내는 서비스 로직
+            fcmService.sendNotification(memberId,title,content);
+            // 알림을 DB에 생성하는 로직
+            notificationMapper.createNotification(notification);
         }
         return true;
     }
