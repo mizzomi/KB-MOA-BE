@@ -125,4 +125,9 @@ public class RestaurantServiceImpl implements RestaurantService {
     public List<ReservationItemResponseDto> getRestaurantReservations(Long tripId) {
         return restaurantMapper.getRestaurantReservationsByTripId(tripId);
     }
+
+    @Override
+    public List<ReservationItemResponseDto> getRestaurantReservationsByDateAndMember(Long memberId, Long tripId, java.time.LocalDate date) {
+        return restaurantMapper.getRestaurantReservationsByDateAndMember(memberId, tripId, date);
+    }
 }

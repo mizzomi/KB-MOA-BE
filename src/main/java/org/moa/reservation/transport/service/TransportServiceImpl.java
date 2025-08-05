@@ -188,4 +188,9 @@ public class TransportServiceImpl implements TransportService {
 	public List<ReservationItemResponseDto> getTransportReservations(Long tripId) {
 		return transportMapper.getTransportReservationsByTripId(tripId);
 	}
+
+	@Override
+	public List<ReservationItemResponseDto> getTransportReservationsByDateAndMember(Long memberId, Long tripId, java.time.LocalDate date) {
+		return transportMapper.getTransportReservationsByDateAndMember(memberId, tripId, date);
+	}
 }

@@ -52,4 +52,9 @@ public interface TransportMapper {
 	List<Long> findExistingTranResIds(@Param("tranResIds") List<Long> tranResIds);
 
 	List<ReservationItemResponseDto> getTransportReservationsByTripId(@Param("tripId") Long tripId);
+	
+	List<ReservationItemResponseDto> getTransportReservationsByDateAndMember(
+		@Param("memberId") Long memberId, 
+		@Param("tripId") Long tripId, 
+		@Param("date") java.time.LocalDate date);
 }

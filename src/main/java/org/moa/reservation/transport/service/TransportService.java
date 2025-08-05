@@ -30,4 +30,6 @@ public interface TransportService {
 	int cancelReservation(Long memberId, TransResCancelRequestDto dto);
 
 	List<ReservationItemResponseDto> getTransportReservations(Long tripId);
+	
+	List<ReservationItemResponseDto> getTransportReservationsByDateAndMember(Long memberId, Long tripId, java.time.LocalDate date);
 }

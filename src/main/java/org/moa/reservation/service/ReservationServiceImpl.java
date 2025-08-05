@@ -1,5 +1,6 @@
 package org.moa.reservation.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class ReservationServiceImpl implements ReservationService {
 
 	@Override
 	public Page<ReservationItemResponseDto> getReservations(Long tripId, String resKind, Pageable pageable) {
-		log.info("예약 내역 조회 시작 - tripId: {}, resKind: {}, page: {}, size: {}", 
+		log.info("예약 내역 조회 시작 - tripId: {}, resKind: {}, page: {}, size: {}",
 			tripId, resKind, pageable.getPageNumber(), pageable.getPageSize());
 
 		List<ReservationItemResponseDto> allReservations = new ArrayList<>();
@@ -62,7 +63,7 @@ public class ReservationServiceImpl implements ReservationService {
 
 			// 페이지네이션 적용
 			int totalElements = allReservations.size();
-			int start = (int) pageable.getOffset();
+			int start = (int)pageable.getOffset();
 			int end = Math.min((start + pageable.getPageSize()), totalElements);
 
 			List<ReservationItemResponseDto> pageContent = new ArrayList<>();
@@ -72,9 +73,9 @@ public class ReservationServiceImpl implements ReservationService {
 
 			Page<ReservationItemResponseDto> result = new PageImpl<>(pageContent, pageable, totalElements);
 
-			log.info("예약 내역 조회 완료 - 총 {}건, 현재 페이지: {}/{}, 페이지 내용: {}건", 
-				totalElements, 
-				pageable.getPageNumber() + 1, 
+			log.info("예약 내역 조회 완료 - 총 {}건, 현재 페이지: {}/{}, 페이지 내용: {}건",
+				totalElements,
+				pageable.getPageNumber() + 1,
 				result.getTotalPages(),
 				pageContent.size());
 
@@ -83,6 +84,58 @@ public class ReservationServiceImpl implements ReservationService {
 		} catch (Exception e) {
 			log.error("예약 내역 조회 중 오류 발생 - tripId: {}, resKind: {}", tripId, resKind, e);
 			throw new RuntimeException("예약 내역 조회 중 오류가 발생했습니다.", e);
+		}
+	}
+
+	@Override
+	public Page<ReservationItemResponseDto> getReservationsByDate(Long memberId, Long tripId, LocalDate date,
+		Pageable pageable) {
+		log.info("날짜별 예약 내역 조회 시작 - memberId: {}, tripId: {}, date: {}, page: {}, size: {}",
+			memberId, tripId, date, pageable.getPageNumber(), pageable.getPageSize());
+
+		List<ReservationItemResponseDto> allReservations = new ArrayList<>();
+
+		try {
+			// 각 서비스에서 날짜별, 멤버별 예약 내역 조회
+			allReservations.addAll(transportService.getTransportReservationsByDateAndMember(memberId, tripId, date));
+			allReservations.addAll(
+				accommodationService.getAccommodationReservationsByDateAndMember(memberId, tripId, date));
+			allReservations.addAll(restaurantService.getRestaurantReservationsByDateAndMember(memberId, tripId, date));
+
+			// 예매시간 순으로 정렬 (createdAt 기준)
+			allReservations.sort((a, b) -> {
+				if (a.getCreatedAt() == null && b.getCreatedAt() == null)
+					return 0;
+				if (a.getCreatedAt() == null)
+					return 1;
+				if (b.getCreatedAt() == null)
+					return -1;
+				return a.getCreatedAt().compareTo(b.getCreatedAt());
+			});
+
+			// 페이지네이션 적용
+			int totalElements = allReservations.size();
+			int start = (int)pageable.getOffset();
+			int end = Math.min((start + pageable.getPageSize()), totalElements);
+
+			List<ReservationItemResponseDto> pageContent = new ArrayList<>();
+			if (start < totalElements) {
+				pageContent = allReservations.subList(start, end);
+			}
+
+			Page<ReservationItemResponseDto> result = new PageImpl<>(pageContent, pageable, totalElements);
+
+			log.info("날짜별 예약 내역 조회 완료 - 총 {}건, 현재 페이지: {}/{}, 페이지 내용: {}건",
+				totalElements,
+				pageable.getPageNumber() + 1,
+				result.getTotalPages(),
+				pageContent.size());
+
+			return result;
+
+		} catch (Exception e) {
+			log.error("날짜별 예약 내역 조회 중 오류 발생 - memberId: {}, tripId: {}, date: {}", memberId, tripId, date, e);
+			throw new RuntimeException("날짜별 예약 내역 조회 중 오류가 발생했습니다.", e);
 		}
 	}
 }
