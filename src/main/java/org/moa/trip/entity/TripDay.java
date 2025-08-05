@@ -2,6 +2,7 @@ package org.moa.trip.entity;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TripDay {
-    private String tripDayId;
-    private String tripId;
-    private LocalDateTime day;
+    private Long tripDayId;
+    private Long tripId;
+    private LocalDate day;
 }

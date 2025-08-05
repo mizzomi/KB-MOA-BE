@@ -1,15 +1,30 @@
 package org.moa.global.account.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import lombok.extern.log4j.Log4j2;
+import org.moa.global.account.dto.payment.LinkPaymentRecordsToTripDto;
+import org.moa.global.account.dto.payment.PaymentRecordResponseDto;
 import org.moa.global.account.dto.payment.PaymentResponseDto;
 import org.moa.global.account.entity.Account;
 import org.moa.global.account.entity.PaymentRecord;
 import org.moa.global.account.mapper.AccountMapper;
 import org.moa.global.account.mapper.PaymentRecordMapper;
 import org.moa.global.handler.BusinessException;
+import org.moa.global.security.domain.CustomUser;
 import org.moa.global.type.StatusCode;
+import org.moa.member.entity.Member;
+import org.moa.member.mapper.MemberMapper;
+import org.moa.trip.entity.TripDay;
+import org.moa.trip.mapper.TripMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +38,9 @@ import lombok.extern.slf4j.Slf4j;
 public class AccountServiceImpl implements AccountService {
 
 	private final AccountMapper accountMapper;
+	private final MemberMapper memberMapper;
 	private final PaymentRecordMapper paymentRecordMapper;
+	private final TripMapper tripMapper;
 
 	@Override
 	public boolean validateAccountNumber(String accountNumber, String accountPassword) {
@@ -72,5 +89,118 @@ public class AccountServiceImpl implements AccountService {
 			.amount(amount)
 			.balance(newBalance)
 			.build();
+	}
+
+	@Override
+	@Transactional
+	public List<PaymentRecordResponseDto> getPaymentRecords(Long tripId){
+		log.info("tripId : {}", tripId);
+		UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Member member = memberMapper.getByEmail(userDetails.getUsername());
+
+		List<LocalDateTime> tripDays = tripMapper.searchDayByTripId(tripId);
+
+		if(tripDays == null || tripDays.isEmpty()) {
+			log.info("비어있음");
+			return new ArrayList<>();
+		}
+
+		for(LocalDateTime tripDay : tripDays){
+			log.info("day : {}", tripDay);
+		}
+
+		List<PaymentRecord> paymentRecords = paymentRecordMapper.searchByPaymentDates(tripDays, member.getMemberId());
+		for(PaymentRecord paymentRecord : paymentRecords){
+			log.info("paymentRecord paymentDate : {}", paymentRecord.getPaymentDate());
+		}
+		List<PaymentRecordResponseDto> paymentRecordResponseDtos = new ArrayList<>();
+
+		for(PaymentRecord paymentRecord : paymentRecords){
+			PaymentRecordResponseDto paymentRecordResponseDto = PaymentRecordResponseDto.builder()
+					.paymentId(paymentRecord.getRecordId())
+					.paymentName(paymentRecord.getPaymentName())
+					.paymentDate(paymentRecord.getPaymentDate())
+					.paymentPrice(paymentRecord.getPaymentPrice())
+					.build();
+			paymentRecordResponseDtos.add(paymentRecordResponseDto);
+		}
+
+		return paymentRecordResponseDtos;
+	}
+
+	@Override
+	@Transactional
+	public boolean LinkPaymentRecordToTrip(Long tripId, LinkPaymentRecordsToTripDto dto) {
+		// 1. 현재 로그인한 사용자 정보 조회
+		UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Member member = memberMapper.getByEmail(userDetails.getUsername());
+
+		// 2. 사용자가 연동을 요청한 PaymentRecord 리스트 조회
+		List<PaymentRecord> paymentRecords = paymentRecordMapper.searchByIdsAndMemberId(dto.getRecordIds());
+
+		// 3. tripId에 해당하는 모든 TripDay 정보를 미리 조회하여 Map에 저장 (효율성 개선)
+		List<TripDay> tripDays = tripMapper.searchByTripId(tripId);
+		if (tripDays == null || tripDays.isEmpty()) {
+			log.warn("해당 tripId({})에 대한 TripDay 정보가 존재하지 않습니다.", tripId);
+			return false;
+		}
+
+		Map<LocalDate, Long> tripDayMap = tripDays.stream()
+				.collect(Collectors.toMap(TripDay::getDay, TripDay::getTripDayId));
+
+		// 4. PaymentRecord에 trip_day_id 연결 (업데이트)
+		int updatedCount = 0;
+		for (PaymentRecord paymentRecord : paymentRecords) {
+			// paymentRecord의 날짜(년월일)를 추출
+			LocalDate paymentDate = paymentRecord.getPaymentDate().toLocalDate();
+
+			// Map에서 해당 날짜에 맞는 TripDayId 찾기
+			Long tripDayId = tripDayMap.get(paymentDate);
+
+			if (tripDayId != null) {
+				// 일치하는 TripDayId가 있을 경우 업데이트
+				paymentRecordMapper.updateTripDayId(paymentRecord.getRecordId(), tripDayId);
+				updatedCount++;
+			} else {
+				log.warn("PaymentRecord(id: {})의 날짜({})에 해당하는 TripDay가 존재하지 않습니다.",
+						paymentRecord.getRecordId(), paymentDate);
+			}
+		}
+		// 5. 결과 반환
+		log.info("tripId({})에 대한 총 {}건의 결제 기록이 TripDay와 연동되었습니다.", tripId, updatedCount);
+		return updatedCount > 0;
+	}
+
+	@Override
+	@Transactional
+	public List<PaymentRecordResponseDto> getLinkedRecords(Long tripId){
+		log.info("getLinkedRecords 메서드 호출: tripId = {}", tripId);
+
+		// 1. 현재 여행(tripId)에 속한 모든 TripDay의 ID를 조회
+		List<TripDay> currentTripDays = tripMapper.searchByTripId(tripId);
+		List<Long>  tripDayIds = currentTripDays.stream().map(TripDay::getTripDayId).toList();
+
+		// 2. 해당 여행에 연동된 결제 기록이 있는지 확인
+		if (tripDayIds.isEmpty()) {
+			log.warn("해당 tripId({})에 대한 연동된 결제 기록이 없습니다.", tripId);
+			return new ArrayList<>();
+		}
+
+		// 3. currentTripDayIds에 포함된 trip_day_id를 가진 모든 PaymentRecord를 조회
+		List<PaymentRecord> paymentRecords = paymentRecordMapper.searchByTripDayIds(tripDayIds);
+
+		// 4. 조회된 결제 기록을 DTO로 변환
+		List<PaymentRecordResponseDto> paymentRecordResponseDtos = paymentRecords.stream()
+				.map(record -> PaymentRecordResponseDto.builder()
+						.paymentId(record.getRecordId())
+						.paymentName(record.getPaymentName())
+						.paymentDate(record.getPaymentDate())
+						.paymentPrice(record.getPaymentPrice())
+						.build())
+				.collect(Collectors.toList());
+
+		log.info("getLinkedRecords 완료: tripId({})에 해당하는 연동 결제 기록 {}건을 반환합니다.", tripId, paymentRecordResponseDtos.size());
+
+		return paymentRecordResponseDtos;
 	}
 }

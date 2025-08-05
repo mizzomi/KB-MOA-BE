@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Param;
 import org.moa.global.account.entity.Account;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Mapper
 public interface AccountMapper {

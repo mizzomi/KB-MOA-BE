@@ -78,7 +78,11 @@
                 #{updatedAt}
                )
     </insert>
-
+    <select id="searchDayByTripId" resultType="java.time.LocalDateTime">
+        SELECT day
+        FROM TRIP_DAY
+        WHERE trip_id = #{tripId}
+    </select>
     <select id="findTripDayId" resultType="long">
         SELECT trip_day_id
         FROM TRIP_DAY
@@ -88,5 +92,18 @@
     <select id="searchTripLocations" resultType="org.moa.trip.entity.TripLocation">
         SELECT *
         FROM TRIP_LOCATION
+    </select>
+    <select id="searchIdsByDays" resultType="java.lang.Long">
+        SELECT id
+        FROM trip_day
+        WHERE DATE(day) IN
+        <foreach collection="recordDays" item="date" open="(" separator="," close=")">
+            DATE(#{date})
+        </foreach>
+    </select>
+    <select id="searchByTripId" resultType="org.moa.trip.entity.TripDay">
+        SELECT *
+        FROM trip_day
+        WHERE trip_id = #{tripId}
     </select>
 </mapper>
