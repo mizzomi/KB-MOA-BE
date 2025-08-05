@@ -10,6 +10,10 @@
         FROM trip t
                  INNER JOIN trip_member tm ON t.trip_id = tm.trip_id
         WHERE tm.member_id = #{memberId}
+        -- locationName 파라미터가 있으면 필터링 조건 추가
+        <if test="locationName != null and locationName != ''">
+            AND t.trip_location = #{locationName}
+        </if>
     </select>
     <!--    사용자가 생성하거나 참여한 여행 페이징 된 리스트-->
     <select id="findTripsByMemberId" resultType="org.moa.trip.dto.trip.TripListResponseDto">
@@ -31,6 +35,10 @@
         FROM trip t
                  INNER JOIN trip_member tm ON t.trip_id = tm.trip_id
         WHERE tm.member_id = #{memberId}
+        -- locationName 파라미터가 있으면 필터링 조건 추가
+        <if test="locationName != null and locationName != ''">
+            AND t.trip_location = #{locationName}
+        </if>
 
         ORDER BY
             -- 여행 1차 정렬: 여행중 > 여행예정 > 여행종료
@@ -70,4 +78,32 @@
                 #{updatedAt}
                )
     </insert>
+    <select id="searchDayByTripId" resultType="java.time.LocalDateTime">
+        SELECT day
+        FROM TRIP_DAY
+        WHERE trip_id = #{tripId}
+    </select>
+    <select id="findTripDayId" resultType="long">
+        SELECT trip_day_id
+        FROM TRIP_DAY
+        WHERE trip_id = #{tripId}
+                  AND day = #{day}
+    </select>
+    <select id="searchTripLocations" resultType="org.moa.trip.entity.TripLocation">
+        SELECT *
+        FROM TRIP_LOCATION
+    </select>
+    <select id="searchIdsByDays" resultType="java.lang.Long">
+        SELECT id
+        FROM trip_day
+        WHERE DATE(day) IN
+        <foreach collection="recordDays" item="date" open="(" separator="," close=")">
+            DATE(#{date})
+        </foreach>
+    </select>
+    <select id="searchByTripId" resultType="org.moa.trip.entity.TripDay">
+        SELECT *
+        FROM trip_day
+        WHERE trip_id = #{tripId}
+    </select>
 </mapper>

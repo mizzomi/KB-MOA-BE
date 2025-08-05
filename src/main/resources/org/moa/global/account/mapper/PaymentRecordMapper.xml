@@ -4,7 +4,6 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.moa.global.account.mapper.PaymentRecordMapper">
-
     <insert id="insert">
         INSERT INTO payment_record(
                                    account_id,
@@ -22,4 +21,34 @@
                  #{paymentLocation}
                         )
     </insert>
+    <update id="updateTripDayId">
+        UPDATE payment_record
+        SET trip_day_id = #{tripDayId}
+        WHERE record_id = #{recordId}
+    </update>
+    <select id="searchByPaymentDates" resultType="org.moa.global.account.entity.PaymentRecord">
+        SELECT *
+        FROM payment_record
+        WHERE member_id = #{memberId}
+        AND DATE(payment_date) IN
+        <foreach collection="paymentDates" item="date" open="(" separator="," close=")">
+            DATE(#{date})
+        </foreach>
+    </select>
+    <select id="searchByIdsAndMemberId" resultType="org.moa.global.account.entity.PaymentRecord">
+        SELECT *
+        FROM payment_record
+        WHERE record_id IN
+        <foreach collection="recordIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="searchByTripDayIds" resultType="org.moa.global.account.entity.PaymentRecord">
+        SELECT *
+        FROM payment_record
+        WHERE trip_day_id IN
+        <foreach collection="tripDayIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 </mapper>

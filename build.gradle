@@ -57,12 +57,16 @@ dependencies {
 //    runtimeOnly 'org.slf4j:slf4j-log4j12:2.0.9'
 //    implementation 'log4j:log4j:1.2.17'
 
-    // Log4j2
-    implementation 'org.apache.logging.log4j:log4j-api:2.18.0'
-    implementation 'org.apache.logging.log4j:log4j-core:2.18.0'
-//    implementation 'org.slf4j:slf4j-api:2.0.13'
-    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.18.0'
 
+    // Log4j2 with SLF4J 2.x 호환
+    implementation 'org.apache.logging.log4j:log4j-api:2.20.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
+    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0'  // slf4j-impl → slf4j2-impl로 변경
+
+    // SLF4J 2.x
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+
+    // JDBC 로깅
     implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4:1.16'
 
     // xml내 한글 처리
@@ -101,6 +105,10 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+    // Firebase
+    implementation 'com.google.firebase:firebase-admin:9.2.0'
+
 
 
     // 테스트

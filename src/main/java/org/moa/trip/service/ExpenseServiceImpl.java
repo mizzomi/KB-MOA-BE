@@ -15,6 +15,9 @@ import org.moa.trip.mapper.ExpenseMapper;
 import org.moa.trip.mapper.SettlementMapper;
 import org.moa.trip.mapper.TripMapper;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -91,23 +94,28 @@ public class ExpenseServiceImpl implements ExpenseService{
 
     @Override
     @Transactional
-    public List<ExpenseResponseDto> getExpenses(Long memberId, Long tripId){
-        log.info("getExpenses 호출: memberId={}, tripId={}", memberId, tripId);
-        if (memberId == null || tripId == null) {
+    public Page<ExpenseResponseDto> getExpenses(Long tripId, Pageable pageable){
+        log.info("getExpenses 호출: tripId={}",tripId);
+        if (tripId == null) {
             throw new BusinessException(StatusCode.BAD_REQUEST, "회원 ID 또는 여행 ID가 누락되었습니다.");
         }
+
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long memberId = memberMapper.getByEmail(userDetails.getUsername()).getMemberId();
+
         // 해당 여행의 해당 유저의 정산 내역을 불러옴
         List<SettlementNotes> settlementNotes;
         try {
-            settlementNotes = settlementMapper.searchByMemberIdAndTripId(memberId, tripId);
+            settlementNotes = settlementMapper.searchByMemberIdAndTripId(memberId, tripId, pageable);
         } catch (DataAccessException e) {
             throw new BusinessException(StatusCode.INTERNAL_ERROR, "정산 내역 조회 중 서버 오류가 발생했습니다.");
         }
 
         if (settlementNotes.isEmpty()) {
             log.info("getExpenses: 사용자 {}의 여행 {}에 대한 정산 내역이 없습니다.", memberId, tripId);
-            return Collections.emptyList();
+            return new PageImpl<>(Collections.emptyList(),pageable,0);
         }
+        int total = settlementNotes.size();
 
         List<ExpenseResponseDto> responseDtos = new ArrayList<>();
         // 각 정산 내역마다 처리
@@ -142,7 +150,7 @@ public class ExpenseServiceImpl implements ExpenseService{
             responseDtos.add(dto);
             log.info("received : {}, shareAmount : {}, status : {}",dto.getReceived(), dto.getShareAmount(),dto.getStatus());
         }
-        return responseDtos;
+        return new PageImpl<>(responseDtos, pageable, total);
     }
 
     public static String getString(SettlementNotes s, Expense expense, Boolean received) {

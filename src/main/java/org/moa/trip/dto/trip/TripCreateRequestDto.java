@@ -18,7 +18,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TripCreateRequestDto {
-    private Long memberId;
     @NotBlank(message = "여행 이름은 필수입니다.")
     private String tripName;
     private LocalDateTime startTime;

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.moa.reservation.accommodation.mapper.AccomResMapper">
+    <select id="findAvailableRooms" resultType="org.moa.reservation.accommodation.entity.AccomRes">
+        SELECT
+            accom_res_id,
+            accom_id,
+            reservation_id,
+            trip_day_id,
+            guests,
+            hotel_name,
+            address,
+            price,
+            room_type,
+            room_image_url,
+            checkin_day,
+            checkout_day,
+            max_guests,
+            created_at,
+            updated_at,
+            status
+        FROM ACCOM_RES
+        WHERE accom_id = (SELECT accom_id FROM ACCOM_RES WHERE accom_res_id = #{accomResId} LIMIT 1)
+          AND status = 'AVAILABLE'
+          AND max_guests >= #{guests}
+          AND DATE(checkin_day) &lt;= #{checkinDay}
+          AND DATE(checkout_day) &gt;= #{checkoutDay}
+        ORDER BY price ASC
+    </select>
+    <select id="searchAccomIdByAccomResId" resultType="long">
+        SELECT accom_id
+        FROM ACCOM_RES
+        WHERE accom_res_id = #{accomResId}
+    </select>
+    <update id="updateAccomResByDate">
+        UPDATE ACCOM_RES
+        SET reservation_id = #{reservationId},
+            trip_day_id = #{tripDayId},
+            guests = #{guests},
+            status = 'CONFIRMED',
+            updated_at = NOW()
+        WHERE accom_id = (SELECT accom_id FROM (SELECT accom_id FROM ACCOM_RES WHERE accom_res_id = #{accomResId}) AS temp)
+          AND room_type = (SELECT room_type FROM (SELECT room_type FROM ACCOM_RES WHERE accom_res_id = #{accomResId}) AS temp2)
+          AND price = (SELECT price FROM (SELECT price FROM ACCOM_RES WHERE accom_res_id = #{accomResId}) AS temp3)
+          AND DATE(checkin_day) = DATE(#{checkInTime})
+          AND DATE(checkout_day) = DATE(#{checkOutTime})
+          AND reservation_id IS NULL
+          AND status = 'AVAILABLE'
+          AND max_guests >= #{guests}
+        ORDER BY
+            CASE
+            WHEN accom_res_id = #{accomResId} THEN 0
+            ELSE 1
+        END
+        LIMIT 1
+    </update>
+    <select id="checkAvailability" resultType="int">
+        SELECT COUNT(*)
+        FROM ACCOM_RES
+        WHERE accom_id = (SELECT accom_id FROM ACCOM_RES WHERE accom_res_id = #{accomResId})
+          AND room_type = (SELECT room_type FROM ACCOM_RES WHERE accom_res_id = #{accomResId})
+          AND price = (SELECT price FROM ACCOM_RES WHERE accom_res_id = #{accomResId})
+          AND DATE(checkin_day) >= DATE(#{checkInDate})
+          AND DATE(checkin_day) &lt; DATE(#{checkOutDate})
+          AND reservation_id IS NULL
+          AND status = 'AVAILABLE'
+          AND max_guests >= #{guests}
+    </select>
+    <select id="searchHotelNameByAccomResId" resultType="string">
+        SELECT ac.hotel_name
+        FROM ACCOMMODATION_INFO ac
+                 JOIN ACCOM_RES ar ON ac.accom_id = ar.accom_id
+        WHERE ar.accom_res_id = #{accomResId}
+    </select>
+    <select id="searchHotelPriceById" resultType="decimal">
+        SELECT price
+        FROM ACCOM_RES
+        WHERE accom_res_id = #{accomResId}
+    </select>
+</mapper>

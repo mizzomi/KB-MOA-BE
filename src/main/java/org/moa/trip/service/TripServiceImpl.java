@@ -2,9 +2,15 @@ package org.moa.trip.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.moa.member.entity.Member;
+import org.moa.member.mapper.MemberMapper;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
+import org.moa.trip.dto.trip.TripDetailResponseDto;
 import org.moa.trip.dto.trip.TripListResponseDto;
+import org.moa.trip.dto.trip.TripLocationResponseDto;
 import org.moa.trip.entity.Trip;
+import org.moa.trip.entity.TripDay;
+import org.moa.trip.entity.TripLocation;
 import org.moa.trip.entity.TripMember;
 import org.moa.trip.mapper.TripMapper;
 import org.moa.trip.mapper.TripMemberMapper;
@@ -13,6 +19,8 @@ import org.moa.trip.type.TripRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,18 +35,22 @@ import java.util.List;
 public class TripServiceImpl implements TripService {
     private final TripMapper tripMapper;
     private final TripMemberMapper tripMemberMapper;
+    private final MemberMapper memberMapper;
 
     @Override
     @Transactional
-    public boolean createTrip(TripCreateRequestDto dto){
+    public Long createTrip(TripCreateRequestDto dto){
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Member member = memberMapper.getByEmail(userDetails.getUsername());
+
         log.info("createTrip : DTO = {}",dto);
         Location location = Location.valueOf(dto.getLocation().toUpperCase());
         Trip newTrip = Trip.builder()
-                .memberId(dto.getMemberId()) // 여행 생성자 ID
+                .memberId(member.getMemberId()) // 여행 생성자 ID
                 .tripName(dto.getTripName())
                 .tripLocation(location)
-                .startDate(dto.getStartTime())
-                .endDate(dto.getEndTime())
+                .startDate(dto.getStartTime().toLocalDate())
+                .endDate(dto.getEndTime().toLocalDate())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .tripMembers(new ArrayList<>())
@@ -70,16 +82,73 @@ public class TripServiceImpl implements TripService {
             }
         }
         // !추후 초대받은 유저들이 수락시 newTrip 에 해당 유저들 추가하는 서비스 로직 필요!
-        return true;
+        return newTrip.getTripId();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TripListResponseDto> getTripList(Long memberId, Pageable pageable) {
+    public Page<TripListResponseDto> getTripList(Long memberId, String locationName, Pageable pageable) {
 
-        List<TripListResponseDto> trips = tripMapper.findTripsByMemberId(memberId, pageable);
-        int total = tripMapper.countTripsByMemberId(memberId);
+        List<TripListResponseDto> trips = tripMapper.findTripsByMemberId(memberId, locationName, pageable);
+        int total = tripMapper.countTripsByMemberId(memberId, locationName);
 
         return new PageImpl<>(trips, pageable, total);
+    }
+
+    @Override
+    @Transactional
+    public List<TripLocationResponseDto> getTripLocations(){
+        List<TripLocation> tripLocations = tripMapper.searchTripLocations();
+        List<TripLocationResponseDto> tripLocationResponseDtos = new ArrayList<>();
+        for(TripLocation tripLocation : tripLocations){
+            log.info("{}",tripLocation.getLocationName());
+            log.info("{}",tripLocation.getLocationName().toString());
+            TripLocationResponseDto tripLocationResponseDto = TripLocationResponseDto.builder()
+                    .locationName(tripLocation.getLocationName())
+                    .longitude(tripLocation.getLongitude())
+                    .latitude(tripLocation.getLatitude())
+                    .address(tripLocation.getAddress())
+                    .build();
+            tripLocationResponseDtos.add(tripLocationResponseDto);
+        }
+        return tripLocationResponseDtos;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TripDetailResponseDto getTripDetail(Long tripId) {
+        log.info("여행 상세 조회 시작 - tripId: {}", tripId);
+        
+        Trip trip = tripMapper.searchTripById(tripId);
+        if (trip == null) {
+            throw new IllegalArgumentException("해당 ID의 여행을 찾을 수 없습니다: " + tripId);
+        }
+        
+        // 여행 상태 판단 로직
+        String status = determineStatus(trip.getStartDate(), trip.getEndDate());
+        
+        TripDetailResponseDto response = TripDetailResponseDto.builder()
+                .tripId(trip.getTripId())
+                .tripName(trip.getTripName())
+                .startDate(trip.getStartDate().toString())
+                .endDate(trip.getEndDate().toString())
+                .locationName(trip.getTripLocation().toString())
+                .status(status)
+                .build();
+        
+        log.info("여행 상세 조회 완료 - tripId: {}, tripName: {}", tripId, trip.getTripName());
+        return response;
+    }
+    
+    private String determineStatus(LocalDate startDate, LocalDate endDate) {
+        LocalDate today = LocalDate.now();
+        
+        if (today.isBefore(startDate)) {
+            return "여행예정";
+        } else if (today.isAfter(endDate)) {
+            return "여행완료";
+        } else {
+            return "여행중";
+        }
     }
 }
