@@ -36,14 +36,17 @@
 
     <select id="findIdCardByMemberId" resultType="org.moa.member.dto.idcard.IdCardRawData">
         SELECT
-            name,
-            address,
-            image_url AS imageUrl,
-            id_card_number AS idCardNumber
+            m.name,
+            ic.address,
+            ic.image_url AS imageUrl,
+            ic.id_card_number AS idCardNumber,
+            ic.issued_date AS issuedDate
         FROM
-            ID_CARD
+            ID_CARD ic
+                INNER JOIN
+            MEMBER m ON ic.member_id = m.member_id
         WHERE
-            member_id = #{memberId}
+            ic.member_id = #{memberId}
     </select>
 
 

@@ -22,6 +22,7 @@ public class DriverLicense {
 	private LocalDate issuedDate;
 	private LocalDate expiryDate;
 	private String issuingAgency;
+	private String imageUrl;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 }

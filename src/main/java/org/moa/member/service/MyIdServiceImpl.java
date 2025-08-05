@@ -50,6 +50,8 @@ public class MyIdServiceImpl implements MyIdService {
                 .birthday(birthday)
                 .address(rawData.getAddress())
                 .imageUrl(signedImageUrl)
+                .idCardNumber(rawData.getIdCardNumber())
+                .issuedDate(rawData.getIssuedDate())
                 .build();
     }
 
@@ -61,13 +63,16 @@ public class MyIdServiceImpl implements MyIdService {
             return null;
         }
 
-        LocalDate birthday = calculateBirthday(rawData.getIdCardNumber());
         String signedImageUrl = getSignedUrlIfPresent(rawData.getImageUrl());
 
         return DriverLicenseResponseDto.builder()
                 .name(rawData.getName())
-                .birthday(birthday)
+                .licenseNumber(rawData.getLicenseNumber())
+                .idCardNumber(rawData.getIdCardNumber())
+                .licenseType(rawData.getLicenseType())
                 .issuingAgency(rawData.getIssuingAgency())
+                .issuedDate(rawData.getIssuedDate())
+                .expiryDate(rawData.getExpiryDate())
                 .imageUrl(signedImageUrl)
                 .build();
     }

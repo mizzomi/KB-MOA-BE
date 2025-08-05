@@ -10,8 +10,13 @@ import java.time.LocalDate;
 @Builder
 public class DriverLicenseResponseDto {
     private String name;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate birthday;
-    private String issuingAgency;
+    private String licenseNumber; // 면허 번호
+    private String idCardNumber; // 주민번호
+    private String licenseType; // 면허 종류
+    private String issuingAgency; // 발급 기관
     private String imageUrl; // 서명된 URL
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate issuedDate; // 발급일자
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate expiryDate; // 만료일자
 }

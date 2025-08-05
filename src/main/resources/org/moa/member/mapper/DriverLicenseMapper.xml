@@ -15,9 +15,13 @@
     <select id="findDriverLicenseByMemberId" resultType="org.moa.member.dto.idcard.DriverLicenseRawData">
         SELECT
             m.name,
+            dl.license_number AS licenseNumber,
+            dl.id_card_number AS idCardNumber,
+            dl.license_type AS licenseType,
             dl.issuing_agency AS issuingAgency,
             dl.image_url AS imageUrl,
-            dl.id_card_number AS idCardNumber
+            dl.issued_date AS issuedDate,
+            dl.expiry_date AS expiryDate
         FROM
             DRIVER_LICENSE dl
                 INNER JOIN
