@@ -2,6 +2,8 @@ package org.moa.reservation.restaurant.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.moa.reservation.dto.ReservationItemResponseDto;
 import org.moa.reservation.restaurant.dto.*;
 import org.moa.reservation.restaurant.mapper.RestaurantMapper;
 import org.springframework.data.domain.Page;
@@ -10,9 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.beans.Transient;
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +38,12 @@ public class RestaurantServiceImpl implements RestaurantService {
 
         return new PageImpl<>(restaurants, pageable, total);
 
+    }
+
+    // 식당 정보 조회
+    @Override
+    public RestaurantInfoResponseDto getRestaurantInfo(Long restId) {
+        return restaurantMapper.findRestaurantInfo(restId);
     }
 
     // 예약 가능한 시간대 조회
@@ -113,5 +119,15 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public RestaurantReservationDetailDto getReservationDetail(Long restResId) {
         return restaurantMapper.findReservationDetail(restResId);
+    }
+
+    @Override
+    public List<ReservationItemResponseDto> getRestaurantReservations(Long tripId) {
+        return restaurantMapper.getRestaurantReservationsByTripId(tripId);
+    }
+
+    @Override
+    public List<ReservationItemResponseDto> getRestaurantReservationsByDateAndMember(Long memberId, Long tripId, java.time.LocalDate date) {
+        return restaurantMapper.getRestaurantReservationsByDateAndMember(memberId, tripId, date);
     }
 }

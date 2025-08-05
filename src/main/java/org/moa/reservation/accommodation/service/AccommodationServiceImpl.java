@@ -19,6 +19,7 @@ import org.moa.reservation.accommodation.entity.AccomRes;
 import org.moa.reservation.accommodation.entity.AccommodationInfo;
 import org.moa.reservation.accommodation.mapper.AccomResMapper;
 import org.moa.reservation.accommodation.mapper.AccommodationMapper;
+import org.moa.reservation.dto.ReservationItemResponseDto;
 import org.moa.reservation.entity.Reservation;
 import org.moa.reservation.mapper.ReservationMapper;
 import org.moa.trip.entity.TripDay;
@@ -188,5 +189,15 @@ public class AccommodationServiceImpl implements AccommodationService {
         PaymentResponseDto result = accountService.makePayment(memberId, dto.getPrice(), hotelName);
 
         return reservationId;
+    }
+
+    @Override
+    public List<ReservationItemResponseDto> getAccommodationReservations(Long tripId) {
+        return accommodationMapper.getAccommodationReservationsByTripId(tripId);
+    }
+
+    @Override
+    public List<ReservationItemResponseDto> getAccommodationReservationsByDateAndMember(Long memberId, Long tripId, java.time.LocalDate date) {
+        return accommodationMapper.getAccommodationReservationsByDateAndMember(memberId, tripId, date);
     }
 }

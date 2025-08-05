@@ -26,7 +26,7 @@ public class FirebaseStorageService {
             return null;
         }
 
-        Bucket bucket = StorageClient.getInstance().bucket(bucketName);
+        Bucket bucket = getBucket();
 
         String originalFileName = file.getOriginalFilename();
         String extension = StringUtils.getFilenameExtension(originalFileName);
@@ -55,7 +55,7 @@ public class FirebaseStorageService {
         }
 
         try {
-            Bucket bucket = StorageClient.getInstance().bucket(bucketName);
+            Bucket bucket = getBucket();
             Blob blob = bucket.get(fileName);
 
             if (blob == null) {
@@ -105,7 +105,7 @@ public class FirebaseStorageService {
         }
 
         try {
-            Bucket bucket = StorageClient.getInstance().bucket(bucketName);
+            Bucket bucket = getBucket();
             Blob blob = bucket.get(fileName);
 
             if (blob == null) {
@@ -117,5 +117,10 @@ public class FirebaseStorageService {
         } catch (Exception e) {
             log.error("파일 삭제 중 오류가 발생했습니다: {}", fileName, e);
         }
+    }
+
+    /** 설정된 버킷 이름으로 Bucket 객체 반환 **/
+    private Bucket getBucket() {
+        return StorageClient.getInstance().bucket(bucketName);
     }
 }

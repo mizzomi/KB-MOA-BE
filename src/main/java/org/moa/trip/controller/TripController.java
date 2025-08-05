@@ -9,6 +9,7 @@ import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.expense.ExpenseResponseDto;
 import org.moa.trip.dto.settlement.SettlementRequestDto;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
+import org.moa.trip.dto.trip.TripDetailResponseDto;
 import org.moa.trip.dto.trip.TripListResponseDto;
 import org.moa.trip.service.ExpenseService;
 import org.moa.trip.service.SettlementService;
@@ -42,10 +43,11 @@ public class TripController {
 
     @GetMapping("/trips")
     public ResponseEntity<ApiResponse<Page<TripListResponseDto>>> getTripList(@AuthenticationPrincipal CustomUser customUser,
+                                                                              @RequestParam(required = false) String locationName,
                                                                               Pageable pageable
     ) {
         Long memberId = customUser.getMember().getMemberId();
-        Page<TripListResponseDto> tripPage = tripService.getTripList(memberId, pageable);
+        Page<TripListResponseDto> tripPage = tripService.getTripList(memberId, locationName, pageable);
         return ResponseEntity.ok(ApiResponse.of(tripPage));
     }
 
@@ -85,5 +87,24 @@ public class TripController {
     @GetMapping("/trip-locations")
     public ResponseEntity<ApiResponse<?>> getTripLocations(){
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(tripService.getTripLocations()));
+    }
+
+    /**
+     * 여행 상세 정보 조회 API
+     * @param tripId 여행 ID (필수)
+     * @return 여행 상세 정보
+     */
+    @GetMapping("/trip-detail")
+    public ResponseEntity<ApiResponse<TripDetailResponseDto>> getTripDetail(@RequestParam Long tripId) {
+        try {
+            TripDetailResponseDto tripDetail = tripService.getTripDetail(tripId);
+            return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(tripDetail));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(org.moa.global.type.StatusCode.BAD_REQUEST, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(org.moa.global.type.StatusCode.INTERNAL_ERROR, "여행 상세 조회 중 오류가 발생했습니다."));
+        }
     }
 }

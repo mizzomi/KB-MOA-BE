@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@RequestMapping("/api/public")
+@RequestMapping("/api")
 @RestController
 public class SecurityController {
 
-	@GetMapping("/all") // 모두 접근 가능
+	@GetMapping("/public/all") // 모두 접근 가능
 	public ResponseEntity<String> doAll() {
 		log.info("do all can access everybody");
 		return ResponseEntity.ok("all can access everybody");

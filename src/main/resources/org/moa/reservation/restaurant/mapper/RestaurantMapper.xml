@@ -38,6 +38,17 @@
         )
     </select>
 
+    <!-- 식당 정보 조회 -->
+    <select id="findRestaurantInfo" resultType="org.moa.reservation.restaurant.dto.RestaurantInfoResponseDto">
+        SELECT
+            rest_id AS restId,
+            rest_name AS restName,
+            rest_image_url AS restImageUrl,
+            address
+        FROM RESTAURANT_INFO
+        WHERE rest_id = #{restId}
+    </select>
+
     <!-- 예약 가능한 시간대 조회 -->
     <select id="findTimeSlot" resultType="string">
         SELECT res_time
@@ -151,6 +162,42 @@
             JOIN REST_TIME_SLOT rts ON rr.rest_time_id = rts.rest_time_id
         WHERE
             rr.rest_res_id = #{restResId}
+    </select>
+
+    <select id="getRestaurantReservationsByTripId" resultType="org.moa.reservation.dto.ReservationItemResponseDto">
+        SELECT
+            ri.rest_name as name,
+            rr.rest_id as itemId,
+            ri.rest_image_url as imageUrl,
+            td.day as date,
+            rr.created_at as createdAt,
+            'RESTAURANT' as resKind
+        FROM REST_RES rr
+            JOIN RESTAURANT_INFO ri ON rr.rest_id = ri.rest_id
+            JOIN TRIP_DAY td ON rr.trip_day_id = td.trip_day_id
+        WHERE td.trip_id = #{tripId}
+          AND rr.status IN ('reserved', 'checked_in', 'completed')
+        ORDER BY td.day
+    </select>
+
+    <select id="getRestaurantReservationsByDateAndMember" resultType="org.moa.reservation.dto.ReservationItemResponseDto">
+        SELECT
+            ri.rest_name as name,
+            rr.rest_id as itemId,
+            ri.rest_image_url as imageUrl,
+            td.day as date,
+            rr.created_at as createdAt,
+            'RESTAURANT' as resKind
+        FROM REST_RES rr
+            JOIN RESTAURANT_INFO ri ON rr.rest_id = ri.rest_id
+            JOIN TRIP_DAY td ON rr.trip_day_id = td.trip_day_id
+            JOIN TRIP t ON td.trip_id = t.trip_id
+            JOIN TRIP_MEMBER tm ON t.trip_id = tm.trip_id
+        WHERE td.trip_id = #{tripId}
+          AND tm.member_id = #{memberId}
+          AND td.day = #{date}
+          AND rr.status IN ('reserved', 'checked_in', 'completed')
+        ORDER BY rr.created_at
     </select>
 
 </mapper>

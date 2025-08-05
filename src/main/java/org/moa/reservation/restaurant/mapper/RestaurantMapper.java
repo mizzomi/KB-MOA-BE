@@ -2,6 +2,7 @@ package org.moa.reservation.restaurant.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.moa.reservation.dto.ReservationItemResponseDto;
 import org.moa.reservation.restaurant.dto.*;
 import org.springframework.data.domain.Pageable;
 
@@ -24,6 +25,9 @@ public interface RestaurantMapper {
             @Param("date") LocalDate date,
             @Param("category") String category
     );
+
+    // 식당 정보 조회
+    RestaurantInfoResponseDto findRestaurantInfo(Long restId);
 
     // 예약 가능한 시간대 조회
     List<String> findTimeSlot(@Param("restId") Long restId);
@@ -54,4 +58,11 @@ public interface RestaurantMapper {
 
     // 식당 예약 상세 조회
     RestaurantReservationDetailDto findReservationDetail(@Param("restResId") Long restResId);
+
+    List<ReservationItemResponseDto> getRestaurantReservationsByTripId(@Param("tripId") Long tripId);
+    
+    List<ReservationItemResponseDto> getRestaurantReservationsByDateAndMember(
+        @Param("memberId") Long memberId, 
+        @Param("tripId") Long tripId, 
+        @Param("date") LocalDate date);
 }

@@ -35,17 +35,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @EnableWebSecurity
-@MapperScan(basePackages = {"org.moa.member.mapper"})
+// @MapperScan(basePackages = {"org.moa.member.mapper"})
 @ComponentScan(basePackages = {"org.moa.global.security"})
 @RequiredArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	private final UserDetailsService userDetailsService;
-
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
 	private final AuthenticationErrorFilter authenticationErrorFilter;
-
 	private final CustomAccessDeniedHandler accessDeniedHandler;
 	private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
@@ -86,12 +83,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		return new CorsFilter(source);
 	}
 
-	// 접근 제한 무시 경로 설정 – resource
-	@Override
-	public void configure(WebSecurity web) throws Exception {
-		web.ignoring().antMatchers("/assets/**", "/*");
-	}
-
 	// 문자셋 필터
 	public CharacterEncodingFilter encodingFilter() {
 		CharacterEncodingFilter encodingFilter = new CharacterEncodingFilter();
@@ -104,14 +95,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public void configure(HttpSecurity http) throws Exception {
 		//한글 인코딩 필터 설정
 		http
-			//Cors필터 제일 먼저 적용
 			.addFilterBefore(corsFilter(), ChannelProcessingFilter.class)
 			.addFilterBefore(encodingFilter(), CsrfFilter.class)
-			//인증 에러 필터
 			.addFilterBefore(authenticationErrorFilter, UsernamePasswordAuthenticationFilter.class)
-			//Jwt 인증 필터
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-			//로그인 인증 필터
 			.addFilterBefore(jwtUsernamePasswordAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 		http
@@ -120,27 +107,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.authenticationEntryPoint(authenticationEntryPoint)
 			.accessDeniedHandler(accessDeniedHandler);
 
-		http.httpBasic().disable() // 기본 HTTP 인증 비활성화
-			.csrf().disable() // CSRF 비활성화
-			.formLogin().disable() // formLogin 비활성화  관련 필터 해제
-			.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS); // 세션 생성 모드 설정
+		http.httpBasic().disable()
+			.csrf().disable()
+			.formLogin().disable()
+			.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
 		http
-			.authorizeRequests() // 경로별 접근 권한 설정
-			.antMatchers(HttpMethod.OPTIONS, "/**")
-			.permitAll()
-			.antMatchers("/api/public/**")
-			.permitAll()
-			.antMatchers("/api/member/**")
-			.permitAll() // 모두 허용
-			.antMatchers("/api/member")
-			.access("hasRole('ROLE_USER')")
-			.antMatchers("/api/admin")
-			.access("hasRole('ROLE_ADMIN')")
-			.antMatchers("/api/owner/**")
-			.access("hasRole('ROLE_OWNER')")
-			.anyRequest()
-			.authenticated(); // 나머지는 로그인 된 경우 모두 허용
+			.authorizeRequests()
+			// 정적 리소스 허용
+			.antMatchers("/assets/**", "/").permitAll()
+			// OPTIONS 요청 허용
+			.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+			// API 경로별 권한 설정
+			.antMatchers("/api/public/**").permitAll()
+			// 역할별 접근 제한
+			.antMatchers("/api/member").access("hasRole('ROLE_USER')")
+			.antMatchers("/api/admin").access("hasRole('ROLE_ADMIN')")
+			.antMatchers("/api/owner/**").access("hasRole('ROLE_OWNER')")
+			// 나머지는 인증 필요
+			.anyRequest().authenticated();
 	}
 
 	//Authentication Manager 구성

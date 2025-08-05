@@ -19,9 +19,11 @@ public interface TripMapper {
     public void insert(Trip trip);
 
     List<TripListResponseDto> findTripsByMemberId(@Param("memberId") Long memberId,
-                                                      @Param("pageable") Pageable pageable);
+                                                  @Param("locationName") String locationName,
+                                                  @Param("pageable") Pageable pageable);
 
-    int countTripsByMemberId(@Param("memberId") Long memberId);
+    int countTripsByMemberId(@Param("memberId") Long memberId,
+                             @Param("locationName") String locationName);
 
     List<LocalDateTime> searchDayByTripId(Long tripId);
 

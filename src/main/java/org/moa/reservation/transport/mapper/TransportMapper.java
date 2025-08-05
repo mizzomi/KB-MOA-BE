@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.moa.reservation.dto.ReservationItemResponseDto;
 import org.moa.reservation.transport.dto.TransResStatusDto;
 import org.moa.reservation.transport.dto.TranstInfoResponse;
 import org.moa.reservation.transport.dto.TransSeatsInfoResponse;
@@ -49,4 +50,11 @@ public interface TransportMapper {
 	int cancelSeatsByReservationId(@Param("reservationId") Long reservationId);
 
 	List<Long> findExistingTranResIds(@Param("tranResIds") List<Long> tranResIds);
+
+	List<ReservationItemResponseDto> getTransportReservationsByTripId(@Param("tripId") Long tripId);
+	
+	List<ReservationItemResponseDto> getTransportReservationsByDateAndMember(
+		@Param("memberId") Long memberId, 
+		@Param("tripId") Long tripId, 
+		@Param("date") java.time.LocalDate date);
 }

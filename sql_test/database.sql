@@ -476,42 +476,42 @@ VALUES ('trans_owner', '123-45-67890', 1, 'TRANSPORT'), -- 교통
 
 -- 주민등록증 테스트용 데이터
 INSERT INTO ID_CARD (member_id, id_card_number, name, issued_date, address, image_url)
-VALUES (1, '0004114000001', '카리나', '2020-01-01', '서울특별시 성동구 왕십리로 83-21', NULL);
+VALUES (1, '0004114000001', '카리나', '2020-01-01', '서울특별시 성동구 왕십리로 83-21', 'IDphoto/karina.jfif');
 
 INSERT INTO ID_CARD (member_id, id_card_number, name, issued_date, address, image_url)
-VALUES (2, '0101014000002', '윈터', '2020-01-01', '서울특별시 성동구 왕십리로 83-21', NULL);
+VALUES (2, '0101014000002', '윈터', '2020-01-01', '서울특별시 성동구 왕십리로 83-21', 'IDphoto/winter.jfif');
 
 INSERT INTO ID_CARD (member_id, id_card_number, name, issued_date, address, image_url)
-VALUES (3, '0010304000003', '지젤', '2020-01-01', '서울특별시 성동구 왕십리로 83-21', NULL);
+VALUES (3, '0010304000003', '지젤', '2020-01-01', '서울특별시 성동구 왕십리로 83-21', 'IDphoto/giselle.jfif');
 
 INSERT INTO ID_CARD (member_id, id_card_number, name, issued_date, address, image_url)
-VALUES (4, '0210234000002', '닝닝', '2020-01-01', '서울특별시 성동구 왕십리로 83-21', NULL);
+VALUES (4, '0210234000002', '닝닝', '2020-01-01', '서울특별시 성동구 왕십리로 83-21', 'IDphoto/ningning.jfif');
 
 
 -- 운전면허증 테스트용 데이터
 -- 카리나 (경남 양산 → 울산남부경찰서)
 INSERT INTO DRIVER_LICENSE (member_id, id_card_number, license_number, license_type,
-                            issued_date, expiry_date, issuing_agency)
+                            issued_date, expiry_date, issuing_agency, image_url)
 VALUES (1, '0004114000001', '201234567810', '1종 보통',
-        '2020-06-15', '2030-06-15', '울산남부경찰서');
+        '2020-06-15', '2030-06-15', '울산남부경찰서', 'IDphoto/karina.jfif');
 
 -- 윈터 (부산 해운대 → 부산해운대경찰서)
 INSERT INTO DRIVER_LICENSE (member_id, id_card_number, license_number, license_type,
-                            issued_date, expiry_date, issuing_agency)
+                            issued_date, expiry_date, issuing_agency, image_url)
 VALUES (2, '0101014000002', '211198765421', '2종 소형',
-        '2021-03-10', '2031-03-10', '부산해운대경찰서');
+        '2021-03-10', '2031-03-10', '부산해운대경찰서', 'IDphoto/winter.jfif');
 
 -- 지젤 (도쿄 출신 → 서울 활동지 기준 서울성동경찰서)
 INSERT INTO DRIVER_LICENSE (member_id, id_card_number, license_number, license_type,
-                            issued_date, expiry_date, issuing_agency)
+                            issued_date, expiry_date, issuing_agency, image_url)
 VALUES (3, '0010304000003', '221011223309', '2종 보통',
-        '2022-07-22', '2032-07-22', '서울성동경찰서');
+        '2022-07-22', '2032-07-22', '서울성동경찰서', 'IDphoto/giselle.jfif');
 
 -- 닝닝 (하얼빈 출신 → 서울 활동지 기준 서울성동경찰서)
 INSERT INTO DRIVER_LICENSE (member_id, id_card_number, license_number, license_type,
-                            issued_date, expiry_date, issuing_agency)
+                            issued_date, expiry_date, issuing_agency, image_url)
 VALUES (4, '0210234000002', '230944556633', '원동기장치자전거',
-        '2023-01-05', '2033-01-05', '서울성동경찰서');
+        '2023-01-05', '2033-01-05', '서울성동경찰서', 'IDphoto/ningning.jfif');
 
 
 -- 계좌 테스트용 데이터

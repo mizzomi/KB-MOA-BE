@@ -4,6 +4,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.moa.reservation.accommodation.entity.AccomRes;
 import org.moa.reservation.accommodation.entity.AccommodationInfo;
+import org.moa.reservation.dto.ReservationItemResponseDto;
 import org.moa.trip.type.Location;
 import org.springframework.data.domain.Pageable;
 
@@ -28,4 +29,11 @@ public interface AccommodationMapper {
     );
 
     AccommodationInfo searchAccommById(Long accomId);
+
+    List<ReservationItemResponseDto> getAccommodationReservationsByTripId(@Param("tripId") Long tripId);
+    
+    List<ReservationItemResponseDto> getAccommodationReservationsByDateAndMember(
+        @Param("memberId") Long memberId, 
+        @Param("tripId") Long tripId, 
+        @Param("date") LocalDate date);
 }
