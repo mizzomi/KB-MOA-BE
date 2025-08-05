@@ -23,16 +23,20 @@
     </select>
 
     <!-- 식당 예약 내역 QR -->
-    <select id="findQrInfo" resultType="org.moa.reservation.dto.QrRestaurantReservationDto">
+    <select id="findQrInfoByReservationId" resultType="org.moa.reservation.dto.QrRestaurantReservationDto">
         SELECT
-            reservation_id AS reservationId,
-            rest_id AS restId,
-            date,
-            res_num AS resNum,
-            status
-        FROM REST_RES
-        WHERE reservation_id = #{reservationId}
+            rr.reservation_id AS reservationId,
+            rr.rest_id AS restId,
+            td.day AS date,
+            rts.res_time AS time,
+            rr.res_num AS resNum,
+            rr.status
+        FROM REST_RES rr
+            JOIN TRIP_DAY td ON rr.trip_day_id = td.trip_day_id
+            JOIN REST_TIME_SLOT rts ON rr.rest_time_id = rts.rest_time_id
+        WHERE rr.reservation_id = #{reservationId}
     </select>
+
 
 
 </mapper>

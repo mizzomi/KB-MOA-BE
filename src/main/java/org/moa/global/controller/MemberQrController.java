@@ -60,9 +60,24 @@ public class MemberQrController {
     @GetMapping("/reservation")
     public ResponseEntity<ApiResponse<String>> generateReservationQr(@AuthenticationPrincipal CustomUser user,
                                                                          @RequestParam Long reservationId) {
-        String qrImage = qrService.generateReservationQr(reservationId);
-        return ResponseEntity
-                .status(StatusCode.OK.getStatus())
-                .body(ApiResponse.of(qrImage, "예약 QR 생성 성공"));
+        try {
+            String qrImage = qrService.generateReservationQr(reservationId);
+
+            return ResponseEntity
+                    .status(StatusCode.OK.getStatus())
+                    .body(ApiResponse.of(qrImage, "예약 QR 생성 성공"));
+
+        } catch (org.apache.ibatis.exceptions.TooManyResultsException e) {
+            log.warn("예약 정보가 2건 이상 조회됨: reservationId={}", reservationId);
+            return ResponseEntity
+                    .status(StatusCode.INTERNAL_ERROR.getStatus())
+                    .body(ApiResponse.error(StatusCode.INTERNAL_ERROR, "예약 정보를 정확히 조회할 수 없습니다. 관리자에게 문의해주세요."));
+
+        } catch (Exception e) {
+            log.error("예약 QR 생성 실패", e);
+            return ResponseEntity
+                    .status(StatusCode.INTERNAL_ERROR.getStatus())
+                    .body(ApiResponse.error(StatusCode.INTERNAL_ERROR, "예약 QR 생성 중 오류가 발생했습니다. 다시 시도해주세요."));
+        }
     }
 }

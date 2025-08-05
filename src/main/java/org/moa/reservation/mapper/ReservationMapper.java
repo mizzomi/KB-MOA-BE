@@ -14,5 +14,5 @@ public interface ReservationMapper {
 	int cancelReservationByReservationId(@Param("reservationId") Long reservationId);
 
 	// 식당 예약 내역 QR
-	QrRestaurantReservationDto findQrInfo(@Param("reservationId") Long reservationId);
+	QrRestaurantReservationDto findQrInfoByReservationId(@Param("reservationId") Long reservationId);
 }

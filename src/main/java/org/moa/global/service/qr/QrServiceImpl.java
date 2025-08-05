@@ -94,7 +94,7 @@ public class QrServiceImpl implements QrService{
     public String generateReservationQr(Long reservationId) {
         try {
             // 1. DB 조회
-            QrRestaurantReservationDto reservation = reservationMapper.findQrInfo(reservationId);
+            QrRestaurantReservationDto reservation = reservationMapper.findQrInfoByReservationId(reservationId);
             if (reservation == null) {
                 throw new NoSuchElementException("해당 예약 정보를 찾을 수 없습니다.");
             }
