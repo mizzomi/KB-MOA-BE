@@ -6,6 +6,7 @@ import org.moa.global.response.ApiResponse;
 import org.moa.global.security.domain.CustomUser;
 import org.moa.global.service.qr.QrService;
 import org.moa.global.type.StatusCode;
+import org.moa.reservation.dto.ReservationItemResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,7 +25,7 @@ public class MemberQrController {
 
     private final QrService qrService;
 
-    // 사용자 주민등록증 QR 생성
+    // 사용자 주민등록증 QR 생성 API
     @GetMapping("/idcard")
     public ResponseEntity<ApiResponse<?>> generateIdCardQr(@AuthenticationPrincipal CustomUser user) {
         try {
@@ -55,4 +56,13 @@ public class MemberQrController {
         }
     }
 
+    // 사용자 예약 내역 QR 조회 API
+    @GetMapping("/reservation")
+    public ResponseEntity<ApiResponse<String>> generateReservationQr(@AuthenticationPrincipal CustomUser user,
+                                                                         @RequestParam Long reservationId) {
+        String qrImage = qrService.generateReservationQr(reservationId);
+        return ResponseEntity
+                .status(StatusCode.OK.getStatus())
+                .body(ApiResponse.of(qrImage, "예약 QR 생성 성공"));
+    }
 }

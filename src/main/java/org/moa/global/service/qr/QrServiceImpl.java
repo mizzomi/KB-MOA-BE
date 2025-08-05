@@ -8,6 +8,8 @@ import org.moa.global.util.QrCodeUtil;
 import org.moa.member.dto.qr.IdCardResponseDto;
 import org.moa.member.entity.IdCard;
 import org.moa.member.mapper.IdCardMapper;
+import org.moa.reservation.dto.QrRestaurantReservationDto;
+import org.moa.reservation.mapper.ReservationMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -20,6 +22,7 @@ import java.util.NoSuchElementException;
 public class QrServiceImpl implements QrService{
 
     private final IdCardMapper idCardMapper;
+    private final ReservationMapper reservationMapper;
 
     // 주민등록증 QR 생성 API
     @Override
@@ -27,8 +30,16 @@ public class QrServiceImpl implements QrService{
         try {
             // ========= 테스트용 =========
             // memberId가 1이면 고정된 QR Base64 반환
-            if(memberId == 1) {
-                return "iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQAAAACFI5MzAAABd0lEQVR4Xu2WQY6DMAxFf9VFlhwhN6EXq1QkLkZvkiOwzALV87+HAVQ6y7ozEpZAcd7Gsr/twH4zPF8sdpCDyP4GKQDOpbZNB/gPTTTh15v76dH0Zo9wUtH0BZfxbPViPLUfIkxMtvsHiQ24ItlniKk+9TTe+LN95QLIj0b7Wah79b6ZfJsuc1rcUFLAnHiR2Cq4besTRFgQsDQtFcL6TEhLfcIILjZXhacpM9RgUpKNV3BSQB41eo8nmpFogcwGmXIKJzL6Q8PSDDgbT8GE8lSfnjSvZ7VGE2MwhTmZmB0qRW4soVEcyS8fGtrb+sQQpoO9wVbJflo1GkWKtrWcCVXLO574ktLI7FyoijKaeIt6WFQrsGo0jMiKR6SRqWQFk8J4OB/8+aDlvZnXUcR8Sg9KERdmeX7VBJCqlc1BOTfrujVDSfGVbffxtntbhhF/v3nHPsf2fsKvl0Y7xXbFZoZEEWhnaVlkdkm33ehB5LUd5CCy/0m+ANReX7vBSB26AAAAAElFTkSuQmCC";
+            if (memberId == 1) {
+                Map<String, Long> info = new HashMap<>();
+                info.put("member_id", memberId);
+                String json = new ObjectMapper().writeValueAsString(info);
+
+                String encrypted = AesUtil.encryptWithIv(json);
+
+                log.info("🔐 Postman 테스트용 data 파라미터: {}", encrypted);
+
+                return QrCodeUtil.generateEncryptedQr(json);
             }
 
             // 1. DB에서 해당 memberId의 주민등록증 정보 존재 확인
@@ -77,4 +88,30 @@ public class QrServiceImpl implements QrService{
             throw new RuntimeException("복호화 실패 : " + e.getMessage());
         } // 복호화/파싱 실패 시 500 error
     }
+
+    // 예약 내역 QR 생성 API
+    @Override
+    public String generateReservationQr(Long reservationId) {
+        try {
+            // 1. DB 조회
+            QrRestaurantReservationDto reservation = reservationMapper.findQrInfo(reservationId);
+            if (reservation == null) {
+                throw new NoSuchElementException("해당 예약 정보를 찾을 수 없습니다.");
+            }
+
+            // 2. JSON으로 직렬화
+            ObjectMapper objectMapper = new ObjectMapper();
+            String json = objectMapper.writeValueAsString(reservation);
+
+            // 3. AES 암호화 + QR 생성
+            String encrypted = AesUtil.encryptWithIv(json);
+            return QrCodeUtil.generateEncryptedQr(encrypted);
+
+        } catch (Exception e) {
+            log.error("예약 QR 생성 실패", e);
+            throw new RuntimeException("예약 QR 생성 실패: " + e.getMessage());
+        }
+    }
+
+
 }
