@@ -59,10 +59,38 @@ public class MemberQrController {
     // 사용자 예약 내역 QR 조회 API
     @GetMapping("/reservation")
     public ResponseEntity<ApiResponse<String>> generateReservationQr(@AuthenticationPrincipal CustomUser user,
-                                                                         @RequestParam Long reservationId) {
-        String qrImage = qrService.generateReservationQr(reservationId);
-        return ResponseEntity
-                .status(StatusCode.OK.getStatus())
-                .body(ApiResponse.of(qrImage, "예약 QR 생성 성공"));
+                                                                     @RequestParam Long reservationId) {
+        try {
+            Long memberId = user.getMember().getMemberId();
+            String qrImage = qrService.generateReservationQr(reservationId, memberId);
+
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(ApiResponse.of(qrImage));
+
+        } catch (SecurityException e) {
+            log.warn("권한 없음: {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(StatusCode.FORBIDDEN, e.getMessage()));
+
+        } catch (NoSuchElementException e) {
+            log.warn("예약 정보 없음: {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(StatusCode.NOT_FOUND, e.getMessage()));
+
+        } catch (IllegalArgumentException e) {
+            log.warn("잘못된 요청: {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(StatusCode.BAD_REQUEST, e.getMessage()));
+
+        } catch (Exception e) {
+            log.error("예약 QR 생성 실패", e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(StatusCode.INTERNAL_ERROR, "예약 QR 생성 중 오류가 발생했습니다. 다시 시도해주세요."));
+        }
     }
 }

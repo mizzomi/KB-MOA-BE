@@ -22,17 +22,72 @@
         WHERE r.reservation_id = #{reservationId}
     </select>
 
-    <!-- 식당 예약 내역 QR -->
-    <select id="findQrInfo" resultType="org.moa.reservation.dto.QrRestaurantReservationDto">
-        SELECT
-            reservation_id AS reservationId,
-            rest_id AS restId,
-            date,
-            res_num AS resNum,
-            status
-        FROM REST_RES
+    <!-- 식당 / 숙박 / 교통 -->
+    <select id="findTypeByReservationId" resultType="string">
+        SELECT res_kind
+        FROM RESERVATION
         WHERE reservation_id = #{reservationId}
     </select>
 
+    <!-- 식당 예약 내역 QR -->
+    <select id="findRestQrInfoByReservationId" resultType="org.moa.reservation.dto.QrRestaurantReservationDto">
+        SELECT
+            'RESTAURANT' AS type,
+            rr.reservation_id AS reservationId,
+            rr.rest_id AS restId,
+            td.day AS date,
+            rts.res_time AS time,
+            rr.res_num AS resNum,
+            rr.status
+        FROM REST_RES rr
+            JOIN TRIP_DAY td ON rr.trip_day_id = td.trip_day_id
+            JOIN REST_TIME_SLOT rts ON rr.rest_time_id = rts.rest_time_id
+        WHERE rr.reservation_id = #{reservationId}
+    </select>
+
+    <!-- 숙박 예약 내역 QR -->
+    <select id="findAccomQrInfoByReservationId" resultType="org.moa.reservation.dto.QrAccommodationReservationDto">
+        SELECT
+            'ACCOMMODATION' AS type,
+            rr.reservation_id AS reservationId,
+            ra.accom_id AS accomId,
+            ra.hotel_name AS hotelName,
+            ra.room_type AS roomType,
+            DATE_FORMAT(ra.checkin_day, '%Y-%m-%d %H:%i:%s') AS checkinDay,
+            DATE_FORMAT(ra.checkout_day, '%Y-%m-%d %H:%i:%s') AS checkoutDay,
+            ra.guests,
+            ra.status
+        FROM ACCOM_RES ra
+                 JOIN RESERVATION rr ON ra.reservation_id = rr.reservation_id
+        WHERE ra.reservation_id = #{reservationId}
+    </select>
+
+    <!-- 교통 예약 내역 QR -->
+    <select id="findTransQrInfoByReservationId" resultType="org.moa.reservation.dto.QrTransportReservationDto">
+        SELECT
+            'TRANSPORT' AS type,
+            tr.reservation_id AS reservationId,
+            tr.transport_id AS transportId,
+            tr.departure AS departure,
+            tr.arrival AS arrival,
+            tr.seat_room_no AS seatRoomNo,
+            tr.seat_number AS seatNumber,
+            tr.seat_type AS seatType,
+            tr.status AS status
+        FROM TRAN_RES tr
+        WHERE tr.reservation_id = #{reservationId}
+    </select>
+
+    <!-- QR 권한 검증 -->
+    <select id="isTripMemberByReservationIdAndMemberId" resultType="boolean" parameterType="map">
+        SELECT EXISTS (
+            SELECT 1
+            FROM reservation r
+                     JOIN trip_day td ON r.trip_day_id = td.trip_day_id
+                     JOIN trip_member tm ON td.trip_id = tm.trip_id
+            WHERE r.reservation_id = #{reservationId}
+              AND tm.member_id = #{memberId}
+        )
+    </select>
 
 </mapper>
