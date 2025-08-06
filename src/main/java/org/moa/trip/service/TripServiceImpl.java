@@ -2,6 +2,10 @@ package org.moa.trip.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.moa.global.notification.entity.Notification;
+import org.moa.global.notification.mapper.NotificationMapper;
+import org.moa.global.service.FcmService;
+import org.moa.global.type.NotificationType;
 import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
@@ -33,9 +37,12 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class TripServiceImpl implements TripService {
+    private final FcmService fcmService;
+
     private final TripMapper tripMapper;
     private final TripMemberMapper tripMemberMapper;
     private final MemberMapper memberMapper;
+    private final NotificationMapper notificationMapper;
 
     @Override
     @Transactional
@@ -72,16 +79,30 @@ public class TripServiceImpl implements TripService {
         // 호스트 참여를 DB에 저장
         tripMemberMapper.insert(host);
 
-//      유저 추가를 여행에 또 새로 저장해야하나....
-//      newTrip.getTripMembers().add(host);
-
         // 참여자들에게 알림 생성
         if(dto.getMemberIds() != null){
             for(Long memberId : dto.getMemberIds()){
-                // !여기서 추후 유저들에게 여행 초대 알림 보내는 서비스 로직 필요! ex) NotificationService 등
+                String title = "여행 초대 요청";
+                String content = member.getName() +"님이 \"" + dto.getTripName() + "\" 여행에 초대하셨습니다.";
+                // 알림 생성
+                Notification notification = Notification.builder()
+                        .memberId(memberId)
+                        .tripId(newTrip.getTripId())
+                        .notificationType(NotificationType.TRIP)
+                        .senderName(member.getName())
+                        .tripName(dto.getTripName())
+                        .title(title)
+                        .content(content)
+                        .isRead(false)
+                        .createdAt(LocalDateTime.now())
+                        .build();
+
+                // 유저들에게 여행 초대 알림 보내는 서비스 로직
+                fcmService.sendNotification(memberId,title,content);
+                // 알림을 DB에 생성하는 로직
+                notificationMapper.createNotification(notification);
             }
         }
-        // !추후 초대받은 유저들이 수락시 newTrip 에 해당 유저들 추가하는 서비스 로직 필요!
         return newTrip.getTripId();
     }
 

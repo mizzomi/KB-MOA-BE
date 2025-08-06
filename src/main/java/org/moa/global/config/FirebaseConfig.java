@@ -4,8 +4,11 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import javax.annotation.PostConstruct; // jakarta -> javax 로 변경
+
+import com.google.firebase.messaging.FirebaseMessaging;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StringUtils;
@@ -53,6 +56,18 @@ public class FirebaseConfig {
             serviceAccount.close();
         } catch (IOException e) {
             log.error("Firebase App 초기화 중 오류 발생", e);
+        }
+    }
+
+    @Bean
+    public FirebaseMessaging firebaseMessaging() {
+        try {
+            FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+            log.info("FirebaseMessaging Bean이 성공적으로 생성되었습니다.");
+            return messaging;
+        } catch (Exception e) {
+            log.error("FirebaseMessaging Bean 생성 실패", e);
+            throw new RuntimeException("FCM 서비스를 사용할 수 없습니다.", e);
         }
     }
 }
