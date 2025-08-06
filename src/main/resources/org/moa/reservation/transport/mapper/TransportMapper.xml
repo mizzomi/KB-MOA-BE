@@ -115,6 +115,7 @@
 
     <select id="getTransportReservationsByTripId" resultType="org.moa.reservation.dto.ReservationItemResponseDto">
         SELECT
+            tr.reservation_id as reservationId,
             ti.train_no as name,
             tr.transport_id as itemId,
             NULL as imageUrl,
@@ -131,6 +132,7 @@
 
     <select id="getTransportReservationsByDateAndMember" resultType="org.moa.reservation.dto.ReservationItemResponseDto">
         SELECT
+            tr.reservation_id as reservationId,
             ti.train_no as name,
             tr.transport_id as itemId,
             NULL as imageUrl,
