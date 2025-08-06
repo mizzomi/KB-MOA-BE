@@ -8,6 +8,7 @@ import org.moa.member.mapper.IdCardMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.concurrent.CompletableFuture;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -22,14 +23,26 @@ public class MyIdServiceImpl implements MyIdService {
     /** 사용자의 주민등록증 및 운전면허증 정보 조회 **/
     @Override
     public MyIdResponseDto getMyIdInfo(Long memberId) {
-        // 주민등록증 정보 처리
-        IdCardResponseDto idCard = processIdCard(memberId);
+        // [수정] 주민등록증과 운전면허증 정보를 동시에 조회 시작
+        CompletableFuture<IdCardResponseDto> idCardFuture = CompletableFuture.supplyAsync(() -> processIdCard(memberId));
+        CompletableFuture<DriverLicenseResponseDto> driverLicenseFuture = CompletableFuture.supplyAsync(() -> processDriverLicense(memberId));
 
-        // 운전면허증 정보 처리
-        DriverLicenseResponseDto driverLicense = processDriverLicense(memberId);
+        // [수정] 두 작업이 모두 완료될 때까지 대기
+        CompletableFuture.allOf(idCardFuture, driverLicenseFuture).join();
 
-        // 두 정보를 합쳐서 반환
-        return new MyIdResponseDto(idCard, driverLicense);
+        try {
+            // [수정] 완료된 Future에서 결과 가져오기
+            IdCardResponseDto idCard = idCardFuture.get();
+            DriverLicenseResponseDto driverLicense = driverLicenseFuture.get();
+
+            // 두 정보를 합쳐서 반환
+            return new MyIdResponseDto(idCard, driverLicense);
+        } catch (Exception e) {
+            // InterruptedException, ExecutionException 처리
+            // 실제 프로덕션 코드에서는 더 정교한 예외 처리가 필요할 수 있음
+            Thread.currentThread().interrupt(); // InterruptedException 발생 시 스레드 인터럽트 상태 복원
+            throw new RuntimeException("ID 정보 조회 중 비동기 처리 오류 발생", e);
+        }
     }
 
 
@@ -40,10 +53,11 @@ public class MyIdServiceImpl implements MyIdService {
             return null;
         }
 
+        // [수정] 이 부분은 CPU 연산이므로 비동기 처리의 이점이 크지 않지만, getMyIdInfo에서 구조상 분리
         LocalDate birthday = calculateBirthday(rawData.getIdCardNumber());
 
         // 파일 이름을 서명된 URL로 변환
-        String signedImageUrl = getSignedUrlIfPresent(rawData.getImageUrl());
+        String signedImageUrl = getSignedUrl(rawData.getImageUrl());
 
         return IdCardResponseDto.builder()
                 .name(rawData.getName())
@@ -63,7 +77,7 @@ public class MyIdServiceImpl implements MyIdService {
             return null;
         }
 
-        String signedImageUrl = getSignedUrlIfPresent(rawData.getImageUrl());
+        String signedImageUrl = getSignedUrl(rawData.getImageUrl());
 
         return DriverLicenseResponseDto.builder()
                 .name(rawData.getName())
@@ -79,7 +93,7 @@ public class MyIdServiceImpl implements MyIdService {
 
 
     /** 이미지 파일 이름이 존재할 경우에만 서명된 URL 반환 **/
-    private String getSignedUrlIfPresent(String imageFileName) {
+    private String getSignedUrl(String imageFileName) {
         if (StringUtils.hasText(imageFileName)) {
             return firebaseStorageService.getSignedUrl(imageFileName);
         }
