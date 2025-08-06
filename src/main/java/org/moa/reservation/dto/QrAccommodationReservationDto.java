@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class QrAccommodationReservationDto {
-    private String type = "accommodation"; // 숙박 예약
+    private String type; // 숙박 예약
     private Long reservationId;
     private Long accomId;
     private String hotelName;
