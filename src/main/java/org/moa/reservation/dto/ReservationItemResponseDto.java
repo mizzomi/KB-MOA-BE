@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReservationItemResponseDto {
+	private Long reservationId; // 예약 ID
 	private String name;        // 식당명, KTX 편명, 숙소명
 	private Long itemId;        // transport_id, rest_id, accom_id
 	private String imageUrl;    // 이미지 URL
