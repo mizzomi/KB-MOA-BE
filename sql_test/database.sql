@@ -1,3 +1,4 @@
+use moa;
 -- 초기화
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -48,13 +49,27 @@ CREATE TABLE MEMBER
 -- ========================================================================================
 -- 사업자 테이블
 -- ========================================================================================
-CREATE TABLE OWNER
-(
-    owner_id       BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    owner_password VARCHAR(255) NOT NULL,
-    owner_no       VARCHAR(255) NOT NULL,
-    business_id    BIGINT       NOT NULL,
-    business_type  ENUM ('TRANSPORT' , 'ACCOMMODATION' , 'RESTAURANT' ));
+CREATE TABLE owner (
+                       business_id     VARCHAR(255)   NOT NULL,
+                       business_kind   ENUM(
+                        'TRANSPORT',
+                        'ACCOMMODATION',
+                        'RESTAURANT'
+                    ) NOT NULL,
+                       member_id       BIGINT         NOT NULL,
+                       created_at      TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                       updated_at      TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
+                           ON UPDATE CURRENT_TIMESTAMP,
+
+    -- composite PK
+                       PRIMARY KEY (business_id, business_kind),
+
+    -- member 테이블의 FK
+                       CONSTRAINT fk_owner_member
+                           FOREIGN KEY (member_id)
+                               REFERENCES member(member_id)
+                               ON DELETE CASCADE
+);
 
 -- ========================================================================================
 -- 알림 테이블
@@ -465,16 +480,38 @@ VALUES (1, 'ROLE_USER', 'karina@test.com', '1234', '카리나', 'asdf1234', '000
        (3, 'ROLE_USER', 'giselle@test.com', '1234', '지젤', 'asdf5678', '0010304000003'),
        (4, 'ROLE_USER', 'ningning@test.com', '1234', '닝닝', 'qwer5678', '0210234000002');
 
-
--- 사업자 테스트용 데이터
-INSERT INTO OWNER (owner_password, owner_no, business_id, business_type)
-VALUES ('trans_owner', '123-45-67890', 1, 'TRANSPORT'), -- 교통
-       ('hotel_owner', '987-65-43210', 1, 'ACCOMMODATION'), -- 숙박
-       ('rest_owner', '456-78-90123', 1, 'RESTAURANT'), -- 해운대 곰장어집
-       ('rest_owner', '456-78-90123', 5, 'RESTAURANT'), -- 이자카야 코이
-       ('rest_owner', '456-78-90123', 7, 'RESTAURANT'), -- 팔선생 중화요리
-       ('rest_owner', '789-23-45678', 10, 'RESTAURANT'), -- 부산 파스타하우스
-       ('rest_owner', '456-78-90123', 15, 'RESTAURANT'); -- 이색분식연구소
+-- 1) MEMBER 테이블에 사업자 계정 추가
+INSERT INTO MEMBER (
+    member_id,
+    member_type,
+    email,
+    password,
+    name,
+    fcm_token,
+    id_card_number
+) VALUES
+      (5, 'ROLE_OWNER', '123-45-67890',    '1234',  '교통사업자',       NULL, 'OWN0000001'),
+      (6, 'ROLE_OWNER', '987-65-43210',    '1234',  '숙박사업자',       NULL, 'OWN0000002'),
+      (7, 'ROLE_OWNER', '456-78-90123-1',    '1234',  '해운대곰장어사업자', NULL, 'OWN0000003'),
+      (8, 'ROLE_OWNER', '456-78-90123-2',    '1234',  '코이이자카야사업자', NULL, 'OWN0000004'),
+      (9, 'ROLE_OWNER', '456-78-90123-3',    '1234',  '팔선생중화요리사업자',NULL,'OWN0000005'),
+      (10, 'ROLE_OWNER', '789-23-45678-4',    '1234',  '파스타하우스사업자',  NULL, 'OWN0000006'),
+      (11, 'ROLE_OWNER', '456-78-90123-5',    '1234',  '이색분식연구소사업자',NULL,'OWN0000007')
+;
+-- 2) OWNER 테이블에 business ↔ member 연결
+INSERT INTO OWNER (
+    business_id,
+    business_kind,
+    member_id
+) VALUES
+      ( 1, 'TRANSPORT',    5),
+      ( 1, 'ACCOMMODATION', 6),
+      ( 1, 'RESTAURANT',   7),  -- 해운대 곰장어집
+      ( 5, 'RESTAURANT',   8),  -- 코이 이자카야
+      ( 7, 'RESTAURANT',   9),  -- 팔선생 중화요리
+      (10, 'RESTAURANT',  10),  -- 파스타하우스
+      (15, 'RESTAURANT',  11)   -- 이색분식연구소
+;
 
 -- 주민등록증 테스트용 데이터
 INSERT INTO ID_CARD (member_id, id_card_number, name, issued_date, address, image_url)
