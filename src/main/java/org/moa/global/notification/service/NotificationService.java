@@ -1,8 +1,8 @@
 package org.moa.global.notification.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.moa.global.notification.dto.NotificationResponseDto;
+import org.moa.global.notification.dto.SettleNotificationRequestDto;
+import org.moa.global.notification.dto.TripNotificationRequestDto;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.List;
 public interface NotificationService {
     List<NotificationResponseDto> getNotifications();
 
-    boolean tripNotification();
+    boolean tripNotification(TripNotificationRequestDto dto);
 
-    boolean settleNotification();
+    boolean settleNotification(SettleNotificationRequestDto dto);
 }

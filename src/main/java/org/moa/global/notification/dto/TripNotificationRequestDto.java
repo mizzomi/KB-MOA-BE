@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class TripNotificationRequestDto {
     private String type; // "수락" , "거절"
     private Long tripId;
+    private Long notificationId;
 }

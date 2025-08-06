@@ -70,6 +70,7 @@ public class ExpenseServiceImpl implements ExpenseService{
                 .tripId(dto.getTripId())
                 .memberId(member.getMemberId()) // DTO에서 받는 결제자 ID
                 .expenseName(dto.getExpenseName())
+                .expenseDate(LocalDateTime.now())
                 .amount(dto.getAmount())
                 .location(trip.getTripLocation()) // 한 번 조회한 trip 객체 재사용
                 .settlementCompleted(false)
@@ -92,26 +93,33 @@ public class ExpenseServiceImpl implements ExpenseService{
         for(int i=0;i<dto.getExpenses().size();i++){
             Long creatorId = member.getMemberId();
             Long memberId = dto.getExpenses().get(i).getMemberId();
+            log.info("expense : {}", dto.getExpenses().get(i));
+            log.info("settlement 받는 memberId : {}", memberId);
             BigDecimal amount = dto.getExpenses().get(i).getAmount();
             settlementService.createSettlement(newExpense.getExpenseId(), newExpense.getTripId(), creatorId , memberId, amount);
 
-            String title = "정산 요청";
-            String content = member.getName() +"님이 \"" + trip.getTripName() + "\" 여행의 정산을 요청하셨습니다.";
-            // 알림 생성
-            Notification notification = Notification.builder()
-                    .memberId(memberId)
-                    .notificationType(NotificationType.SETTLE)
-                    .tripName(trip.getTripName())
-                    .title(title)
-                    .content(content)
-                    .isRead(false)
-                    .createdAt(LocalDateTime.now())
-                    .build();
+            if(!creatorId.equals(memberId)){
+                String title = "정산 요청";
+                String content = member.getName() +"님이 \"" + trip.getTripName() + "\" 여행의 정산을 요청하셨습니다.";
+                // 알림 생성
+                Notification notification = Notification.builder()
+                        .memberId(memberId)
+                        .tripId(newExpense.getTripId())
+                        .expenseId(newExpense.getExpenseId())
+                        .notificationType(NotificationType.SETTLE)
+                        .senderName(member.getName())
+                        .tripName(trip.getTripName())
+                        .title(title)
+                        .content(content)
+                        .isRead(false)
+                        .createdAt(LocalDateTime.now())
+                        .build();
 
-            // 유저들에게 정산 알림 보내는 서비스 로직
-            fcmService.sendNotification(memberId,title,content);
-            // 알림을 DB에 생성하는 로직
-            notificationMapper.createNotification(notification);
+                // 유저들에게 정산 알림 보내는 서비스 로직
+                fcmService.sendNotification(memberId,title,content);
+                // 알림을 DB에 생성하는 로직
+                notificationMapper.createNotification(notification);
+            }
         }
         return true;
     }

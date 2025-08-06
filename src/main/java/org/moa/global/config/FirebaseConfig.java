@@ -61,6 +61,13 @@ public class FirebaseConfig {
 
     @Bean
     public FirebaseMessaging firebaseMessaging() {
-        return FirebaseMessaging.getInstance(); // 기존 Firebase 앱 사용
+        try {
+            FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+            log.info("FirebaseMessaging Bean이 성공적으로 생성되었습니다.");
+            return messaging;
+        } catch (Exception e) {
+            log.error("FirebaseMessaging Bean 생성 실패", e);
+            throw new RuntimeException("FCM 서비스를 사용할 수 없습니다.", e);
+        }
     }
 }

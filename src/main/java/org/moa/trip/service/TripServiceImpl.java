@@ -79,9 +79,6 @@ public class TripServiceImpl implements TripService {
         // 호스트 참여를 DB에 저장
         tripMemberMapper.insert(host);
 
-//      유저 추가를 여행에 또 새로 저장해야하나....
-//      newTrip.getTripMembers().add(host);
-
         // 참여자들에게 알림 생성
         if(dto.getMemberIds() != null){
             for(Long memberId : dto.getMemberIds()){
@@ -90,7 +87,9 @@ public class TripServiceImpl implements TripService {
                 // 알림 생성
                 Notification notification = Notification.builder()
                         .memberId(memberId)
+                        .tripId(newTrip.getTripId())
                         .notificationType(NotificationType.TRIP)
+                        .senderName(member.getName())
                         .tripName(dto.getTripName())
                         .title(title)
                         .content(content)
@@ -104,7 +103,6 @@ public class TripServiceImpl implements TripService {
                 notificationMapper.createNotification(notification);
             }
         }
-        // !추후 초대받은 유저들이 수락시 newTrip 에 해당 유저들 추가하는 서비스 로직 필요!
         return newTrip.getTripId();
     }
 

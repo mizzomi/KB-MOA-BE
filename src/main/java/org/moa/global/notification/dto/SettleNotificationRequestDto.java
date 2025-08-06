@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SettleNotificationRequestDto {
     private Long tripId;
+    private Long notificationId;
 }

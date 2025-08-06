@@ -6,7 +6,6 @@ import com.google.firebase.messaging.Notification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.member.mapper.MemberMapper;
-import org.moa.member.service.MemberService;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -33,10 +32,10 @@ public class FcmService {
                     .build();
 
             String response = firebaseMessaging.send(message);
-            log.info("fcmToken send response: {}", response);
+            log.info("fcmToken 전송 응답 : {}", response);
         }
         catch (Exception e){
-            log.info("fcmToken send error: {}", e.getMessage());
+            log.info("fcmToken 전송 에러 : {}", e.getMessage());
         }
     }
 }

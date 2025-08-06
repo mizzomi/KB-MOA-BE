@@ -4,6 +4,16 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="org.moa.member.mapper.MemberMapper">
+    <update id="updateFcmToken">
+        UPDATE MEMBER
+        SET fcm_token = #{FcmToken}
+        WHERE member_id = #{memberId}
+    </update>
+    <delete id="deleteFcmToken">
+        UPDATE MEMBER
+        SET fcm_token = NULL
+        WHERE member_id = #{memberId}
+    </delete>
     <insert id="insert" parameterType="org.moa.member.entity.Member" useGeneratedKeys="true" keyProperty="memberId">
         INSERT INTO MEMBER (member_type,
                             email,

@@ -13,7 +13,10 @@ import java.time.LocalDateTime;
 public class Notification {
     private Long notificationId;
     private Long memberId;
+    private Long tripId;
+    private Long expenseId;
     private NotificationType notificationType;
+    private String senderName;
     private String tripName;
     private String title;
     private String content;
