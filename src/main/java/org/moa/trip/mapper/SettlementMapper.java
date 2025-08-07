@@ -13,6 +13,7 @@ public interface SettlementMapper {
     void insert(SettlementNotes settlementNotes);
     void updateIsPayedByExpenseIdAndMemberID(@Param("expenseId") Long expenseId, @Param("memberId") Long memberId);
     List<SettlementNotes> searchByMemberIdAndTripId(@Param("memberId") Long memberId,@Param("tripId") Long tripId, @Param("pageable") Pageable pageable);
+    int countByMemberIdAndTripId(@Param("memberId")Long memberId, @Param("tripId")Long tripId);
     List<SettlementNotes> searchByExpenseId(Long expenseId);
     SettlementNotes searchByMemberIdAndExpenseId(@Param("expenseId") Long expenseId, @Param("memberId") Long memberId);
 }

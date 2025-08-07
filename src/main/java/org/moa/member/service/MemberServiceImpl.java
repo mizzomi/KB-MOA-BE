@@ -1,6 +1,9 @@
 package org.moa.member.service;
 
 import org.moa.global.account.mapper.AccountMapper;
+import org.moa.global.handler.BusinessException;
+import org.moa.global.notification.dto.FcmTokenRequestDto;
+import org.moa.global.type.StatusCode;
 import org.moa.global.util.HashUtil;
 import org.moa.member.dto.join.MemberJoinRequestDto;
 import org.moa.member.dto.verify.MemberVerifyRequestDto;
@@ -11,7 +14,12 @@ import org.moa.member.mapper.MemberMapper;
 import org.moa.trip.dto.trip.TripMemberResponseDto;
 import org.moa.trip.entity.Trip;
 import org.moa.trip.entity.TripMember;
+import org.moa.trip.mapper.TripMapper;
 import org.moa.trip.mapper.TripMemberMapper;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +38,6 @@ public class MemberServiceImpl implements MemberService {
 	private final IdCardMapper idCardMapper;
 	private final AccountMapper accountMapper;
 	private final DriverLicenseMapper driverLicenseMapper;
-	private final HashUtil hashUtil;
 
 	// @Override
 	// public boolean checkDuplicate(String email) {
@@ -44,6 +51,95 @@ public class MemberServiceImpl implements MemberService {
 	// 		.orElseThrow(() -> new NoSuchElementException("해당 이메일의 사용자가 없습니다."));
 	// 	return member;
 	// }
+	@Override
+	@Transactional
+	public boolean updateFcmToken(FcmTokenRequestDto dto){
+		// 1. 현재 로그인된 사용자 정보 조회
+		UserDetails userDetails = null;
+		try {
+			Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+			if (principal instanceof UserDetails) {
+				userDetails = (UserDetails) principal;
+			} else {
+				log.warn("인증된 사용자 정보가 UserDetails 타입이 아닙니다.");
+				throw new BusinessException(StatusCode.UNAUTHORIZED);
+			}
+		} catch (Exception e) {
+			log.error("인증된 사용자 정보를 가져오는 데 실패했습니다.", e);
+			throw new BusinessException(StatusCode.UNAUTHORIZED);
+		}
+
+		// 2. Member 정보 조회
+		Member member;
+		try {
+			member = memberMapper.getByEmail(userDetails.getUsername());
+			if (member == null) {
+				log.warn("사용자 이메일({})에 해당하는 회원 정보를 찾을 수 없습니다.", userDetails.getUsername());
+				throw new BusinessException(StatusCode.BAD_REQUEST, "해당하는 사용자 이메일의 유저가 없습니다.");
+			}
+		} catch (DataAccessException e) {
+			log.error("회원 정보 조회 중 데이터베이스 오류 발생", e);
+			throw new BusinessException(StatusCode.INTERNAL_ERROR, "회원 정보 조회 중 오류가 발생했습니다.");
+		}
+		log.info("member : {} ",member);
+
+		try{
+			int result = memberMapper.updateFcmToken(member.getMemberId(), dto.getFcmToken());
+			if (result == 0) {
+				throw new RuntimeException("FCM 토큰 업데이트 실패: 사용자를 찾을 수 없습니다.");
+			}
+			log.info("FCM 토큰 업데이트 성공. member_id: {}", member.getMemberId());
+		} catch (Exception e) {
+			log.error("FCM 토큰 업데이트 실패. member_id: {}", member.getMemberId(), e);
+			throw e;
+		}
+		return true;
+	}
+
+	@Override
+	@Transactional
+	public boolean deleteFcmToken(){
+		// 1. 현재 로그인된 사용자 정보 조회
+		UserDetails userDetails = null;
+		try {
+			Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+			if (principal instanceof UserDetails) {
+				userDetails = (UserDetails) principal;
+			} else {
+				log.warn("인증된 사용자 정보가 UserDetails 타입이 아닙니다.");
+				throw new BusinessException(StatusCode.UNAUTHORIZED);
+			}
+		} catch (Exception e) {
+			log.error("인증된 사용자 정보를 가져오는 데 실패했습니다.", e);
+			throw new BusinessException(StatusCode.UNAUTHORIZED);
+		}
+
+		// 2. Member 정보 조회
+		Member member;
+		try {
+			member = memberMapper.getByEmail(userDetails.getUsername());
+			if (member == null) {
+				log.warn("사용자 이메일({})에 해당하는 회원 정보를 찾을 수 없습니다.", userDetails.getUsername());
+				throw new BusinessException(StatusCode.BAD_REQUEST, "해당하는 사용자 이메일의 유저가 없습니다.");
+			}
+		} catch (DataAccessException e) {
+			log.error("회원 정보 조회 중 데이터베이스 오류 발생", e);
+			throw new BusinessException(StatusCode.INTERNAL_ERROR, "회원 정보 조회 중 오류가 발생했습니다.");
+		}
+		log.info("member : {} ",member);
+
+		try{
+			int result = memberMapper.deleteFcmToken(member.getMemberId());
+			if (result == 0) {
+				throw new RuntimeException("FCM 토큰 업데이트 실패: 사용자를 찾을 수 없습니다.");
+			}
+			log.info("FCM 토큰 업데이트 성공. member_id: {}", member.getMemberId());
+		} catch (Exception e) {
+			log.error("FCM 토큰 업데이트 실패. member_id: {}", member.getMemberId(), e);
+			throw e;
+		}
+		return true;
+	}
 
 	@Transactional
 	@Override
@@ -131,11 +227,23 @@ public class MemberServiceImpl implements MemberService {
 	}
 
 	@Override
+	@Transactional
 	public Long searchUserIdByEmail(String email) {
 		return memberMapper.getByEmail(email).getMemberId();
 	}
 
 	@Override
+	public Long existUserIdByEmail(String email, Long tripId) {
+		Long memberId = memberMapper.getByEmail(email).getMemberId();
+		int count = tripMemberMapper.existMemberInTrip(tripId,memberId);
+		if(count > 0){
+			throw new BusinessException(StatusCode.BAD_REQUEST,"이미 유저가 여행에 존재합니다");
+		}
+		return memberId;
+	}
+
+	@Override
+	@Transactional
 	public List<TripMemberResponseDto> getTripMembers(Long tripId){
 		// 1. tripId를 기반으로 TRIP_MEMBER 에서 member_id 들 뽑기
 		List<TripMember> tripMembers = tripMemberMapper.searchTripMembersByTripId(tripId);

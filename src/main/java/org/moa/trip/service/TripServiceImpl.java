@@ -2,12 +2,13 @@ package org.moa.trip.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.moa.global.notification.entity.Notification;
+import org.moa.global.notification.mapper.NotificationMapper;
+import org.moa.global.service.FcmService;
+import org.moa.global.type.NotificationType;
 import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
-import org.moa.trip.dto.trip.TripCreateRequestDto;
-import org.moa.trip.dto.trip.TripDetailResponseDto;
-import org.moa.trip.dto.trip.TripListResponseDto;
-import org.moa.trip.dto.trip.TripLocationResponseDto;
+import org.moa.trip.dto.trip.*;
 import org.moa.trip.entity.Trip;
 import org.moa.trip.entity.TripDay;
 import org.moa.trip.entity.TripLocation;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,9 +35,12 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class TripServiceImpl implements TripService {
+    private final FcmService fcmService;
+
     private final TripMapper tripMapper;
     private final TripMemberMapper tripMemberMapper;
     private final MemberMapper memberMapper;
+    private final NotificationMapper notificationMapper;
 
     @Override
     @Transactional
@@ -72,18 +77,81 @@ public class TripServiceImpl implements TripService {
         // 호스트 참여를 DB에 저장
         tripMemberMapper.insert(host);
 
-//      유저 추가를 여행에 또 새로 저장해야하나....
-//      newTrip.getTripMembers().add(host);
+        // 3. startDate ~ endDate 사이의 TripDay 생성 및 DB 저장
+        List<TripDay> tripDaysToInsert = new ArrayList<>();
+        LocalDate startDate = dto.getStartTime().toLocalDate();
+        LocalDate endDate = dto.getEndTime().toLocalDate();
+        long daysBetween = ChronoUnit.DAYS.between(startDate, endDate) + 1;
+
+        for (int i = 0; i < daysBetween; i++) {
+            TripDay tripDay = TripDay.builder()
+                    .tripId(newTrip.getTripId())
+                    .day(startDate.plusDays(i))
+                    .build();
+            tripDaysToInsert.add(tripDay);
+        }
+        tripMapper.insertTripDays(tripDaysToInsert); // 배치 insert 메서드 호출
+
 
         // 참여자들에게 알림 생성
         if(dto.getMemberIds() != null){
             for(Long memberId : dto.getMemberIds()){
-                // !여기서 추후 유저들에게 여행 초대 알림 보내는 서비스 로직 필요! ex) NotificationService 등
+                String title = "여행 초대 요청";
+                String content = member.getName() +"님이 \"" + dto.getTripName() + "\" 여행에 초대하셨습니다.";
+                // 알림 생성
+                Notification notification = Notification.builder()
+                        .memberId(memberId)
+                        .tripId(newTrip.getTripId())
+                        .notificationType(NotificationType.TRIP)
+                        .senderName(member.getName())
+                        .tripName(dto.getTripName())
+                        .title(title)
+                        .content(content)
+                        .isRead(false)
+                        .createdAt(LocalDateTime.now())
+                        .build();
+
+                // 유저들에게 여행 초대 알림 보내는 서비스 로직
+                fcmService.sendNotification(memberId,title,content);
+                // 알림을 DB에 생성하는 로직
+                notificationMapper.createNotification(notification);
             }
         }
-        // !추후 초대받은 유저들이 수락시 newTrip 에 해당 유저들 추가하는 서비스 로직 필요!
         return newTrip.getTripId();
     }
+
+    @Override
+    @Transactional
+    public boolean addMemberToTrip(AddMemberRequestDto dto){
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Member sender = memberMapper.getByEmail(userDetails.getUsername());
+
+        Trip trip = tripMapper.searchTripById(dto.getTripId());
+
+        for(Long memberId : dto.getMemberIds()){
+            String title = "여행 초대 요청";
+            String content = sender.getName() +"님이 \"" + trip.getTripName() + "\" 여행에 초대하셨습니다.";
+            // 알림 생성
+            Notification notification = Notification.builder()
+                    .memberId(memberId)
+                    .tripId(dto.getTripId())
+                    .notificationType(NotificationType.TRIP)
+                    .senderName(sender.getName())
+                    .tripName(trip.getTripName())
+                    .title(title)
+                    .content(content)
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            // 유저들에게 여행 초대 알림 보내는 서비스 로직
+            fcmService.sendNotification(memberId,title,content);
+            // 알림을 DB에 생성하는 로직
+            notificationMapper.createNotification(notification);
+        }
+        return true;
+    }
+
 
     @Override
     @Transactional(readOnly = true)

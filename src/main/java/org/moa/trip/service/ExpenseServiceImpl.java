@@ -3,6 +3,10 @@ package org.moa.trip.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.global.handler.BusinessException;
+import org.moa.global.notification.entity.Notification;
+import org.moa.global.notification.mapper.NotificationMapper;
+import org.moa.global.service.FcmService;
+import org.moa.global.type.NotificationType;
 import org.moa.global.type.StatusCode;
 import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
@@ -27,6 +31,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -34,11 +39,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExpenseServiceImpl implements ExpenseService{
     private final SettlementService settlementService;
+    private final FcmService fcmService;
 
     private final TripMapper tripMapper;
     private final ExpenseMapper expenseMapper;
     private final SettlementMapper settlementMapper;
     private final MemberMapper memberMapper;
+    private final NotificationMapper notificationMapper;
 
     @Override
     @Transactional
@@ -64,6 +71,7 @@ public class ExpenseServiceImpl implements ExpenseService{
                 .tripId(dto.getTripId())
                 .memberId(member.getMemberId()) // DTO에서 받는 결제자 ID
                 .expenseName(dto.getExpenseName())
+                .expenseDate(LocalDateTime.now())
                 .amount(dto.getAmount())
                 .location(trip.getTripLocation()) // 한 번 조회한 trip 객체 재사용
                 .settlementCompleted(false)
@@ -86,8 +94,33 @@ public class ExpenseServiceImpl implements ExpenseService{
         for(int i=0;i<dto.getExpenses().size();i++){
             Long creatorId = member.getMemberId();
             Long memberId = dto.getExpenses().get(i).getMemberId();
+            log.info("expense : {}", dto.getExpenses().get(i));
+            log.info("settlement 받는 memberId : {}", memberId);
             BigDecimal amount = dto.getExpenses().get(i).getAmount();
             settlementService.createSettlement(newExpense.getExpenseId(), newExpense.getTripId(), creatorId , memberId, amount);
+
+            if(!creatorId.equals(memberId)){
+                String title = "정산 요청";
+                String content = member.getName() +"님이 \"" + trip.getTripName() + "\" 여행의 정산을 요청하셨습니다.";
+                // 알림 생성
+                Notification notification = Notification.builder()
+                        .memberId(memberId)
+                        .tripId(newExpense.getTripId())
+                        .expenseId(newExpense.getExpenseId())
+                        .notificationType(NotificationType.SETTLE)
+                        .senderName(member.getName())
+                        .tripName(trip.getTripName())
+                        .title(title)
+                        .content(content)
+                        .isRead(false)
+                        .createdAt(LocalDateTime.now())
+                        .build();
+
+                // 유저들에게 정산 알림 보내는 서비스 로직
+                fcmService.sendNotification(memberId,title,content);
+                // 알림을 DB에 생성하는 로직
+                notificationMapper.createNotification(notification);
+            }
         }
         return true;
     }
@@ -115,7 +148,9 @@ public class ExpenseServiceImpl implements ExpenseService{
             log.info("getExpenses: 사용자 {}의 여행 {}에 대한 정산 내역이 없습니다.", memberId, tripId);
             return new PageImpl<>(Collections.emptyList(),pageable,0);
         }
-        int total = settlementNotes.size();
+
+        int total = settlementMapper.countByMemberIdAndTripId(memberId, tripId);
+        log.info("size : {}", total);
 
         List<ExpenseResponseDto> responseDtos = new ArrayList<>();
         // 각 정산 내역마다 처리
@@ -150,6 +185,10 @@ public class ExpenseServiceImpl implements ExpenseService{
             responseDtos.add(dto);
             log.info("received : {}, shareAmount : {}, status : {}",dto.getReceived(), dto.getShareAmount(),dto.getStatus());
         }
+
+//        // 최종 responseDtos를 expenseDate로 내림차순(DESC) 정렬
+//        responseDtos.sort(Comparator.comparing(ExpenseResponseDto::getExpenseDate).reversed());
+
         return new PageImpl<>(responseDtos, pageable, total);
     }
 

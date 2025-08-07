@@ -48,28 +48,26 @@ CREATE TABLE MEMBER
 -- ========================================================================================
 -- 사업자 테이블
 -- ========================================================================================
-CREATE TABLE OWNER
-(
-    owner_id       BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    owner_password VARCHAR(255) NOT NULL,
-    owner_no       VARCHAR(255) NOT NULL,
-    business_id    BIGINT       NOT NULL,
-    business_type  ENUM ('TRANSPORT' , 'ACCOMMODATION' , 'RESTAURANT' ));
+CREATE TABLE owner (
+                       business_id     VARCHAR(255)   NOT NULL,
+                       business_kind   ENUM(
+                        'TRANSPORT',
+                        'ACCOMMODATION',
+                        'RESTAURANT'
+                    ) NOT NULL,
+                       member_id       BIGINT         NOT NULL,
+                       created_at      TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                       updated_at      TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
+                           ON UPDATE CURRENT_TIMESTAMP,
 
--- ========================================================================================
--- 알림 테이블
--- ========================================================================================
-CREATE TABLE NOTIFICATION
-(
-    notification_id   BIGINT                                                                              NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 알림 ID (PK)
-    member_id         BIGINT                                                                              NOT NULL,                            -- 수신자 ID (FK)
-    notification_type ENUM ('travel_invite', 'settlement_request', 'room_reserved', 'transport_reserved') NULL,                                -- 알림 유형
-    title             VARCHAR(100)                                                                        NULL,                                -- 알림 제목
-    content           TEXT                                                                                NULL,                                -- 알림 내용
-    is_read           BOOLEAN                                                                             NOT NULL DEFAULT FALSE,              -- 읽음 여부
-    created_at        TIMESTAMP                                                                           NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 생성일시 (자동 등록)
+    -- composite PK
+                       PRIMARY KEY (business_id, business_kind),
 
-    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id)                                                                                      -- 수신자 ID 외래키
+    -- member 테이블의 FK
+                       CONSTRAINT fk_owner_member
+                           FOREIGN KEY (member_id)
+                               REFERENCES member(member_id)
+                               ON DELETE CASCADE
 );
 
 -- ========================================================================================
@@ -398,6 +396,28 @@ CREATE TABLE EXPENSE
 );
 
 -- ========================================================================================
+-- 알림 테이블
+-- ========================================================================================
+CREATE TABLE NOTIFICATION
+(
+    notification_id   BIGINT                                                                              NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 알림 ID (PK)
+    member_id         BIGINT                                                                              NOT NULL,                            -- 수신자 ID (FK)
+    trip_id           BIGINT       NULL,
+    expense_id        BIGINT       NULL,
+    notification_type ENUM ('TRIP', 'SETTLE') NOT NULL,                                -- 알림 유형
+    sender_name       VARCHAR(100) NOT NULL,
+    trip_name         VARCHAR(255) NOT NULL,
+    title             VARCHAR(100)                                                                        NULL,                                -- 알림 제목
+    content           TEXT                                                                                NULL,                                -- 알림 내용
+    is_read           BOOLEAN                                                                             NOT NULL DEFAULT FALSE,              -- 읽음 여부
+    created_at        TIMESTAMP                                                                           NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 생성일시 (자동 등록)
+
+    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id),                                                                                      -- 수신자 ID 외래키
+    FOREIGN KEY (trip_id) REFERENCES TRIP (trip_id),
+    FOREIGN KEY (expense_id) REFERENCES EXPENSE (expense_id)
+);
+
+-- ========================================================================================
 -- 정산 내역 테이블
 -- ========================================================================================
 CREATE TABLE SETTLEMENT_NOTES
@@ -465,16 +485,38 @@ VALUES (1, 'ROLE_USER', 'karina@test.com', '1234', '카리나', 'asdf1234', '000
        (3, 'ROLE_USER', 'giselle@test.com', '1234', '지젤', 'asdf5678', '0010304000003'),
        (4, 'ROLE_USER', 'ningning@test.com', '1234', '닝닝', 'qwer5678', '0210234000002');
 
-
--- 사업자 테스트용 데이터
-INSERT INTO OWNER (owner_password, owner_no, business_id, business_type)
-VALUES ('trans_owner', '123-45-67890', 1, 'TRANSPORT'), -- 교통
-       ('hotel_owner', '987-65-43210', 1, 'ACCOMMODATION'), -- 숙박
-       ('rest_owner', '456-78-90123', 1, 'RESTAURANT'), -- 해운대 곰장어집
-       ('rest_owner', '456-78-90123', 5, 'RESTAURANT'), -- 이자카야 코이
-       ('rest_owner', '456-78-90123', 7, 'RESTAURANT'), -- 팔선생 중화요리
-       ('rest_owner', '789-23-45678', 10, 'RESTAURANT'), -- 부산 파스타하우스
-       ('rest_owner', '456-78-90123', 15, 'RESTAURANT'); -- 이색분식연구소
+-- 1) MEMBER 테이블에 사업자 계정 추가
+INSERT INTO MEMBER (
+    member_id,
+    member_type,
+    email,
+    password,
+    name,
+    fcm_token,
+    id_card_number
+) VALUES
+      (5, 'ROLE_OWNER', '123-45-67890',    '1234',  '교통사업자',       NULL, 'OWN0000001'),
+      (6, 'ROLE_OWNER', '987-65-43210',    '1234',  '숙박사업자',       NULL, 'OWN0000002'),
+      (7, 'ROLE_OWNER', '456-78-90123-1',    '1234',  '해운대곰장어사업자', NULL, 'OWN0000003'),
+      (8, 'ROLE_OWNER', '456-78-90123-2',    '1234',  '코이이자카야사업자', NULL, 'OWN0000004'),
+      (9, 'ROLE_OWNER', '456-78-90123-3',    '1234',  '팔선생중화요리사업자',NULL,'OWN0000005'),
+      (10, 'ROLE_OWNER', '789-23-45678-4',    '1234',  '파스타하우스사업자',  NULL, 'OWN0000006'),
+      (11, 'ROLE_OWNER', '456-78-90123-5',    '1234',  '이색분식연구소사업자',NULL,'OWN0000007')
+;
+-- 2) OWNER 테이블에 business ↔ member 연결
+INSERT INTO OWNER (
+    business_id,
+    business_kind,
+    member_id
+) VALUES
+      ( 1, 'TRANSPORT',    5),
+      ( 1, 'ACCOMMODATION', 6),
+      ( 1, 'RESTAURANT',   7),  -- 해운대 곰장어집
+      ( 5, 'RESTAURANT',   8),  -- 코이 이자카야
+      ( 7, 'RESTAURANT',   9),  -- 팔선생 중화요리
+      (10, 'RESTAURANT',  10),  -- 파스타하우스
+      (15, 'RESTAURANT',  11)   -- 이색분식연구소
+;
 
 -- 주민등록증 테스트용 데이터
 INSERT INTO ID_CARD (member_id, id_card_number, name, issued_date, address, image_url)
@@ -1028,57 +1070,57 @@ INSERT INTO REST_TIME_SLOT (rest_id, res_time, max_capacity) VALUES
 (15, '11:00', 5), (15, '12:00', 5), (15, '13:00', 5),
 (15, '14:00', 5), (15, '15:00', 5), (15, '16:00', 5),
 (15, '17:00', 5), (15, '18:00', 5), (15, '19:00', 5);
-
 -- 비용 테스트용 데이터
 INSERT INTO EXPENSE (trip_id, member_id, expense_name, expense_date, amount, location, settlement_completed)
 VALUES (2, 2, '교통비', '2025-08-05 17:10:00' ,149400, 'BUSAN', false),
-       (2, 2, '숙박 비용', '2025-08-06 19:10:00' ,193000, 'BUSAN', false),
+       (2, 2, '숙박 비용', '2025-08-06 18:10:00' ,193000, 'BUSAN', false),
        (2, 3, '돼지 국밥', '2025-08-06 19:10:00' ,45000, 'BUSAN', false),
        (2, 4, '부산 밀면', '2025-08-06 19:10:00' ,30000, 'BUSAN', false),
        (2, 2, '부산 꼼장어', '2025-08-06 19:10:00' ,50000, 'BUSAN', false),
        (2, 2, '숙박 비용', '2025-08-06 19:10:00' ,210000, 'BUSAN', false),
        (2, 3, '이재모 피자', '2025-08-06 19:10:00' ,40000, 'BUSAN', false),
-       (2, 4, '버블티&카페', '2025-08-06 19:10:00' ,18000, 'BUSAN', false),
-       (2, 2, '교통비', '2025-08-05 17:10:00' ,149400, 'BUSAN', false);
+       (2, 4, '버블티&카페', '2025-08-06 20:10:00' ,18000, 'BUSAN', false),
+       (2, 2, '교통비', '2025-08-06 21:10:00' ,149400, 'BUSAN', false);
 
-INSERT INTO SETTLEMENT_NOTES (expense_id, trip_id, member_id, share_amount, is_payed, received)
+INSERT INTO SETTLEMENT_NOTES (expense_id, trip_id, member_id, share_amount, is_payed, received, created_at)
 VALUES
 -- (2, 2, '교통비', 149400, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(1, 2, 2, 49800, true, false),
-(1, 2, 3, 49800, false, true),
-(1, 2, 4, 49800, false, true),
+(1, 2, 2, 49800, true, false, '2025-08-05 17:10:00'),
+(1, 2, 3, 49800, false, true, '2025-08-05 17:10:00'),
+(1, 2, 4, 49800, false, true, '2025-08-05 17:10:00'),
 -- (2, 2, '숙박 비용', 193000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(2, 2, 2, 38600, true, false),
-(2, 2, 3, 38600, false, true),
-(2, 2, 4, 38600, false, true),
+(2, 2, 2, 38600, true, false, '2025-08-06 18:10:00'),
+(2, 2, 3, 38600, false, true, '2025-08-06 18:10:00'),
+(2, 2, 4, 38600, false, true, '2025-08-06 18:10:00'),
 -- (2, 3, '돼지 국밥', 45000, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
-(3, 2, 2, 15000, false, true),
-(3, 2, 3, 15000, true, false),
-(3, 2, 4, 15000, false, true),
+(3, 2, 2, 15000, false, true, '2025-08-06 19:10:00'),
+(3, 2, 3, 15000, true, false, '2025-08-06 19:10:00'),
+(3, 2, 4, 15000, false, true, '2025-08-06 19:10:00'),
 -- (2, 2, '부산 밀면', 30000, 'BUSAN', false)에 대한 정산 (지젤이 계산)
-(4, 2, 2, 10000, false, true),
-(4, 2, 3, 10000, false, true),
-(4, 2, 4, 10000, true, false),
+(4, 2, 2, 10000, false, true, '2025-08-06 19:10:00'),
+(4, 2, 3, 10000, false, true, '2025-08-06 19:10:00'),
+(4, 2, 4, 10000, true, false, '2025-08-06 19:10:00'),
 -- (2, 2, '부산 꼼장어', 50000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(5, 2, 2, 16667, true, false),
-(5, 2, 3, 16666, false, true),
-(5, 2, 4, 16666, false, true),
+(5, 2, 2, 16667, true, false, '2025-08-06 19:10:00'),
+(5, 2, 3, 16666, false, true, '2025-08-06 19:10:00'),
+(5, 2, 4, 16666, false, true, '2025-08-06 19:10:00'),
 -- (2, 2, '숙박 비용', 210000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(6, 2, 2, 70000, true, false),
-(6, 2, 3, 70000, false, true),
-(6, 2, 4, 70000, false, true),
+(6, 2, 2, 70000, true, false, '2025-08-06 19:10:00'),
+(6, 2, 3, 70000, false, true, '2025-08-06 19:10:00'),
+(6, 2, 4, 70000, false, true, '2025-08-06 19:10:00'),
 -- (2, 3, '이재모 피자', 40000, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
-(7, 2, 2, 13334, false, true),
-(7, 2, 3, 13333, true, false),
-(7, 2, 4, 13333, false, true),
+(7, 2, 2, 13334, false, true, '2025-08-06 19:10:00'),
+(7, 2, 3, 13333, true, false, '2025-08-06 19:10:00'),
+(7, 2, 4, 13333, false, true, '2025-08-06 19:10:00'),
 -- (2, 2, '버블티&카페', 18000, 'BUSAN', false)에 대한 정산 (지젤이 계산)
-(8, 2, 2, 6000, false, true),
-(8, 2, 3, 6000, false, true),
-(8, 2, 4, 6000, true, false),
+(8, 2, 2, 6000, false, true, '2025-08-06 20:10:00'),
+(8, 2, 3, 6000, false, true, '2025-08-06 20:10:00'),
+(8, 2, 4, 6000, true, false, '2025-08-06 20:10:00'),
 -- (2, 2, '교통비', 149400, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(9, 2, 2, 49800, true, false),
-(9, 2, 3, 49800, false, true),
-(9, 2, 4, 49800, false, true);
+(9, 2, 2, 49800, true, false, '2025-08-06 21:10:00'),
+(9, 2, 3, 49800, false, true, '2025-08-06 21:10:00'),
+(9, 2, 4, 49800, false, true, '2025-08-06 21:10:00');
+
 
 INSERT INTO TRIP_RECORDS (trip_id, member_id, title, record_date, content)
 VALUES (1, 1, '부산 도착~', '2025-08-01', '내일 이재모 피자 먹어야지 ㅎㅎ 숙소도 너무 좋다'),

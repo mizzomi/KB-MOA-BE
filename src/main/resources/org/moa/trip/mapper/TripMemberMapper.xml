@@ -18,6 +18,12 @@
                  #{joinedAt}
                  )
     </insert>
+    <select id="existMemberInTrip" resultType="int">
+        SELECT COUNT(*)
+        FROM TRIP_MEMBER
+        WHERE trip_id = #{tripId}
+        AND member_id = #{memberId}
+    </select>
     <select id="searchTripMembersByTripId" resultType="org.moa.trip.entity.TripMember">
         SELECT *
         FROM TRIP_MEMBER

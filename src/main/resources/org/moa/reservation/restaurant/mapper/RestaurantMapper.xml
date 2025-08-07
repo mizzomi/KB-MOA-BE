@@ -166,6 +166,7 @@
 
     <select id="getRestaurantReservationsByTripId" resultType="org.moa.reservation.dto.ReservationItemResponseDto">
         SELECT
+            rr.reservation_id as reservationId,
             ri.rest_name as name,
             rr.rest_id as itemId,
             ri.rest_image_url as imageUrl,
@@ -182,6 +183,7 @@
 
     <select id="getRestaurantReservationsByDateAndMember" resultType="org.moa.reservation.dto.ReservationItemResponseDto">
         SELECT
+            rr.reservation_id as reservationId,
             ri.rest_name as name,
             rr.rest_id as itemId,
             ri.rest_image_url as imageUrl,

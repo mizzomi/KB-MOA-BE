@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.moa.global.notification.mapper.NotificationMapper">
+    <insert id="createNotification" parameterType="org.moa.global.notification.entity.Notification" useGeneratedKeys="true" keyProperty="notificationId">
+        INSERT INTO notification(
+                                 member_id,
+                                 trip_id,
+                                 expense_id,
+                                 notification_type,
+                                 sender_name,
+                                 trip_name,
+                                 title,
+                                 content,
+                                 is_read,
+                                 created_at
+        ) VALUES(
+                 #{memberId},
+                 #{tripId},
+                 #{expenseId},
+                 #{notificationType},
+                 #{senderName},
+                 #{tripName},
+                 #{title},
+                 #{content},
+                 #{isRead},
+                 #{createdAt}
+            )
+    </insert>
+    <select id="searchNotificationsByMemberIdAndUnread" resultType="org.moa.global.notification.entity.Notification">
+        SELECT *
+        FROM NOTIFICATION
+        WHERE member_id = #{memberId}
+            AND is_read = false
+    </select>
+    <update id="readNotification">
+        UPDATE NOTIFICATION
+        SET is_read = true
+        WHERE notification_id = #{notificationId}
+            AND is_read = false
+    </update>
+</mapper>
