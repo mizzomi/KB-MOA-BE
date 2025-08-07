@@ -4,10 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.moa.global.response.ApiResponse;
 import org.moa.member.service.MemberService;
 import org.moa.global.security.domain.CustomUser;
-import org.moa.reservation.accommodation.dto.AccommodationInfoResponse;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.expense.ExpenseResponseDto;
 import org.moa.trip.dto.settlement.SettlementRequestDto;
+import org.moa.trip.dto.trip.AddMemberRequestDto;
 import org.moa.trip.dto.trip.TripCreateRequestDto;
 import org.moa.trip.dto.trip.TripDetailResponseDto;
 import org.moa.trip.dto.trip.TripListResponseDto;
@@ -17,15 +17,12 @@ import org.moa.trip.service.TripService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.time.LocalDate;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -49,6 +46,11 @@ public class TripController {
         Long memberId = customUser.getMember().getMemberId();
         Page<TripListResponseDto> tripPage = tripService.getTripList(memberId, locationName, pageable);
         return ResponseEntity.ok(ApiResponse.of(tripPage));
+    }
+
+    @PostMapping("/trips/member")
+    public ResponseEntity<ApiResponse<?>> addMemberToTrip(@RequestBody AddMemberRequestDto dto){
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(tripService.addMemberToTrip(dto)));
     }
 
     @PostMapping("/expense")
