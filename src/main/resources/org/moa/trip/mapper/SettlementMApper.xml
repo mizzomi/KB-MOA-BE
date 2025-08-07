@@ -36,6 +36,11 @@
         ORDER BY created_at DESC
         LIMIT #{pageable.pageSize} OFFSET #{pageable.offset}
     </select>
+    <select id="countByMemberIdAndTripId" resultType="int">
+        SELECT COUNT(*)
+        FROM SETTLEMENT_NOTES
+        WHERE member_Id = #{memberId} AND trip_id = #{tripId}
+    </select>
     <select id="searchByExpenseId" resultType="org.moa.trip.entity.SettlementNotes">
         SELECT *
         FROM SETTLEMENT_NOTES
