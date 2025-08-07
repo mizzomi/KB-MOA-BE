@@ -7,18 +7,21 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.moa.global.response.ApiResponse;
 import org.moa.global.security.domain.CustomUser;
 import org.moa.global.security.domain.RefreshToken;
 import org.moa.global.security.dto.AuthResultDto;
+import org.moa.global.security.dto.LoginResponseDto;
 import org.moa.global.security.dto.UserInfoDto;
 import org.moa.global.security.service.RedisTokenService;
-import org.moa.global.security.util.JsonResponse;
 import org.moa.global.security.util.JwtProcessor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,7 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 	
 	private final JwtProcessor jwtProcessor;
-	private final RedisTokenService redisTokenService;  // Redis 서비스로 변경
+	private final RedisTokenService redisTokenService;
+	private final ObjectMapper objectMapper;  // Bean으로 주입
 	
 	@Value("${jwt.refresh.cookie.name:refreshToken}")
 	private String refreshTokenCookieName;
@@ -111,8 +115,8 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 		Cookie refreshTokenCookie = createRefreshTokenCookie(result.getRefreshToken());
 		response.addCookie(refreshTokenCookie);
 		
-		// Response Body에는 Access Token과 사용자 정보만 전송
-		AuthResultDto responseBody = AuthResultDto.builder()
+		// Response Body에는 Access Token과 사용자 정보만 전송 (refreshToken 제외)
+		LoginResponseDto responseBody = LoginResponseDto.builder()
 				.accessToken(result.getAccessToken())
 				.user(result.getUser())
 				.expiresIn(result.getExpiresIn())
@@ -122,8 +126,15 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 		log.info("로그인 성공 - memberId: {}, email: {}, IP: {}", 
 				user.getMember().getMemberId(), user.getMember().getEmail(), ipAddress);
 		
-		// JSON 응답
-		JsonResponse.send(response, responseBody);
+		// ApiResponse 형식으로 JSON 응답
+		response.setStatus(HttpStatus.OK.value());
+		response.setContentType("application/json;charset=UTF-8");
+		
+		ApiResponse<LoginResponseDto> apiResponse = ApiResponse.of(responseBody, "Login successful");
+		
+		String jsonResponse = objectMapper.writeValueAsString(apiResponse);
+		response.getWriter().write(jsonResponse);
+		response.getWriter().flush();
 	}
 	
 	/**

@@ -6,21 +6,38 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.moa.global.security.util.JsonResponse;
+import org.moa.global.response.ApiResponse;
+import org.moa.global.type.StatusCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
+	
+	private final ObjectMapper objectMapper;  // Bean으로 주입
+	
 	@Override
 	public void handle(HttpServletRequest request, HttpServletResponse response,
 		AccessDeniedException accessDeniedException) throws IOException, ServletException {
 		log.error("========== 인가 에러 ============");
-		JsonResponse.sendError(response, HttpStatus.FORBIDDEN, "권한이 부족합니다.");
+		log.error("Error: {}", accessDeniedException.getMessage());
+		
+		// ApiResponse 형식으로 응답
+		response.setStatus(HttpStatus.FORBIDDEN.value());
+		response.setContentType("application/json;charset=UTF-8");
+		
+		ApiResponse<Void> apiResponse = ApiResponse.error(StatusCode.ACCESS_DENIED, "권한이 부족합니다.");
+		
+		String jsonResponse = objectMapper.writeValueAsString(apiResponse);
+		response.getWriter().write(jsonResponse);
+		response.getWriter().flush();
 	}
 }

@@ -9,6 +9,10 @@ import org.springframework.http.HttpStatus;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * @deprecated Use ApiResponse instead
+ */
+@Deprecated
 public class JsonResponse {
 	public static <T> void send(HttpServletResponse response, T result) throws IOException {
 		ObjectMapper om = new ObjectMapper();

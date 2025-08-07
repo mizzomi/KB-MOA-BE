@@ -1,3 +1,5 @@
+use moa;
+
 -- 초기화
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -26,6 +28,7 @@ DROP TABLE IF EXISTS ID_CARD;
 DROP TABLE IF EXISTS NOTIFICATION;
 DROP TABLE IF EXISTS OWNER;
 DROP TABLE IF EXISTS MEMBER;
+DROP TABLE IF EXISTS TBL_SECURITY_AUDIT_LOG;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -69,6 +72,30 @@ CREATE TABLE owner (
                                REFERENCES member(member_id)
                                ON DELETE CASCADE
 );
+
+-- Security Audit Log 테이블 (파티셔닝 없는 심플 버전)
+CREATE TABLE IF NOT EXISTS TBL_SECURITY_AUDIT_LOG (
+                                                      AUDIT_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                                      EVENT_TYPE VARCHAR(50) NOT NULL COMMENT '이벤트 타입',
+                                                      MEMBER_ID BIGINT COMMENT '회원 ID',
+                                                      USERNAME VARCHAR(100) COMMENT '사용자명',
+                                                      IP_ADDRESS VARCHAR(45) NOT NULL COMMENT 'IP 주소',
+                                                      USER_AGENT TEXT COMMENT '브라우저 정보',
+                                                      REQUEST_METHOD VARCHAR(10) COMMENT 'HTTP 메소드',
+                                                      REQUEST_URI VARCHAR(255) COMMENT '요청 URI',
+                                                      EVENT_DETAIL TEXT COMMENT '상세 정보',
+                                                      SUCCESS_YN CHAR(1) DEFAULT 'N' COMMENT '성공 여부',
+                                                      ERROR_MESSAGE TEXT COMMENT '에러 메시지',
+                                                      SESSION_ID VARCHAR(100) COMMENT '세션 ID',
+                                                      ACCESS_TOKEN_ID VARCHAR(100) COMMENT 'Access Token ID',
+                                                      REFRESH_TOKEN_ID VARCHAR(100) COMMENT 'Refresh Token ID',
+                                                      CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시간',
+
+                                                      INDEX IDX_MEMBER_ID (MEMBER_ID),
+                                                      INDEX IDX_EVENT_TYPE (EVENT_TYPE),
+                                                      INDEX IDX_CREATED_AT (CREATED_AT),
+                                                      INDEX IDX_IP_ADDRESS (IP_ADDRESS)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='보안 감사 로그';
 
 -- ========================================================================================
 -- 주민등록증 테이블
