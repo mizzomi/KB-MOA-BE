@@ -30,4 +30,9 @@ public interface ReservationMapper {
 	// QR 권한 검증
 	boolean isTripMemberByReservationIdAndMemberId(@Param("reservationId") Long reservationId,
 												   @Param("memberId") Long memberId);
+
+	// 사장님 사업장 소유권 검증
+	boolean isOwnerOfBusiness(@Param("ownerId")Long ownerId,
+							  @Param("businessId") Long businessId,
+							  @Param("businessType") String businessType);
 }
