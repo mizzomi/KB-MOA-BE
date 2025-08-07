@@ -16,9 +16,9 @@
 
     <select id="findMemberIdByReservationId" parameterType="long" resultType="long">
         SELECT t.member_id
-        FROM reservation r
-                 JOIN trip_day td ON r.trip_day_id = td.trip_day_id
-                 JOIN trip t ON td.trip_id = t.trip_id
+        FROM RESERVATION r
+                 JOIN TRIP_DAY td ON r.trip_day_id = td.trip_day_id
+                 JOIN TRIP t ON td.trip_id = t.trip_id
         WHERE r.reservation_id = #{reservationId}
     </select>
 
@@ -82,11 +82,22 @@
     <select id="isTripMemberByReservationIdAndMemberId" resultType="boolean" parameterType="map">
         SELECT EXISTS (
             SELECT 1
-            FROM reservation r
-                     JOIN trip_day td ON r.trip_day_id = td.trip_day_id
-                     JOIN trip_member tm ON td.trip_id = tm.trip_id
+            FROM RESERVATION r
+                     JOIN TRIP_DAY td ON r.trip_day_id = td.trip_day_id
+                     JOIN TRIP_MEMBER tm ON td.trip_id = tm.trip_id
             WHERE r.reservation_id = #{reservationId}
               AND tm.member_id = #{memberId}
+        )
+    </select>
+
+    <!-- 사장님 식당 검증 -->
+    <select id="isOwnerOfBusiness" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM OWNER
+            WHERE owner_id = #{ownerId}
+              AND business_id = #{businessId}
+              AND business_type = #{businessType}
         )
     </select>
 
