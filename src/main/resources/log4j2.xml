@@ -1,23 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
 
-    <!-- Appender, Layout 설정 -->
+    <!-- Appender, Layout Configuration -->
     <Appenders>
         <Console name="console" target="SYSTEM_OUT">
-            <PatternLayout pattern=" %-5level %c(%M:%L) - %m%n"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5level %c(%M:%L) - %m%n"/>
         </Console>
+        
+        <!-- Security Audit Log File -->
+        <RollingFile name="securityFile" fileName="logs/security.log"
+                     filePattern="logs/security-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
     </Appenders>
 
-    <!-- Logger 설정 -->
+    <!-- Logger Configuration -->
     <Loggers>
         <Root level="INFO">
             <AppenderRef ref="console"/>
         </Root>
+        
         <Logger name="org.moa" level="INFO" additivity="false">
             <AppenderRef ref="console"/>
         </Logger>
+        
+        <!-- Security Logging -->
+        <Logger name="org.moa.global.security" level="DEBUG" additivity="false">
+            <AppenderRef ref="console"/>
+            <AppenderRef ref="securityFile"/>
+        </Logger>
 
         <Logger name="org.springframework" level="INFO" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+        
+        <Logger name="org.springframework.security" level="INFO" additivity="false">
             <AppenderRef ref="console"/>
         </Logger>
 

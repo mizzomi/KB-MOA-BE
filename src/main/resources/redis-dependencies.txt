@@ -1,0 +1,15 @@
+# Gradle
+implementation 'org.springframework.data:spring-data-redis:2.7.0'
+implementation 'redis.clients:jedis:4.2.3'
+
+# Maven
+<dependency>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-redis</artifactId>
+    <version>2.7.0</version>
+</dependency>
+<dependency>
+    <groupId>redis.clients</groupId>
+    <artifactId>jedis</artifactId>
+    <version>4.2.3</version>
+</dependency>

@@ -3,6 +3,7 @@ package org.moa.global.security.config;
 import org.moa.global.security.filter.AuthenticationErrorFilter;
 import org.moa.global.security.filter.JwtAuthenticationFilter;
 import org.moa.global.security.filter.JwtUsernamePasswordAuthenticationFilter;
+import org.moa.global.security.filter.RateLimitingFilter;
 import org.moa.global.security.handler.CustomAccessDeniedHandler;
 import org.moa.global.security.handler.CustomAuthenticationEntryPoint;
 import org.mybatis.spring.annotation.MapperScan;
@@ -43,6 +44,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	private final UserDetailsService userDetailsService;
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	private final AuthenticationErrorFilter authenticationErrorFilter;
+	private final RateLimitingFilter rateLimitingFilter;
 	private final CustomAccessDeniedHandler accessDeniedHandler;
 	private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
@@ -72,12 +74,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public CorsFilter corsFilter() {
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowCredentials(true);
+		config.setAllowCredentials(true);  // Cookie 전송 허용
 		// config.addAllowedOriginPattern("*");
 		config.addAllowedOrigin("http://localhost:5173");
 		config.addAllowedHeader("*");
 		config.addAllowedMethod("*");
 		config.addExposedHeader("Authorization");
+		config.addExposedHeader("Token-Expired");  // 토큰 만료 헤더 노출
 		config.setMaxAge(3600L); //preflight 결과 캐시
 		source.registerCorsConfiguration("/**", config);
 		return new CorsFilter(source);
@@ -97,6 +100,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		http
 			.addFilterBefore(corsFilter(), ChannelProcessingFilter.class)
 			.addFilterBefore(encodingFilter(), CsrfFilter.class)
+			.addFilterBefore(rateLimitingFilter, ChannelProcessingFilter.class)  // Rate Limiting 필터 추가
 			.addFilterBefore(authenticationErrorFilter, UsernamePasswordAuthenticationFilter.class)
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 			.addFilterBefore(jwtUsernamePasswordAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -120,6 +124,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 			// API 경로별 권한 설정
 			.antMatchers("/api/public/**").permitAll()
+			.antMatchers("/api/public/auth/refresh").permitAll()  // 토큰 리프레시 허용
+			.antMatchers("/api/auth/logout").authenticated()  // 로그아웃은 인증 필요
+			.antMatchers("/api/auth/me").authenticated()  // 현재 사용자 정보는 인증 필요
 			// 역할별 접근 제한
 			.antMatchers("/api/member").access("hasRole('ROLE_USER')")
 			.antMatchers("/api/admin").access("hasRole('ROLE_ADMIN')")
