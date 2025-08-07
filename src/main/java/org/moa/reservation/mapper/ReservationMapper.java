@@ -31,6 +31,8 @@ public interface ReservationMapper {
 	boolean isTripMemberByReservationIdAndMemberId(@Param("reservationId") Long reservationId,
 												   @Param("memberId") Long memberId);
 
-	// 사장님 식당 검증
-	boolean isOwnerOfBusiness(Long ownerId, Long businessId, String businessType);
+	// 사장님 사업장 소유권 검증
+	boolean isOwnerOfBusiness(@Param("ownerId")Long ownerId,
+							  @Param("businessId") Long businessId,
+							  @Param("businessType") String businessType);
 }

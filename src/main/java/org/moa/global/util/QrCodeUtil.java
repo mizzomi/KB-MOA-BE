@@ -19,10 +19,8 @@ import javax.imageio.ImageIO;
 public class QrCodeUtil {
 
     // QR 생성 + 암호화
-    public static String generateEncryptedQr(String plainTextJson) throws Exception {
-        String encrypted = AesUtil.encryptWithIv(plainTextJson);
-        BufferedImage qrImage = generateQrImage(encrypted);
-
+    public static String generateEncryptedQr(String encryptedData) throws Exception {
+        BufferedImage qrImage = generateQrImage(encryptedData);
 
         // ========= 테스트 시작 =========
         // QR 이미지 파일로 저장 ! ! !

@@ -29,19 +29,6 @@ public class QrServiceImpl implements QrService{
     // 주민등록증 QR 생성 API
     @Override
     public String generateIdCardQr(Long memberId) throws Exception {
-            // ========= 테스트용 =========
-            // memberId가 1이면 고정된 QR Base64 반환
-            if (memberId == 1) {
-                Map<String, Long> info = new HashMap<>();
-                info.put("member_id", memberId);
-                String json = toJson(info);
-
-                String encrypted = AesUtil.encryptWithIv(json);
-
-                log.info("Postman 테스트용 주민등록증 QR data 파라미터: {}", encrypted);
-
-                return QrCodeUtil.generateEncryptedQr(json);
-            }
 
             // 1. DB에서 해당 memberId의 주민등록증 정보 존재 확인
             IdCard card = idCardMapper.findByMemberId(memberId);
@@ -55,12 +42,16 @@ public class QrServiceImpl implements QrService{
 
             String json = toJson(info); // json = "{\"member_id\":1}" 로 직렬화
 
-            return QrCodeUtil.generateEncryptedQr(json);
+            String encrypted = AesUtil.encryptWithIv(json);
+            log.info("Postman 테스트용 주민등록증 QR data 파라미터: {}", encrypted);
+
+            return QrCodeUtil.generateEncryptedQr(encrypted);
     }
 
     // 주민등록증 QR 복호화 API
     @Override
     public IdCardResponseDto decryptIdCardQr(String encryptedText) {
+
             String json = AesUtil.decryptWithIv(encryptedText);
             Map<String, Object> data = fromJson(json); // json -> map 으로 파싱
 
@@ -83,26 +74,6 @@ public class QrServiceImpl implements QrService{
     // 예약 내역 QR 생성 API
     @Override
     public String generateReservationQr(Long reservationId, Long memberId) throws Exception {
-
-        // ========= 테스트용 =========
-        // reservationId가 1이면 고정된 QR Base64 반환
-        if (reservationId == 1L) {
-            Map<String, Object> mock = new HashMap<>();
-            mock.put("type", "RESTAURANT");
-            mock.put("reservationId", 1L);
-            mock.put("restId", 999L);
-            mock.put("date", "2025-08-01");
-            mock.put("time", "13:00");
-            mock.put("resNum", 2);
-            mock.put("status", "reserved");
-
-            String json = toJson(mock);
-            String encrypted = AesUtil.encryptWithIv(json);
-
-            log.info("Postman 테스트용 예약 QR data 파라미터: {}", encrypted);
-
-            return QrCodeUtil.generateEncryptedQr(encrypted);
-        }
 
         // 1. 권한 검사
         boolean isMember = reservationMapper.isTripMemberByReservationIdAndMemberId(reservationId, memberId);
@@ -135,6 +106,8 @@ public class QrServiceImpl implements QrService{
 
         // 5. 암호화 및 QR 생성
         String encrypted = AesUtil.encryptWithIv(json);
+        log.info("Postman 테스트용 예약 QR data 파라미터: {}", encrypted);
+
         return QrCodeUtil.generateEncryptedQr(encrypted);
     }
 
@@ -160,6 +133,7 @@ public class QrServiceImpl implements QrService{
     // 예약 내역 QR 복호화 API
     @Override
     public Object decryptReservationQr(String encryptedText, Long ownerId) {
+
         String json = AesUtil.decryptWithIv(encryptedText);
         Map<String, Object> data = fromJson(json);
 
@@ -174,7 +148,7 @@ public class QrServiceImpl implements QrService{
                 QrRestaurantReservationDto dto = new ObjectMapper().convertValue(data,QrRestaurantReservationDto.class);
 
                 if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getRestId(), "RESTAURANT")) {
-                    throw new SecurityException("이 예약 정보에 접근할 수 없습니다.");
+                    throw new SecurityException("이 예약에 접근할 권한이 없습니다.");
                 }
 
                 yield dto;
@@ -184,7 +158,7 @@ public class QrServiceImpl implements QrService{
                 QrAccommodationReservationDto dto = new ObjectMapper().convertValue(data, QrAccommodationReservationDto.class);
 
                 if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getAccomId(), "ACCOMMODATION")) {
-                    throw new SecurityException("이 예약 정보에 접근할 수 없습니다.");
+                    throw new SecurityException("이 예약에 접근할 권한이 없습니다.");
                 }
 
                 yield dto;
@@ -194,7 +168,7 @@ public class QrServiceImpl implements QrService{
                 QrTransportReservationDto dto = new ObjectMapper().convertValue(data, QrTransportReservationDto.class);
 
                 if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getTransportId(), "TRANSPORT")) {
-                    throw new SecurityException("이 예약 정보에 접근할 수 없습니다.");
+                    throw new SecurityException("이 예약에 접근할 권한이 없습니다.");
                 }
 
                 yield dto;
