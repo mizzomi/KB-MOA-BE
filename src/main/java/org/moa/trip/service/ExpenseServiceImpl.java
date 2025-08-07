@@ -147,7 +147,9 @@ public class ExpenseServiceImpl implements ExpenseService{
             log.info("getExpenses: 사용자 {}의 여행 {}에 대한 정산 내역이 없습니다.", memberId, tripId);
             return new PageImpl<>(Collections.emptyList(),pageable,0);
         }
-        int total = settlementNotes.size();
+
+        int total = settlementMapper.countByMemberIdAndTripId(memberId, tripId);
+        log.info("size : {}", total);
 
         List<ExpenseResponseDto> responseDtos = new ArrayList<>();
         // 각 정산 내역마다 처리
