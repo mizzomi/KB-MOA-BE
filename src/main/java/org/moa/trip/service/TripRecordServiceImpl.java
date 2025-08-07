@@ -55,7 +55,7 @@ public class TripRecordServiceImpl implements TripRecordService {
         tripRecordMapper.insertTripRecord(newRecord);
 
         // 이미지 저장 처리
-        uploadAndSaveImages(dto.getImages(), newRecord.getRecordId());
+        uploadAndSaveImages(dto.getImageUrls(), newRecord.getRecordId());
 
         // createdAt같은 DB 자동 생성 값을 가져오기 위해서 방금 생성한 완전한 값을 다시 조회
         TripRecord savedRecord = tripRecordMapper.findRecordById(newRecord.getRecordId());
@@ -139,7 +139,7 @@ public class TripRecordServiceImpl implements TripRecordService {
         tripRecordImageMapper.deleteImagesByRecordId(recordId);
 
         // 이미지 저장 처리
-        uploadAndSaveImages(dto.getImages(), recordId);
+        uploadAndSaveImages(dto.getImageUrls(), recordId);
 
         // 업데이트된 정보를 다시 조회하여 반환
         TripRecord finalRecord = tripRecordMapper.findRecordById(recordId);
