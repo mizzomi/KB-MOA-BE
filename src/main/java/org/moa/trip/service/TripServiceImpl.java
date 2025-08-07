@@ -128,25 +128,27 @@ public class TripServiceImpl implements TripService {
 
         Trip trip = tripMapper.searchTripById(dto.getTripId());
 
-        String title = "여행 초대 요청";
-        String content = sender.getName() +"님이 \"" + trip.getTripName() + "\" 여행에 초대하셨습니다.";
-        // 알림 생성
-        Notification notification = Notification.builder()
-                .memberId(dto.getMemberId())
-                .tripId(trip.getTripId())
-                .notificationType(NotificationType.TRIP)
-                .senderName(sender.getName())
-                .tripName(trip.getTripName())
-                .title(title)
-                .content(content)
-                .isRead(false)
-                .createdAt(LocalDateTime.now())
-                .build();
+        for(Long memberId : dto.getMemberIds()){
+            String title = "여행 초대 요청";
+            String content = sender.getName() +"님이 \"" + trip.getTripName() + "\" 여행에 초대하셨습니다.";
+            // 알림 생성
+            Notification notification = Notification.builder()
+                    .memberId(memberId)
+                    .tripId(dto.getTripId())
+                    .notificationType(NotificationType.TRIP)
+                    .senderName(sender.getName())
+                    .tripName(trip.getTripName())
+                    .title(title)
+                    .content(content)
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
 
-        // 유저들에게 여행 초대 알림 보내는 서비스 로직
-        fcmService.sendNotification(dto.getMemberId(),title,content);
-        // 알림을 DB에 생성하는 로직
-        notificationMapper.createNotification(notification);
+            // 유저들에게 여행 초대 알림 보내는 서비스 로직
+            fcmService.sendNotification(memberId,title,content);
+            // 알림을 DB에 생성하는 로직
+            notificationMapper.createNotification(notification);
+        }
         return true;
     }
 
