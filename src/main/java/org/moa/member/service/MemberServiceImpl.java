@@ -227,7 +227,13 @@ public class MemberServiceImpl implements MemberService {
 	}
 
 	@Override
-	public Long searchUserIdByEmail(String email, Long tripId) {
+	@Transactional
+	public Long searchUserIdByEmail(String email) {
+		return memberMapper.getByEmail(email).getMemberId();
+	}
+
+	@Override
+	public Long existUserIdByEmail(String email, Long tripId) {
 		Long memberId = memberMapper.getByEmail(email).getMemberId();
 		int count = tripMemberMapper.existMemberInTrip(tripId,memberId);
 		if(count > 0){
@@ -237,6 +243,7 @@ public class MemberServiceImpl implements MemberService {
 	}
 
 	@Override
+	@Transactional
 	public List<TripMemberResponseDto> getTripMembers(Long tripId){
 		// 1. tripId를 기반으로 TRIP_MEMBER 에서 member_id 들 뽑기
 		List<TripMember> tripMembers = tripMemberMapper.searchTripMembersByTripId(tripId);
