@@ -90,14 +90,14 @@
         )
     </select>
 
-    <!-- 사장님 식당 검증 -->
+    <!-- 사장님 사업장 소유권 검증 -->
     <select id="isOwnerOfBusiness" resultType="boolean">
         SELECT EXISTS (
             SELECT 1
             FROM OWNER
-            WHERE owner_id = #{ownerId}
+            WHERE member_id = #{ownerId}
               AND business_id = #{businessId}
-              AND business_type = #{businessType}
+              AND business_kind = #{businessType}
         )
     </select>
 
