@@ -8,7 +8,9 @@ import org.moa.global.util.QrCodeUtil;
 import org.moa.member.dto.qr.IdCardResponseDto;
 import org.moa.member.entity.IdCard;
 import org.moa.member.mapper.IdCardMapper;
+import org.moa.reservation.dto.QrAccommodationReservationDto;
 import org.moa.reservation.dto.QrRestaurantReservationDto;
+import org.moa.reservation.dto.QrTransportReservationDto;
 import org.moa.reservation.mapper.ReservationMapper;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +38,7 @@ public class QrServiceImpl implements QrService{
 
                 String encrypted = AesUtil.encryptWithIv(json);
 
-                log.info("Postman 테스트용 data 파라미터: {}", encrypted);
+                log.info("Postman 테스트용 주민등록증 QR data 파라미터: {}", encrypted);
 
                 return QrCodeUtil.generateEncryptedQr(json);
             }
@@ -81,6 +83,27 @@ public class QrServiceImpl implements QrService{
     // 예약 내역 QR 생성 API
     @Override
     public String generateReservationQr(Long reservationId, Long memberId) throws Exception {
+
+        // ========= 테스트용 =========
+        // reservationId가 1이면 고정된 QR Base64 반환
+        if (reservationId == 1L) {
+            Map<String, Object> mock = new HashMap<>();
+            mock.put("type", "RESTAURANT");
+            mock.put("reservationId", 1L);
+            mock.put("restId", 999L);
+            mock.put("date", "2025-08-01");
+            mock.put("time", "13:00");
+            mock.put("resNum", 2);
+            mock.put("status", "reserved");
+
+            String json = toJson(mock);
+            String encrypted = AesUtil.encryptWithIv(json);
+
+            log.info("Postman 테스트용 예약 QR data 파라미터: {}", encrypted);
+
+            return QrCodeUtil.generateEncryptedQr(encrypted);
+        }
+
         // 1. 권한 검사
         boolean isMember = reservationMapper.isTripMemberByReservationIdAndMemberId(reservationId, memberId);
 
@@ -133,4 +156,52 @@ public class QrServiceImpl implements QrService{
             throw new RuntimeException("JSON 역직렬화 실패", e);
         }
     }
+
+    // 예약 내역 QR 복호화 API
+    @Override
+    public Object decryptReservationQr(String encryptedText, Long ownerId) {
+        String json = AesUtil.decryptWithIv(encryptedText);
+        Map<String, Object> data = fromJson(json);
+
+        String type = (String) data.get("type");
+
+        if (type == null) {
+            throw new IllegalArgumentException("QR 데이터에 예약 타입이 존재하지 않습니다.");
+        }
+
+        return switch (type) {
+            case "RESTAURANT" -> {
+                QrRestaurantReservationDto dto = new ObjectMapper().convertValue(data,QrRestaurantReservationDto.class);
+
+                if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getRestId(), "RESTAURANT")) {
+                    throw new SecurityException("이 예약 정보에 접근할 수 없습니다.");
+                }
+
+                yield dto;
+            }
+
+            case "ACCOMMODATION" -> {
+                QrAccommodationReservationDto dto = new ObjectMapper().convertValue(data, QrAccommodationReservationDto.class);
+
+                if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getAccomId(), "ACCOMMODATION")) {
+                    throw new SecurityException("이 예약 정보에 접근할 수 없습니다.");
+                }
+
+                yield dto;
+            }
+
+            case "TRANSPORT" -> {
+                QrTransportReservationDto dto = new ObjectMapper().convertValue(data, QrTransportReservationDto.class);
+
+                if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getTransportId(), "TRANSPORT")) {
+                    throw new SecurityException("이 예약 정보에 접근할 수 없습니다.");
+                }
+
+                yield dto;
+            }
+
+            default -> throw new IllegalArgumentException("지원하지 않는 예약입니다.");
+        };
+    }
+
 }
