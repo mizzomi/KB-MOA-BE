@@ -27,6 +27,8 @@ public interface TripMapper {
 
     List<LocalDateTime> searchDayByTripId(Long tripId);
 
+    void insertTripDays(@Param("tripDays")List<TripDay> tripDays);
+
     Long findTripDayId(@Param("tripId") Long tripId, @Param("day") LocalDate departureDate);
 
     List<TripLocation> searchTripLocations();

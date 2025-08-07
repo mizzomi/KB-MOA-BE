@@ -83,6 +83,19 @@
         FROM TRIP_DAY
         WHERE trip_id = #{tripId}
     </select>
+    <insert id="insertTripDays">
+        INSERT INTO TRIP_DAY(
+                             trip_id,
+                             day
+        )
+        VALUES
+            <foreach collection="tripDays" item="tripDay" separator=",">
+                (
+                #{tripDay.tripId},
+                #{tripDay.day}
+                )
+            </foreach>
+    </insert>
     <select id="findTripDayId" resultType="long">
         SELECT trip_day_id
         FROM TRIP_DAY

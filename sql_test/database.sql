@@ -1,4 +1,3 @@
-use moa;
 -- 초기화
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -69,22 +68,6 @@ CREATE TABLE owner (
                            FOREIGN KEY (member_id)
                                REFERENCES member(member_id)
                                ON DELETE CASCADE
-);
-
--- ========================================================================================
--- 알림 테이블
--- ========================================================================================
-CREATE TABLE NOTIFICATION
-(
-    notification_id   BIGINT                                                                              NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 알림 ID (PK)
-    member_id         BIGINT                                                                              NOT NULL,                            -- 수신자 ID (FK)
-    notification_type ENUM ('travel_invite', 'settlement_request', 'room_reserved', 'transport_reserved') NULL,                                -- 알림 유형
-    title             VARCHAR(100)                                                                        NULL,                                -- 알림 제목
-    content           TEXT                                                                                NULL,                                -- 알림 내용
-    is_read           BOOLEAN                                                                             NOT NULL DEFAULT FALSE,              -- 읽음 여부
-    created_at        TIMESTAMP                                                                           NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 생성일시 (자동 등록)
-
-    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id)                                                                                      -- 수신자 ID 외래키
 );
 
 -- ========================================================================================
@@ -410,6 +393,28 @@ CREATE TABLE EXPENSE
 
     FOREIGN KEY (trip_id) REFERENCES TRIP (trip_id)                                                                          -- 여행 ID 외래키
         ON DELETE CASCADE
+);
+
+-- ========================================================================================
+-- 알림 테이블
+-- ========================================================================================
+CREATE TABLE NOTIFICATION
+(
+    notification_id   BIGINT                                                                              NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 알림 ID (PK)
+    member_id         BIGINT                                                                              NOT NULL,                            -- 수신자 ID (FK)
+    trip_id           BIGINT       NULL,
+    expense_id        BIGINT       NULL,
+    notification_type ENUM ('TRIP', 'SETTLE') NOT NULL,                                -- 알림 유형
+    sender_name       VARCHAR(100) NOT NULL,
+    trip_name         VARCHAR(255) NOT NULL,
+    title             VARCHAR(100)                                                                        NULL,                                -- 알림 제목
+    content           TEXT                                                                                NULL,                                -- 알림 내용
+    is_read           BOOLEAN                                                                             NOT NULL DEFAULT FALSE,              -- 읽음 여부
+    created_at        TIMESTAMP                                                                           NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 생성일시 (자동 등록)
+
+    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id),                                                                                      -- 수신자 ID 외래키
+    FOREIGN KEY (trip_id) REFERENCES TRIP (trip_id),
+    FOREIGN KEY (expense_id) REFERENCES EXPENSE (expense_id)
 );
 
 -- ========================================================================================
