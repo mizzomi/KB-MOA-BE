@@ -35,7 +35,12 @@ public class MemberController {
 	}
 
 	@GetMapping("/search-by-email")
-	public ResponseEntity<ApiResponse<?>> searchUserIdByEmail(@RequestParam String email , @RequestParam Long tripId) {
-		return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(memberService.searchUserIdByEmail(email,tripId)));
+	public ResponseEntity<ApiResponse<?>> searchUserIdByEmail(@RequestParam String email) {
+		return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(memberService.searchUserIdByEmail(email)));
+	}
+
+	@GetMapping("/exist-by-email")
+	public ResponseEntity<ApiResponse<?>> existUserIdByEmail(@RequestParam String email , @RequestParam Long tripId) {
+		return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(memberService.existUserIdByEmail(email,tripId)));
 	}
 }
