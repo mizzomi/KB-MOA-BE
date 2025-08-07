@@ -56,21 +56,6 @@ CREATE TABLE OWNER
     business_id    BIGINT       NOT NULL,
     business_type  ENUM ('TRANSPORT' , 'ACCOMMODATION' , 'RESTAURANT' ));
 
--- ========================================================================================
--- 알림 테이블
--- ========================================================================================
-CREATE TABLE NOTIFICATION
-(
-    notification_id   BIGINT                                                                              NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 알림 ID (PK)
-    member_id         BIGINT                                                                              NOT NULL,                            -- 수신자 ID (FK)
-    notification_type ENUM ('travel_invite', 'settlement_request', 'room_reserved', 'transport_reserved') NULL,                                -- 알림 유형
-    title             VARCHAR(100)                                                                        NULL,                                -- 알림 제목
-    content           TEXT                                                                                NULL,                                -- 알림 내용
-    is_read           BOOLEAN                                                                             NOT NULL DEFAULT FALSE,              -- 읽음 여부
-    created_at        TIMESTAMP                                                                           NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 생성일시 (자동 등록)
-
-    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id)                                                                                      -- 수신자 ID 외래키
-);
 
 -- ========================================================================================
 -- 주민등록증 테이블
@@ -127,22 +112,6 @@ CREATE TABLE ACCOUNT
     is_active        BOOLEAN                 DEFAULT TRUE,
     created_at       TIMESTAMP               DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id)
-);
-
--- ========================================================================================
--- 결제 내역 테이블
--- ========================================================================================
-CREATE TABLE PAYMENT_RECORD
-(
-    record_id        BIGINT AUTO_INCREMENT PRIMARY KEY,
-    account_id       BIGINT         NOT NULL,
-    member_id        BIGINT         NOT NULL,
-    payment_name     VARCHAR(100)   NOT NULL,
-    payment_price    DECIMAL(15, 2) NOT NULL,
-    payment_date     DATETIME       NOT NULL,
-    payment_location VARCHAR(255),
-    FOREIGN KEY (account_id) REFERENCES ACCOUNT (account_id),
     FOREIGN KEY (member_id) REFERENCES MEMBER (member_id)
 );
 
@@ -207,6 +176,24 @@ CREATE TABLE TRIP_DAY
         FOREIGN KEY (trip_id)
             REFERENCES TRIP (trip_id)
             ON DELETE CASCADE
+);
+
+-- ========================================================================================
+-- 결제 내역 테이블
+-- ========================================================================================
+CREATE TABLE PAYMENT_RECORD
+(
+    record_id        BIGINT AUTO_INCREMENT PRIMARY KEY,
+    account_id       BIGINT         NOT NULL,
+    member_id        BIGINT         NOT NULL,
+    trip_day_id      BIGINT         NULL,
+    payment_name     VARCHAR(100)   NOT NULL,
+    payment_price    DECIMAL(15, 2) NOT NULL,
+    payment_date     DATETIME       NOT NULL,
+    payment_location VARCHAR(255),
+    FOREIGN KEY (account_id) REFERENCES ACCOUNT (account_id),
+    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id),
+    FOREIGN KEY (trip_day_id) REFERENCES TRIP_DAY (trip_day_id)
 );
 
 -- ========================================================================================
@@ -305,6 +292,7 @@ CREATE TABLE TRAN_RES
     seat_type      ENUM ('general', 'first_class', 'silent', 'family') NOT NULL,   -- 좌석 종류
     booked_at      DATETIME   NULL,                              -- 예약 일자
     price          DECIMAL(15, 2)   NOT NULL,                    -- 가격
+    version        INT           NOT NULL DEFAULT 0,             -- 낙관적락을 위한 버전
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,          -- 생성일시
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,   -- 수정일시
     status ENUM('AVAILABLE', 'PENDING', 'CONFIRMED') NOT NULL DEFAULT 'AVAILABLE',
@@ -393,6 +381,28 @@ CREATE TABLE EXPENSE
 
     FOREIGN KEY (trip_id) REFERENCES TRIP (trip_id)                                                                          -- 여행 ID 외래키
         ON DELETE CASCADE
+);
+
+-- ========================================================================================
+-- 알림 테이블
+-- ========================================================================================
+CREATE TABLE NOTIFICATION
+(
+    notification_id   BIGINT                                                                              NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 알림 ID (PK)
+    member_id         BIGINT                                                                              NOT NULL,                            -- 수신자 ID (FK)
+    trip_id           BIGINT       NULL,
+    expense_id        BIGINT       NULL,
+    notification_type ENUM ('TRIP', 'SETTLE') NOT NULL,                                -- 알림 유형
+    sender_name       VARCHAR(100) NOT NULL,
+    trip_name         VARCHAR(255) NOT NULL,
+    title             VARCHAR(100)                                                                        NULL,                                -- 알림 제목
+    content           TEXT                                                                                NULL,                                -- 알림 내용
+    is_read           BOOLEAN                                                                             NOT NULL DEFAULT FALSE,              -- 읽음 여부
+    created_at        TIMESTAMP                                                                           NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 생성일시 (자동 등록)
+
+    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id),                                                                                      -- 수신자 ID 외래키
+    FOREIGN KEY (trip_id) REFERENCES TRIP (trip_id),
+    FOREIGN KEY (expense_id) REFERENCES EXPENSE (expense_id)
 );
 
 -- ========================================================================================
@@ -584,8 +594,6 @@ VALUES  (1, 1, 'HOST', NOW()), -- 카리나 호스트 부산여행
         (2, 3, 'MEMBER', NOW()), -- 닝닝 멤버 부산여행
         (2, 4, 'MEMBER', NOW()); -- 지젤 멤버 부산여행
 
-
-
 INSERT INTO TRIP_DAY (trip_id, day)
 VALUES
 -- 카리나 부산 여행 (3일)
@@ -598,7 +606,18 @@ VALUES
 (2, '2025-08-04'), -- 6
 (2, '2025-08-05'); -- 7
 
--- 숙박 정보 테스트용 데이터
+INSERT INTO RESERVATION (trip_day_id, res_kind)
+VALUES
+-- trip_day_id: 1, 2, 3, 4 => 카리나 부산 여행
+(1,'ACCOMMODATION'), -- 숙박
+(2,'ACCOMMODATION'), -- 숙박
+(3,'ACCOMMODATION'), -- 숙박
+(4,'ACCOMMODATION'), -- 숙박
+-- trip_day_id : 5, 6, 7 => 윈닝젤 부산 여행
+(5,'ACCOMMODATION'), -- 숙박
+(6,'ACCOMMODATION'), -- 숙박
+(7,'ACCOMMODATION'); -- 숙박
+
 INSERT INTO ACCOMMODATION_INFO (hotel_name, address, location , latitude, longitude, description, hotel_image_url)
 VALUES ('부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 'BUSAN',  35.1664, 129.0624,
         '중심 업무 지구의 고층 유리 건물에 자리한 이 고급 호텔은 서면역에서 도보 5분, 광안리 해수욕장에서 지하철로 33분 거리에 있습니다. \n\n아늑하고 우아한 객실에 무료 Wi-Fi, 평면 TV, 차 및 커피 메이커가 갖춰져 있습니다. 스위트룸에는 거실이 추가되며 업그레이드 스위트룸에는 사우나, 벽난로, 식탁이 마련되어 있습니다. 클럽층 객실에는 무료 조식, 스낵, 애프터눈 티가 제공됩니다. 야구를 테마로 꾸민 스위트룸이 2곳 있습니다. 룸 서비스도 이용 가능합니다. \n\n레스토랑 5곳, 베이커리, 정기 라이브 음악 공연이 열리는 바가 있습니다. 헬스장, 사우나, 골프 연습장, 실내외 수영장도 이용할 수 있습니다.',
@@ -608,46 +627,141 @@ VALUES ('부산 롯데 호텔', '부산광역시 부산진구 가야대로 772',
         'https://yaimg.yanolja.com/v5/2025/05/02/06/1280/6814641ba896e4.56171130.jpg'),
        ('JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 'JEJU',  33.2343, 126.5347,
         '제주의 바다를 마주한 JW 메리어트 제주 리조트 & 스파는 제주 국제공항에서 50분 거리에 위치하고 있습니다. 서귀포 매일올레시장과 산방산, 성산일출봉 등 자연경관 가까이 자리 잡은 JW 메리어트 제주에서 진정한 휴식을 즐겨보세요. 올데이 다이닝 레스토랑 아일랜드 키친에서 브런치 로열과 함께 여유롭게 하루를 시작하고, 더 라운지에서 애프터눈티 세트를 경험하실 수 있습니다.\n\n더 플라잉 호그에서는 우드 파이어 그릴에 구워 낸 제주식 구이 요리를 파인 다이닝 스타일로 추천해 드립니다. SPA by JW에서 페이셜 및 딥 티슈 마사지를 경험하며 웰니스에 집중해 보는 건 어떨까요?\n\n인피니티 풀을 포함해 총 4곳의 실내 수영장 또는 실외 수영장 또한 마련되어 있습니다. 패밀리클럽에서 아이들과 즐거운 시간을 보낼 수 있고, 어린이들을 위한 다양한 키즈 액티비티 프로그램도 준비됩니다. 완벽한 비즈니스 행사와 데스티네이션 웨딩을 계획하신다면, 한식 또는 양식 옵션을 선택하실 수 있는 맞춤 케이터링 메뉴가 제공되는 JW 메리어트 제주의 실내 혹은 실외 이벤트 공간을 활용해 보세요.\n\nLED TV, 미니바, 대리석 욕조 그리고 무료 Wi-Fi가 제공되는 안락한 객실에서 충분한 휴식을 취하세요. 대부분의 객실에 아름다운 오션뷰를 만끽할 수 있는 발코니가 설치되어 있습니다. JW 메리어트 제주에서 숨이 멎을 정도로 아름다운 제주도의 풍경을 경험해보세요.',
-        'https://yaimg.yanolja.com/v5/2025/07/10/09/1280/686f8a74540cf6.30391796.jpg');
+        'https://yaimg.yanolja.com/v5/2025/07/10/09/1280/686f8a74540cf6.30391796.jpg'),
+       ('시그니엘 부산', '부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워', 'BUSAN', '35.1633', '129.1637', '해운대 해변과 부산의 아름다운 스카이라인을 조망할 수 있는 럭셔리 호텔입니다. 최상의 서비스와 현대적인 시설을 자랑하며, 다양한 레스토랑과 수영장, 스파를 갖추고 있습니다.', 'https://yaimg.yanolja.com/v5/2023/01/04/10/1280/63b55a0edcb3e9.58092209.jpg'),
+       ('그랜드조선 부산', '부산광역시 해운대구 해운대해변로 292', 'BUSAN', '35.1639', '129.1610',
+        '해운대 해변가에 위치한 5성급 호텔로, 품격 있는 서비스와 편안한 휴식을 제공합니다. 다양한 식음료 시설과 실내외 수영장, 키즈 라운지 등을 갖추고 있어 가족 여행객에게도 인기가 많습니다.', 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/274680179.jpg?k=9f32fc5cb943f6998db47daaad1044ae59a112f550c14d29913833ef9e09b803&o='),
+       ('파크 하얏트 부산', '부산광역시 해운대구 마린시티1로 51', 'BUSAN', '35.1652', '129.1491', '운대 마린시티에 위치한 럭셔리 호텔로, 광안대교와 수영만 요트경기장의 전경을 감상할 수 있습니다. 고급스러운 객실과 미식 경험을 제공하는 레스토랑, 최신식 피트니스 시설을 갖추고 있습니다.', 'https://yaimg.yanolja.com/v5/2022/09/01/13/1280/6310b57ea38718.17915397.jpg');
 
-INSERT INTO ACCOM_RES (accom_id, reservation_id, trip_day_id, guests, hotel_name, address, price, room_type, room_image_url, checkin_day, checkout_day, max_guests, status)
+
+-- 숙박 정보 테스트용 데이터
+INSERT INTO ACCOM_RES (accom_res.accom_res_id,accom_id, reservation_id, trip_day_id, guests, hotel_name, address, price, room_type, room_image_url, checkin_day, checkout_day, max_guests, status)
 VALUES
-    -- 부산 롯데 호텔(accom_id=1, 총 5개 방)
-    -- 8월 1일: 1개 CONFIRMED, 4개 AVAILABLE (검색 가능)
-    (1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'AVAILABLE'),
-    (1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'AVAILABLE'),
-    (1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'AVAILABLE'),
-    (1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'AVAILABLE'),
-    (1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'AVAILABLE'),
-    -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
-    (1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
-    (1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
-    (1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
-    (1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
-    (1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
-
-    -- 씨마크 호텔(accom_id=2, 총 4개 방)
+    -- 카리나 -> 부산 롯데(8/1) twin, 시그니엘(8/2) twin, 그랜드조선(8/3) twin, 파크 하얏트(8/4) deluxe
+    -- 윈닝젤 -> 부산 롯데(8/1~8/2) family, 시그니엘(8/3) deluxe
+    -- 부산 롯데 호텔(accom_id=1, 방 종류 3개, 방은 2개씩)
     -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
-    (2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 193000, 'family', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
-    (2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 193000, 'family', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
-    (2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 193000, 'family', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
-    (2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 193000, 'family', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
+    (1,1, 1, 1, 1, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'CONFIRMED'),
+    (2,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'AVAILABLE'),
+    (3,1, 5, 5, 3, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
+    (4,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
+    (5,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
+    (6,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
     -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
-    (2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 193000, 'family', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
-    (2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 193000, 'family', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
-    (2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 193000, 'family', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
-    (2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 193000, 'family', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
+    (7,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
+    (8,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
+    (9,1, 5, 6, 3, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
+    (10,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
+    (11,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
+    (12,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
+    -- 8월 3일: 모든 방 AVAILABLE (검색 가능)
+    (13,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 2, 'AVAILABLE'),
+    (14,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 2, 'AVAILABLE'),
+    (15,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 4, 'AVAILABLE'),
+    (16,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 4, 'AVAILABLE'),
+    (17,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 3, 'AVAILABLE'),
+    (18,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 3, 'AVAILABLE'),
+    -- 8월 4일: 모든 방 AVAILABLE (검색 가능)
+    (19,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-04 15:00:00', '2025-08-05 11:00:00', 2, 'AVAILABLE'),
+    (20,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-04 15:00:00', '2025-08-05 11:00:00', 2, 'AVAILABLE'),
+    (21,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-04 15:00:00', '2025-08-05 11:00:00', 4, 'AVAILABLE'),
+    (22,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-04 15:00:00', '2025-08-05 11:00:00', 4, 'AVAILABLE'),
+    (23,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-04 15:00:00', '2025-08-05 11:00:00', 3, 'AVAILABLE'),
+    (24,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-04 15:00:00', '2025-08-05 11:00:00', 3, 'AVAILABLE'),
+    -- 8월 5일: 모든 방 AVAILABLE (검색 가능)
+    (25,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-05 15:00:00', '2025-08-06 11:00:00', 2, 'AVAILABLE'),
+    (26,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-05 15:00:00', '2025-08-06 11:00:00', 2, 'AVAILABLE'),
+    (27,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-05 15:00:00', '2025-08-06 11:00:00', 4, 'AVAILABLE'),
+    (28,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-05 15:00:00', '2025-08-06 11:00:00', 4, 'AVAILABLE'),
+    (29,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-05 15:00:00', '2025-08-06 11:00:00', 3, 'AVAILABLE'),
+    (30,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-05 15:00:00', '2025-08-06 11:00:00', 3, 'AVAILABLE'),
 
-    -- JW 메리어트 제주(accom_id=3, 총 3개 방)
+    -- 씨마크 호텔(accom_id=2, 방 종류 3개, 방은 1개씩)
     -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
-    (3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
-    (3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
-    (3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
+    (31,2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 180000, 'twin', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'AVAILABLE'),
+    (32,2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 193000, 'family', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
+    (33,2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 210000, 'deluxe', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
     -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
-    (3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
-    (3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
-    (3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE');
+    (34,2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 180000, 'twin', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
+    (35,2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 193000, 'family', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
+    (36,2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 210000, 'deluxe', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
 
+    -- JW 메리어트 제주(accom_id=3, 방 종류 2개, 방은 2개씩)
+    -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
+    (37,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'family', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
+    (38,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'family', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
+    (39,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
+    (40,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
+    -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
+    (41,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'family', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
+    (42,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'family', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
+    (43,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
+    (44,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
+
+    -- 시그니엘 부산(accom_id=4, 방 종류 2개 방 1개씩 8/1~8/4)
+    -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
+    (45,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',230000,'twin','https://pix8.agoda.net/hotelImages/34297119/1150527990/a92210af40041d811b7c170cae042485.jpeg?ce=2&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',2,'AVAILABLE'),
+    (46,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',2,'AVAILABLE'),
+    -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
+    (47,4,2,2,1,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',230000,'twin','https://pix8.agoda.net/hotelImages/34297119/1150527990/a92210af40041d811b7c170cae042485.jpeg?ce=2&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',2,'CONFIRMED'),
+    (48,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',2,'AVAILABLE'),
+    -- 8월 3일: 모든 방 AVAILABLE (검색 가능)
+    (49,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',230000,'twin','https://pix8.agoda.net/hotelImages/34297119/1150527990/a92210af40041d811b7c170cae042485.jpeg?ce=2&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',2,'AVAILABLE'),
+    (50,4,6,7,3,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',2,'AVAILABLE'),
+    -- 8월 4일: 모든 방 AVAILABLE (검색 가능)
+    (51,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',230000,'twin','https://pix8.agoda.net/hotelImages/34297119/1150527990/a92210af40041d811b7c170cae042485.jpeg?ce=2&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',2,'AVAILABLE'),
+    (52,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',2,'AVAILABLE'),
+    -- 그랜드조선 부산(accom_id=5 방 종류 3개 방 1개씩 8/1~8/6)
+    -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
+    (53,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',2,'AVAILABLE'),
+    (54,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',250000,'family','https://pix8.agoda.net/hotelImages/16933389/-1/aaba0bc319b64912911a31693bcbea3a.jpg?ca=17&ce=1&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',4,'AVAILABLE'),
+    (55,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',210000,'deluxe','https://pix8.agoda.net/hotelImages/16933389/-1/6d860134a155ab6cc0c72a6b90e80952.jpg?ce=0&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',2,'AVAILABLE'),
+    -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
+    (56,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',2,'AVAILABLE'),
+    (57,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',250000,'family','https://pix8.agoda.net/hotelImages/16933389/-1/aaba0bc319b64912911a31693bcbea3a.jpg?ca=17&ce=1&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',4,'AVAILABLE'),
+    (58,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',210000,'deluxe','https://pix8.agoda.net/hotelImages/16933389/-1/6d860134a155ab6cc0c72a6b90e80952.jpg?ce=0&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',2,'AVAILABLE'),
+    -- 8월 3일: 모든 방 AVAILABLE (검색 가능)
+    (59,5,3,3,1,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',2,'CONFIRMED'),
+    (60,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',250000,'family','https://pix8.agoda.net/hotelImages/16933389/-1/aaba0bc319b64912911a31693bcbea3a.jpg?ca=17&ce=1&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',4,'AVAILABLE'),
+    (61,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',210000,'deluxe','https://pix8.agoda.net/hotelImages/16933389/-1/6d860134a155ab6cc0c72a6b90e80952.jpg?ce=0&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',2,'AVAILABLE'),
+    -- 8월 4일: 모든 방 AVAILABLE (검색 가능)
+    (62,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',2,'AVAILABLE'),
+    (63,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',250000,'family','https://pix8.agoda.net/hotelImages/16933389/-1/aaba0bc319b64912911a31693bcbea3a.jpg?ca=17&ce=1&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',4,'AVAILABLE'),
+    (64,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',210000,'deluxe','https://pix8.agoda.net/hotelImages/16933389/-1/6d860134a155ab6cc0c72a6b90e80952.jpg?ce=0&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',2,'AVAILABLE'),
+    -- 8월 5일: 모든 방 AVAILABLE (검색 가능)
+    (65,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-05 15:00:00', '2025-08-06 11:00:00',2,'AVAILABLE'),
+    (66,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',300000,'family','https://pix8.agoda.net/hotelImages/16933389/-1/aaba0bc319b64912911a31693bcbea3a.jpg?ca=17&ce=1&s=1024x','2025-08-05 15:00:00', '2025-08-06 11:00:00',4,'AVAILABLE'),
+    (67,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',210000,'deluxe','https://pix8.agoda.net/hotelImages/16933389/-1/6d860134a155ab6cc0c72a6b90e80952.jpg?ce=0&s=1024x','2025-08-05 15:00:00', '2025-08-06 11:00:00',2,'AVAILABLE'),
+    -- 8월 6일: 모든 방 AVAILABLE (검색 가능)
+    (68,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',2,'AVAILABLE'),
+    (69,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',300000,'family','https://pix8.agoda.net/hotelImages/16933389/-1/aaba0bc319b64912911a31693bcbea3a.jpg?ca=17&ce=1&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',4,'AVAILABLE'),
+    (70,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',210000,'deluxe','https://pix8.agoda.net/hotelImages/16933389/-1/6d860134a155ab6cc0c72a6b90e80952.jpg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',2,'AVAILABLE'),
+
+-- 파크 하얏트 부산(accom_id=6 방 종류 1개 방 3개씩)
+    -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
+    (71,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',3,'AVAILABLE'),
+    (72,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',3,'AVAILABLE'),
+    (73,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',3,'AVAILABLE'),
+    -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
+    (74,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',3,'AVAILABLE'),
+    (75,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',3,'AVAILABLE'),
+    (76,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',3,'AVAILABLE'),
+    -- 8월 3일: 모든 방 AVAILABLE (검색 가능)
+    (77,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',3,'AVAILABLE'),
+    (78,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',3,'AVAILABLE'),
+    (79,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',3,'AVAILABLE'),
+    -- 8월 4일: 모든 방 AVAILABLE (검색 가능)
+    (80,6,4,4,1,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',3,'CONFIRMED'),
+    (81,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',3,'AVAILABLE'),
+    (82,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',3,'AVAILABLE'),
+    -- 8월 5일: 모든 방 AVAILABLE (검색 가능)
+    (83,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-05 15:00:00', '2025-08-06 11:00:00',3,'AVAILABLE'),
+    (84,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-05 15:00:00', '2025-08-06 11:00:00',3,'AVAILABLE'),
+    (85,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-05 15:00:00', '2025-08-06 11:00:00',3,'AVAILABLE'),
+    -- 8월 6일: 모든 방 AVAILABLE (검색 가능)
+    (86,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',3,'AVAILABLE'),
+    (87,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',3,'AVAILABLE'),
+    (88,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',3,'AVAILABLE');
 
 -- 식당 정보 테스트용 데이터 (가짜 firebase 경로)
 INSERT INTO RESTAURANT_INFO (
@@ -864,3 +978,18 @@ VALUES (1, '2b1d7834-3f92-4fb8-8e39-dac2c952c6f4.webp'),
        (3, '773215b6-3a11-4dc5-8050-234d3aaf7b78.webp'),
        (4, 'b290a04d-d05c-4975-9d52-cd56138bdaf5.jpg'),
        (5, '7fb93cf9-02d4-4678-8a6b-d30371dfcf75.jpg');
+
+-- 숙박 테스트 데이터셋 추가
+# INSERT INTO RESERVATION (trip_day_id, res_kind)
+# VALUES
+# -- trip_day_id: 1, 2, 3, 4 => 카리나 부산 여행
+# (1,'ACCOMMODATION'), -- 숙박
+# (2,'ACCOMMODATION'), -- 숙박
+# (3,'ACCOMMODATION'), -- 숙박
+# (4,'ACCOMMODATION'), -- 숙박
+# -- trip_day_id : 5, 6, 7 => 윈닝젤 부산 여행
+# (5,'ACCOMMODATION'), -- 숙박
+# (6,'ACCOMMODATION'), -- 숙박
+# (7,'ACCOMMODATION'); -- 숙박
+
+-- 교통 테스트 데이터셋 추가
