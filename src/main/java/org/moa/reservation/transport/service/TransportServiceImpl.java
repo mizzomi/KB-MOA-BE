@@ -20,8 +20,11 @@ import org.moa.reservation.transport.dto.TransPaymentRequestDto;
 import org.moa.reservation.transport.dto.TranstInfoResponse;
 import org.moa.reservation.transport.dto.TransResRequestDto;
 import org.moa.reservation.transport.dto.TransSeatsInfoResponse;
+import org.moa.reservation.transport.exception.TransportReservationException;
 import org.moa.reservation.transport.mapper.TransportMapper;
 import org.moa.reservation.transport.type.Status;
+import org.moa.reservation.transport.validator.TransportReservationValidator;
+import org.moa.reservation.transport.helper.SeatGroupingHelper;
 import org.moa.trip.mapper.TripMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -38,6 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 public class TransportServiceImpl implements TransportService {
 
 	private final AccountService accountService;
+	private final TransportReservationValidator validator;
+	private final SeatGroupingHelper seatGroupingHelper;
 
 	private final ReservationMapper reservationMapper;
 	private final TransportMapper transportMapper;
@@ -47,14 +52,9 @@ public class TransportServiceImpl implements TransportService {
 	public Map<Integer, List<TransSeatsInfoResponse>> getSeats(Long transportId) {
 		// 목록 조회
 		List<TransSeatsInfoResponse> transportSeatsInfos = transportMapper.selectSeatsByTransportId(transportId);
-
-		// seatRoomNo 기준으로 묶어서 LinkedHashMap 으로 반환
-		return transportSeatsInfos.stream()
-			.collect(Collectors.groupingBy(
-				TransSeatsInfoResponse::getSeatRoomNo,
-				LinkedHashMap::new,       // insertion-order 유지
-				Collectors.toList()
-			));
+		
+		// 헬퍼 클래스를 사용하여 그룹화
+		return seatGroupingHelper.groupSeatsByRoom(transportSeatsInfos);
 	}
 
 	@Override
@@ -81,52 +81,55 @@ public class TransportServiceImpl implements TransportService {
 	@Transactional
 	public Long reserveTransportSeats(TransResRequestDto dto) {
 		// 1. trip_day_id 조회
-		Long tripDayId = tripMapper.findTripDayId(dto.getTripId(), dto.getDepartureDateTime().toLocalDate());
-		if(tripDayId == null) {
-			throw new IllegalArgumentException("해당 날짜의 trip_day가 존재하지 않습니다.");
+		Long tripDayId = findTripDayIdOrThrow(dto.getTripId(), dto.getDepartureDateTime());
+
+		// 2. 좌석 유효성 검증 (Validator에 위임)
+		validator.validateSeatsForReservation(dto.getTranResIds());
+
+		// 3. Reservation 저장
+		Long reservationId = createReservation(tripDayId);
+
+		// 4. 좌석들 업데이트
+		updateSeatsToPending(reservationId, tripDayId, dto.getTranResIds());
+		
+		log.info("TransportService.reserveTransportSeats reservationId={} ==== 좌석 예약 완료(결제전)", reservationId);
+		return reservationId;
+	}
+	
+	/**
+	 * Trip Day ID 조회 헬퍼 메서드
+	 */
+	private Long findTripDayIdOrThrow(Long tripId, LocalDateTime departureDateTime) {
+		Long tripDayId = tripMapper.findTripDayId(tripId, departureDateTime.toLocalDate());
+		if (tripDayId == null) {
+			throw TransportReservationException.tripDayNotFound();
 		}
-
-		//2. 좌석 상태 확인
-		log.info("업데이트할 tran_res_id 목록: {}", dto.getTranResIds());
-		List<TransResStatusDto> seatStatuses = transportMapper.findStatusesByIds(dto.getTranResIds());
-
-		boolean allAvailable = seatStatuses.stream()
-			.allMatch(seat -> seat.getStatus() == Status.AVAILABLE);
-		if(!allAvailable) {
-			throw new IllegalStateException("선택한 좌석 중 이미 예약 중인 좌석이 있습니다.");
-		}
-
-		List<Long> inputIds = dto.getTranResIds();
-		List<Long> existingIds = transportMapper.findExistingTranResIds(inputIds);
-
-		if (existingIds.size() != inputIds.size()) {
-			// 누락된 ID 확인
-			List<Long> missingIds = new ArrayList<>(inputIds);
-			missingIds.removeAll(existingIds);
-
-
-			throw new IllegalArgumentException("선택한 좌석 중 존재하지 않는 좌석이 있습니다. 다시 확인해 주세요.");
-		}
-
-		//3. Reservation 저장
+		return tripDayId;
+	}
+	
+	/**
+	 * Reservation 생성 헬퍼 메서드
+	 */
+	private Long createReservation(Long tripDayId) {
 		Reservation reservation = Reservation.builder()
 			.tripDayId(tripDayId)
 			.resKind(ResKind.TRANSPORT)
 			.build();
 		reservationMapper.insertReservation(reservation);
-		Long reservationId = reservation.getReservationId();
-
-		//4. 좌석들 업데이트
+		return reservation.getReservationId();
+	}
+	
+	/**
+	 * 좌석 상태 업데이트 헬퍼 메서드
+	 */
+	private void updateSeatsToPending(Long reservationId, Long tripDayId, List<Long> tranResIds) {
 		int updatedCount = transportMapper.updateSeatsToPending(
 			reservationId,
 			tripDayId,
-			dto.getTranResIds(),
+			tranResIds,
 			LocalDateTime.now()
 		);
 		log.info("예약 상태로 변경된 좌석 수: {}", updatedCount);
-
-		log.info("TransportService.reserveTransportSeats reservationId={} ==== 좌석 예약 완료(결제전)", reservationId);
-		return reservationId;
 	}
 
 	@Transactional
@@ -134,54 +137,78 @@ public class TransportServiceImpl implements TransportService {
 		Long reservationId = dto.getReservationId();
 		BigDecimal amount = dto.getPrice();
 
-		Long ownerMemberId = reservationMapper.findMemberIdByReservationId(reservationId);
+		// 1. 예약 소유권 검증
+		validator.validateReservationOwnershipForPayment(memberId, reservationId);
 
-		if (ownerMemberId == null) {
-			throw new IllegalArgumentException("해당 reservationId [" + reservationId + "] 에 해당하는 예약이 존재하지 않습니다.");
-		}
-		if (!ownerMemberId.equals(memberId)) {
-			throw new IllegalStateException("해당 사용자의 예약건이 아닙니다.");
-		}
-
+		// 2. 결제 금액 검증
 		BigDecimal totalPrice = transportMapper.getTotalPriceByReservationId(reservationId);
-		if(totalPrice.compareTo(dto.getPrice()) != 0) {
-			throw new IllegalArgumentException("입력된 금액이 실제 결제될 금액과 다릅니다.");
-		}
+		validator.validatePaymentAmount(totalPrice, amount);
 
-		String trainNo = transportMapper.selectTrainNoByReservationId(reservationId);
+		// 3. 결제 처리
+		processPayment(memberId, amount, reservationId);
 
-		//실질적인 결제 프로세스 -> 향후 외부 PG 연동 가능성 확보
-		PaymentResponseDto result = accountService.makePayment(memberId, amount, trainNo);
-
-		int updated = transportMapper.confirmSeatsByReservationId(reservationId);
-		if(updated == 0) {
-			throw new IllegalStateException("예약확정으로 변경된 좌석이 없습니다. 다시 시도해주세요.");
-		}
+		// 4. 좌석 상태 확정
+		confirmSeats(reservationId);
 
 		return true;
+	}
+	
+	/**
+	 * 결제 처리 헬퍼 메서드
+	 */
+	private void processPayment(Long memberId, BigDecimal amount, Long reservationId) {
+		String trainNo = transportMapper.selectTrainNoByReservationId(reservationId);
+		
+		// 실질적인 결제 프로세스 -> 향후 외부 PG 연동 가능성 확보
+		PaymentResponseDto result = accountService.makePayment(memberId, amount, trainNo);
+		log.info("결제 완료: reservationId={}, amount={}", reservationId, amount);
+	}
+	
+	/**
+	 * 좌석 확정 처리 헬퍼 메서드
+	 */
+	private void confirmSeats(Long reservationId) {
+		int updated = transportMapper.confirmSeatsByReservationId(reservationId);
+		if (updated == 0) {
+			throw TransportReservationException.paymentFailed();
+		}
+		log.info("좌석 확정 완료: reservationId={}, 확정 좌석 수={}", reservationId, updated);
 	}
 
 	@Transactional
 	public int cancelReservation(Long memberId, TransResCancelRequestDto dto) {
 		Long reservationId = dto.getReservationId();
 
-		//예약 소유자 확인
-		Long ownerMemberId = reservationMapper.findMemberIdByReservationId(reservationId);
-		if(ownerMemberId == null || !ownerMemberId.equals(memberId)) {
-			throw new IllegalArgumentException("본인의 예약만 취소할 수 있습니다.");
-		}
+		// 1. 예약 소유자 확인
+		validator.validateReservationOwnershipForCancel(memberId, reservationId);
 
-		// 좌석 상태 초기화 (단, status = 'PENDING'인 것만)
-		int cancelSeats = transportMapper.cancelSeatsByReservationId(reservationId);
-		if (cancelSeats == 0) {
-			throw new IllegalStateException("취소 가능한 좌석이 없습니다. 이미 결제되었거나 취소된 상태입니다.");
-		}
+		// 2. 좌석 상태 초기화 (단, status = 'PENDING'인 것만)
+		int cancelSeats = cancelSeats(reservationId);
 
-		// 예약 정보 삭제
-		int cancelReservation = reservationMapper.cancelReservationByReservationId(reservationId);
+		// 3. 예약 정보 삭제
+		deleteReservation(reservationId);
 
 		log.info("TransportService.cancelReservation: memberId = {} }의 예약을 취소하였습니다.", memberId);
 		return cancelSeats;
+	}
+	
+	/**
+	 * 좌석 취소 처리 헬퍼 메서드
+	 */
+	private int cancelSeats(Long reservationId) {
+		int cancelSeats = transportMapper.cancelSeatsByReservationId(reservationId);
+		if (cancelSeats == 0) {
+			throw TransportReservationException.noCancellableSeats();
+		}
+		return cancelSeats;
+	}
+	
+	/**
+	 * 예약 삭제 처리 헬퍼 메서드
+	 */
+	private void deleteReservation(Long reservationId) {
+		int cancelReservation = reservationMapper.cancelReservationByReservationId(reservationId);
+		log.info("예약 삭제 완료: reservationId={}", reservationId);
 	}
 
 	@Override

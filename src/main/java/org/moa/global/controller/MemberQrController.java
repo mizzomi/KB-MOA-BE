@@ -6,6 +6,7 @@ import org.moa.global.response.ApiResponse;
 import org.moa.global.security.domain.CustomUser;
 import org.moa.global.service.qr.QrService;
 import org.moa.global.type.StatusCode;
+import org.moa.reservation.dto.ReservationItemResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,16 +20,16 @@ import java.util.NoSuchElementException;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/member")
+@RequestMapping("/api/member/qr")
 public class MemberQrController {
 
     private final QrService qrService;
 
-    // 사용자 주민등록증 QR 생성
-    @GetMapping("/qr-idcard")
+    // 사용자 주민등록증 QR 생성 API
+    @GetMapping("/idcard")
     public ResponseEntity<ApiResponse<?>> generateIdCardQr(@AuthenticationPrincipal CustomUser user) {
         try {
-            Long memberId = user.getMember().getMemberId(); // 로그인된 사용자
+            Long memberId = user.getMember().getMemberId();
             String base64Qr = qrService.generateIdCardQr(memberId);
 
             if (base64Qr == null) {
@@ -55,4 +56,41 @@ public class MemberQrController {
         }
     }
 
+    // 사용자 예약 내역 QR 조회 API
+    @GetMapping("/reservation")
+    public ResponseEntity<ApiResponse<String>> generateReservationQr(@AuthenticationPrincipal CustomUser user,
+                                                                     @RequestParam Long reservationId) {
+        try {
+            Long memberId = user.getMember().getMemberId();
+            String qrImage = qrService.generateReservationQr(reservationId, memberId);
+
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(ApiResponse.of(qrImage));
+
+        } catch (SecurityException e) {
+            log.warn("권한 없음: {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(StatusCode.FORBIDDEN, e.getMessage()));
+
+        } catch (NoSuchElementException e) {
+            log.warn("예약 정보 없음: {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(StatusCode.NOT_FOUND, e.getMessage()));
+
+        } catch (IllegalArgumentException e) {
+            log.warn("잘못된 요청: {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(StatusCode.BAD_REQUEST, e.getMessage()));
+
+        } catch (Exception e) {
+            log.error("예약 QR 생성 실패", e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(StatusCode.INTERNAL_ERROR, "예약 QR 생성 중 오류가 발생했습니다. 다시 시도해주세요."));
+        }
+    }
 }
