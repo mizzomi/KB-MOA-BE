@@ -18,7 +18,7 @@ import javax.imageio.ImageIO;
 @Slf4j
 public class QrCodeUtil {
 
-    // QR 생성 + 암호화
+    // QR 생성
     public static String generateEncryptedQr(String encryptedData) throws Exception {
         BufferedImage qrImage = generateQrImage(encryptedData);
 

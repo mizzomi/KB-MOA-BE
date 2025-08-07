@@ -30,9 +30,9 @@ public class MemberQrController {
     public ResponseEntity<ApiResponse<?>> generateIdCardQr(@AuthenticationPrincipal CustomUser user) {
         try {
             Long memberId = user.getMember().getMemberId();
-            String base64Qr = qrService.generateIdCardQr(memberId);
+            String qrImage = qrService.generateIdCardQr(memberId);
 
-            if (base64Qr == null) {
+            if (qrImage == null) {
                 return ResponseEntity
                         .status(HttpStatus.NOT_FOUND)
                         .body(ApiResponse.error(StatusCode.NOT_FOUND, "해당 회원의 주민등록증 정보가 존재하지 않습니다."));
@@ -40,7 +40,7 @@ public class MemberQrController {
 
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(ApiResponse.of(base64Qr)); // OK = 200
+                    .body(ApiResponse.of(qrImage)); // OK = 200
 
         } catch (NoSuchElementException e) {
             log.warn("회원 정보 없음: {}", e.getMessage());

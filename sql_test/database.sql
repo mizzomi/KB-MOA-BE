@@ -1153,3 +1153,10 @@ VALUES (1, '2b1d7834-3f92-4fb8-8e39-dac2c952c6f4.webp'),
 # (7,'ACCOMMODATION'); -- 숙박
 
 -- 교통 테스트 데이터셋 추가
+
+INSERT INTO tran_res (
+    transport_id, reservation_id, trip_day_id,
+    departure, arrival, seat_room_no, seat_number, seat_type,
+    booked_at, price, created_at, updated_at, status
+) VALUES
+    (1, 8, 1, '서울', '부산', 1, 'A1', 'general', NOW(), 49800.00, NOW(), NOW(), 'AVAILABLE');
