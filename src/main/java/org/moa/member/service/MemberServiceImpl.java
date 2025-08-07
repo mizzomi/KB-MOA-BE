@@ -14,8 +14,10 @@ import org.moa.member.mapper.MemberMapper;
 import org.moa.trip.dto.trip.TripMemberResponseDto;
 import org.moa.trip.entity.Trip;
 import org.moa.trip.entity.TripMember;
+import org.moa.trip.mapper.TripMapper;
 import org.moa.trip.mapper.TripMemberMapper;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -36,7 +38,6 @@ public class MemberServiceImpl implements MemberService {
 	private final IdCardMapper idCardMapper;
 	private final AccountMapper accountMapper;
 	private final DriverLicenseMapper driverLicenseMapper;
-	private final HashUtil hashUtil;
 
 	// @Override
 	// public boolean checkDuplicate(String email) {
@@ -226,8 +227,13 @@ public class MemberServiceImpl implements MemberService {
 	}
 
 	@Override
-	public Long searchUserIdByEmail(String email) {
-		return memberMapper.getByEmail(email).getMemberId();
+	public Long searchUserIdByEmail(String email, Long tripId) {
+		Long memberId = memberMapper.getByEmail(email).getMemberId();
+		int count = tripMemberMapper.existMemberInTrip(tripId,memberId);
+		if(count > 0){
+			throw new BusinessException(StatusCode.BAD_REQUEST,"이미 유저가 여행에 존재합니다");
+		}
+		return memberId;
 	}
 
 	@Override

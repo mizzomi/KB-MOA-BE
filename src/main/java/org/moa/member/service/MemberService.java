@@ -22,7 +22,7 @@ public interface MemberService {
 
 	boolean verifyJoin(MemberVerifyRequestDto dto);
 
-	Long searchUserIdByEmail(String email);
+	Long searchUserIdByEmail(String email, Long tripId);
 
 	List<TripMemberResponseDto> getTripMembers(Long tripId);
 }

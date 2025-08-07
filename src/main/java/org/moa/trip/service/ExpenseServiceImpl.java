@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -184,6 +185,10 @@ public class ExpenseServiceImpl implements ExpenseService{
             responseDtos.add(dto);
             log.info("received : {}, shareAmount : {}, status : {}",dto.getReceived(), dto.getShareAmount(),dto.getStatus());
         }
+
+//        // 최종 responseDtos를 expenseDate로 내림차순(DESC) 정렬
+//        responseDtos.sort(Comparator.comparing(ExpenseResponseDto::getExpenseDate).reversed());
+
         return new PageImpl<>(responseDtos, pageable, total);
     }
 

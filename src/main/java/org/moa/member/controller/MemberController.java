@@ -35,7 +35,7 @@ public class MemberController {
 	}
 
 	@GetMapping("/search-by-email")
-	public ResponseEntity<ApiResponse<?>> searchUserIdByEmail(@Valid @RequestParam String email) {
-		return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(memberService.searchUserIdByEmail(email)));
+	public ResponseEntity<ApiResponse<?>> searchUserIdByEmail(@RequestParam String email , @RequestParam Long tripId) {
+		return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(memberService.searchUserIdByEmail(email,tripId)));
 	}
 }
