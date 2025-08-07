@@ -56,6 +56,33 @@ public class MemberQrController {
         }
     }
 
+    // 사용자 예약 상세 정보 조회 API
+    @GetMapping("reservationInfo")
+    public ResponseEntity<ApiResponse<?>> getReservationInfo(@AuthenticationPrincipal CustomUser user,
+                                                             @RequestParam Long reservationId) {
+        try {
+            Long memberId = user.getMember().getMemberId();
+            Object reservationInfo = qrService.getReservationInfo(reservationId, memberId);
+
+            return ResponseEntity.ok(ApiResponse.of(reservationInfo));
+        } catch (SecurityException e) {
+            log.warn("권한 없음: {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(StatusCode.FORBIDDEN, e.getMessage()));
+        } catch (NoSuchElementException e) {
+            log.warn("예약 정보 없음: {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(StatusCode.NOT_FOUND, e.getMessage()));
+        } catch (Exception e) {
+            log.error("예약 정보 조회 실패", e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(StatusCode.INTERNAL_ERROR, "예약 정보 조회 중 오류가 발생했습니다."));
+        }
+    }
+
     // 사용자 예약 내역 QR 조회 API
     @GetMapping("/reservation")
     public ResponseEntity<ApiResponse<String>> generateReservationQr(@AuthenticationPrincipal CustomUser user,

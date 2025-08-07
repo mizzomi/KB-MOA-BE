@@ -35,6 +35,7 @@
             'RESTAURANT' AS type,
             rr.reservation_id AS reservationId,
             rr.rest_id AS restId,
+            ri.rest_name AS restName,
             td.day AS date,
             rts.res_time AS time,
             rr.res_num AS resNum,
@@ -42,6 +43,24 @@
         FROM REST_RES rr
             JOIN TRIP_DAY td ON rr.trip_day_id = td.trip_day_id
             JOIN REST_TIME_SLOT rts ON rr.rest_time_id = rts.rest_time_id
+            JOIN RESTAURANT_INFO ri ON rr.rest_id = ri.rest_id
+        WHERE rr.reservation_id = #{reservationId}
+    </select>
+
+    <select id="findUserRestInfoByReservationId" resultType="org.moa.reservation.dto.UserRestaurantReservationDto">
+        SELECT
+            'RESTAURANT' AS type,
+            rr.reservation_id AS reservationId,
+            ri.rest_name AS restName,
+            ri.address,
+            td.day AS date,
+            CAST(rts.res_time AS TIME) AS time,
+            rr.res_num AS resNum,
+            rr.status
+        FROM REST_RES rr
+                 JOIN RESTAURANT_INFO ri ON rr.rest_id = ri.rest_id
+                 JOIN TRIP_DAY td ON rr.trip_day_id = td.trip_day_id
+                 JOIN REST_TIME_SLOT rts ON rr.rest_time_id = rts.rest_time_id
         WHERE rr.reservation_id = #{reservationId}
     </select>
 
@@ -53,12 +72,29 @@
             ra.accom_id AS accomId,
             ra.hotel_name AS hotelName,
             ra.room_type AS roomType,
-            DATE_FORMAT(ra.checkin_day, '%Y-%m-%d %H:%i:%s') AS checkinDay,
-            DATE_FORMAT(ra.checkout_day, '%Y-%m-%d %H:%i:%s') AS checkoutDay,
+            DATE_FORMAT(ra.checkin_day, '%Y-%m-%d %H:%i') AS checkinDay,
+            DATE_FORMAT(ra.checkout_day, '%Y-%m-%d %H:%i') AS checkoutDay,
             ra.guests,
             ra.status
         FROM ACCOM_RES ra
                  JOIN RESERVATION rr ON ra.reservation_id = rr.reservation_id
+        WHERE ra.reservation_id = #{reservationId}
+    </select>
+
+    <select id="findUserAccomInfoByReservationId" resultType="org.moa.reservation.dto.UserAccommodationReservationDto">
+        SELECT
+            'ACCOMMODATION' AS type,
+            ra.reservation_id AS reservationId,
+            ai.hotel_name AS hotelName,
+            ai.address,
+            ra.room_type AS roomType,
+            ra.checkin_day AS checkinDay,
+            ra.checkout_day AS checkoutDay,
+            ra.guests,
+            ai.location,
+            ra.status
+        FROM ACCOM_RES ra
+                 JOIN ACCOMMODATION_INFO ai ON ra.accom_id = ai.accom_id
         WHERE ra.reservation_id = #{reservationId}
     </select>
 
@@ -75,6 +111,25 @@
             tr.seat_type AS seatType,
             tr.status AS status
         FROM TRAN_RES tr
+        WHERE tr.reservation_id = #{reservationId}
+    </select>
+
+    <select id="findUserTransInfoByReservationId" resultType="org.moa.reservation.dto.UserTransportReservationDto">
+        SELECT
+            'TRANSPORT' AS type,
+            tr.reservation_id AS reservationId,
+            ti.departure_name AS departureName,
+            ti.arrival_name AS arrivalName,
+            ti.departure_time AS departureTime,
+            ti.arrival_time AS arrivalTime,
+            tr.seat_room_no AS seatRoomNo,
+            tr.seat_number AS seatNumber,
+            tr.seat_type AS seatType,
+            ti.train_type AS trainType,
+            ti.train_no AS trainNo,
+            tr.status
+        FROM TRAN_RES tr
+                 JOIN TRANSPORT_INFO ti ON tr.transport_id = ti.transport_id
         WHERE tr.reservation_id = #{reservationId}
     </select>
 

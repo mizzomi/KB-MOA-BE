@@ -130,6 +130,31 @@ public class QrServiceImpl implements QrService{
         }
     }
 
+    // 예약 상세 정보 조회 API
+    @Override
+    public Object getReservationInfo(Long reservationId, Long memberId) {
+
+        // 1. 예약 권한이 있는지 확인
+        boolean isMember = reservationMapper.isTripMemberByReservationIdAndMemberId(reservationId, memberId);
+        if (!isMember) {
+            throw new SecurityException("이 예약 정보를 조회할 권한이 없습니다.");
+        }
+
+        // 2. 예약 타입 조회
+        String type = reservationMapper.findTypeByReservationId(reservationId);
+        if (type == null) {
+            throw new NoSuchElementException("해당 예약 정보를 찾을 수 없습니다.");
+        }
+
+        // 3. 타입에 맞는 예약 정보를 DB에서 가져와 반환
+        return switch (type) {
+            case "RESTAURANT" -> reservationMapper.findUserRestInfoByReservationId(reservationId);
+            case "ACCOMMODATION" -> reservationMapper.findUserAccomInfoByReservationId(reservationId);
+            case "TRANSPORT" -> reservationMapper.findUserTransInfoByReservationId(reservationId);
+            default -> throw new IllegalArgumentException("지원하지 않는 예약 타입입니다: " + type);
+        };
+    }
+
     // 예약 내역 QR 복호화 API
     @Override
     public Object decryptReservationQr(String encryptedText, Long ownerId) {
@@ -177,5 +202,4 @@ public class QrServiceImpl implements QrService{
             default -> throw new IllegalArgumentException("지원하지 않는 예약입니다.");
         };
     }
-
 }

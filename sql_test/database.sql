@@ -657,7 +657,9 @@ VALUES
 (5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/3 서울역 -> 부산역 11:00 출발 (윈터, 지젤) reservationId = 10, tripDayId = 5
 (5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/5 서울역 -> 부산역 12:00 출발 (닝닝) reservationId = 11, tripDayId = 5
 (7, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 10:00 출발 (윈터 스케줄 바쁨) reservationId = 12, tripDayId = 7
-(7, 'TRANSPORT'); -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 15:00 출발 (지젤, 닝닝 느긋) reservationId = 13, tripDayId = 7
+(7, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 15:00 출발 (지젤, 닝닝 느긋) reservationId = 13, tripDayId = 7
+-- 식당 데이터 추가
+(1, 'RESTAURANT'); -- 식당
 
 -- 교통 예약 테스트 데이터
 INSERT INTO transport_info (
@@ -1071,6 +1073,10 @@ INSERT INTO REST_TIME_SLOT (rest_id, res_time, max_capacity) VALUES
 (15, '14:00', 5), (15, '15:00', 5), (15, '16:00', 5),
 (15, '17:00', 5), (15, '18:00', 5), (15, '19:00', 5);
 
+-- 식당 예약 테스트용 데이터
+INSERT INTO REST_RES (rest_id, reservation_id, trip_day_id, res_num, rest_time_id) VALUES
+(1, 14, 1, 2, 1);
+
 -- 비용 테스트용 데이터
 INSERT INTO EXPENSE (trip_id, member_id, expense_name, expense_date, amount, location, settlement_completed)
 VALUES (2, 2, '교통비', '2025-08-05 17:10:00' ,149400, 'BUSAN', false),
@@ -1153,6 +1159,7 @@ VALUES (1, '2b1d7834-3f92-4fb8-8e39-dac2c952c6f4.webp'),
 # (7,'ACCOMMODATION'); -- 숙박
 
 -- 교통 테스트 데이터셋 추가
+-- 식당 테스트 데이터셋 추가
 
 INSERT INTO tran_res (
     transport_id, reservation_id, trip_day_id,
