@@ -65,6 +65,7 @@
 
     <select id="getAccommodationReservationsByTripId" resultType="org.moa.reservation.dto.ReservationItemResponseDto">
         SELECT
+            ar.reservation_id as reservationId,
             ar.hotel_name as name,
             ar.accom_id as itemId,
             ai.hotel_image_url as imageUrl,
@@ -81,6 +82,7 @@
 
     <select id="getAccommodationReservationsByDateAndMember" resultType="org.moa.reservation.dto.ReservationItemResponseDto">
         SELECT
+            ar.reservation_id as reservationId,
             ar.hotel_name as name,
             ar.accom_id as itemId,
             ai.hotel_image_url as imageUrl,
