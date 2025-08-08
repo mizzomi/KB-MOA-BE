@@ -657,9 +657,7 @@ VALUES
 (5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/3 서울역 -> 부산역 11:00 출발 (윈터, 지젤) reservationId = 10, tripDayId = 5
 (5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/5 서울역 -> 부산역 12:00 출발 (닝닝) reservationId = 11, tripDayId = 5
 (7, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 10:00 출발 (윈터 스케줄 바쁨) reservationId = 12, tripDayId = 7
-(7, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 15:00 출발 (지젤, 닝닝 느긋) reservationId = 13, tripDayId = 7
--- 식당 데이터 추가
-(1, 'RESTAURANT'); -- 식당
+(7, 'TRANSPORT'); -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 15:00 출발 (지젤, 닝닝 느긋) reservationId = 13, tripDayId = 7
 
 -- 교통 예약 테스트 데이터
 INSERT INTO transport_info (
@@ -1080,53 +1078,54 @@ INSERT INTO REST_RES (rest_id, reservation_id, trip_day_id, res_num, rest_time_i
 -- 비용 테스트용 데이터
 INSERT INTO EXPENSE (trip_id, member_id, expense_name, expense_date, amount, location, settlement_completed)
 VALUES (2, 2, '교통비', '2025-08-05 17:10:00' ,149400, 'BUSAN', false),
-       (2, 2, '숙박 비용', '2025-08-06 19:10:00' ,193000, 'BUSAN', false),
+       (2, 2, '숙박 비용', '2025-08-06 18:10:00' ,193000, 'BUSAN', false),
        (2, 3, '돼지 국밥', '2025-08-06 19:10:00' ,45000, 'BUSAN', false),
        (2, 4, '부산 밀면', '2025-08-06 19:10:00' ,30000, 'BUSAN', false),
        (2, 2, '부산 꼼장어', '2025-08-06 19:10:00' ,50000, 'BUSAN', false),
        (2, 2, '숙박 비용', '2025-08-06 19:10:00' ,210000, 'BUSAN', false),
        (2, 3, '이재모 피자', '2025-08-06 19:10:00' ,40000, 'BUSAN', false),
-       (2, 4, '버블티&카페', '2025-08-06 19:10:00' ,18000, 'BUSAN', false),
-       (2, 2, '교통비', '2025-08-05 17:10:00' ,149400, 'BUSAN', false);
+       (2, 4, '버블티&카페', '2025-08-06 20:10:00' ,18000, 'BUSAN', false),
+       (2, 2, '교통비', '2025-08-06 21:10:00' ,149400, 'BUSAN', false);
 
-INSERT INTO SETTLEMENT_NOTES (expense_id, trip_id, member_id, share_amount, is_payed, received)
+INSERT INTO SETTLEMENT_NOTES (expense_id, trip_id, member_id, share_amount, is_payed, received, created_at)
 VALUES
 -- (2, 2, '교통비', 149400, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(1, 2, 2, 49800, true, false),
-(1, 2, 3, 49800, false, true),
-(1, 2, 4, 49800, false, true),
+(1, 2, 2, 49800, true, false, '2025-08-05 17:10:00'),
+(1, 2, 3, 49800, false, true, '2025-08-05 17:10:00'),
+(1, 2, 4, 49800, false, true, '2025-08-05 17:10:00'),
 -- (2, 2, '숙박 비용', 193000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(2, 2, 2, 38600, true, false),
-(2, 2, 3, 38600, false, true),
-(2, 2, 4, 38600, false, true),
+(2, 2, 2, 38600, true, false, '2025-08-06 18:10:00'),
+(2, 2, 3, 38600, false, true, '2025-08-06 18:10:00'),
+(2, 2, 4, 38600, false, true, '2025-08-06 18:10:00'),
 -- (2, 3, '돼지 국밥', 45000, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
-(3, 2, 2, 15000, false, true),
-(3, 2, 3, 15000, true, false),
-(3, 2, 4, 15000, false, true),
+(3, 2, 2, 15000, false, true, '2025-08-06 19:10:00'),
+(3, 2, 3, 15000, true, false, '2025-08-06 19:10:00'),
+(3, 2, 4, 15000, false, true, '2025-08-06 19:10:00'),
 -- (2, 2, '부산 밀면', 30000, 'BUSAN', false)에 대한 정산 (지젤이 계산)
-(4, 2, 2, 10000, false, true),
-(4, 2, 3, 10000, false, true),
-(4, 2, 4, 10000, true, false),
+(4, 2, 2, 10000, false, true, '2025-08-06 19:10:00'),
+(4, 2, 3, 10000, false, true, '2025-08-06 19:10:00'),
+(4, 2, 4, 10000, true, false, '2025-08-06 19:10:00'),
 -- (2, 2, '부산 꼼장어', 50000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(5, 2, 2, 16667, true, false),
-(5, 2, 3, 16666, false, true),
-(5, 2, 4, 16666, false, true),
+(5, 2, 2, 16667, true, false, '2025-08-06 19:10:00'),
+(5, 2, 3, 16666, false, true, '2025-08-06 19:10:00'),
+(5, 2, 4, 16666, false, true, '2025-08-06 19:10:00'),
 -- (2, 2, '숙박 비용', 210000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(6, 2, 2, 70000, true, false),
-(6, 2, 3, 70000, false, true),
-(6, 2, 4, 70000, false, true),
+(6, 2, 2, 70000, true, false, '2025-08-06 19:10:00'),
+(6, 2, 3, 70000, false, true, '2025-08-06 19:10:00'),
+(6, 2, 4, 70000, false, true, '2025-08-06 19:10:00'),
 -- (2, 3, '이재모 피자', 40000, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
-(7, 2, 2, 13334, false, true),
-(7, 2, 3, 13333, true, false),
-(7, 2, 4, 13333, false, true),
+(7, 2, 2, 13334, false, true, '2025-08-06 19:10:00'),
+(7, 2, 3, 13333, true, false, '2025-08-06 19:10:00'),
+(7, 2, 4, 13333, false, true, '2025-08-06 19:10:00'),
 -- (2, 2, '버블티&카페', 18000, 'BUSAN', false)에 대한 정산 (지젤이 계산)
-(8, 2, 2, 6000, false, true),
-(8, 2, 3, 6000, false, true),
-(8, 2, 4, 6000, true, false),
+(8, 2, 2, 6000, false, true, '2025-08-06 20:10:00'),
+(8, 2, 3, 6000, false, true, '2025-08-06 20:10:00'),
+(8, 2, 4, 6000, true, false, '2025-08-06 20:10:00'),
 -- (2, 2, '교통비', 149400, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(9, 2, 2, 49800, true, false),
-(9, 2, 3, 49800, false, true),
-(9, 2, 4, 49800, false, true);
+(9, 2, 2, 49800, true, false, '2025-08-06 21:10:00'),
+(9, 2, 3, 49800, false, true, '2025-08-06 21:10:00'),
+(9, 2, 4, 49800, false, true, '2025-08-06 21:10:00');
+
 
 INSERT INTO TRIP_RECORDS (trip_id, member_id, title, record_date, content)
 VALUES (1, 1, '부산 도착~', '2025-08-01', '내일 이재모 피자 먹어야지 ㅎㅎ 숙소도 너무 좋다'),
@@ -1159,11 +1158,3 @@ VALUES (1, '2b1d7834-3f92-4fb8-8e39-dac2c952c6f4.webp'),
 # (7,'ACCOMMODATION'); -- 숙박
 
 -- 교통 테스트 데이터셋 추가
--- 식당 테스트 데이터셋 추가
-
-INSERT INTO tran_res (
-    transport_id, reservation_id, trip_day_id,
-    departure, arrival, seat_room_no, seat_number, seat_type,
-    booked_at, price, created_at, updated_at, status
-) VALUES
-    (1, 8, 1, '서울', '부산', 1, 'A1', 'general', NOW(), 49800.00, NOW(), NOW(), 'AVAILABLE');
