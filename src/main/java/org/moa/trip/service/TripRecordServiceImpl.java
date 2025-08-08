@@ -8,7 +8,7 @@ import org.moa.global.exception.RecordNotFoundException;
 import org.moa.global.handler.FileUploadException;
 import org.moa.global.service.FirebaseStorageService;
 import org.moa.trip.dto.record.TripRecordCardDto;
-import org.moa.trip.dto.record.TripRecordDetailResponseDto;
+import org.moa.trip.dto.record.*;
 import org.moa.trip.dto.record.TripRecordRequestDto;
 import org.moa.trip.dto.record.TripRecordResponseDto;
 import org.moa.trip.entity.TripRecord;
@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.concurrent.CompletableFuture;
+import java.util.Collections;
 import java.util.concurrent.Executor;
 import java.util.Objects;
 import java.util.List;
@@ -152,7 +153,8 @@ public class TripRecordServiceImpl implements TripRecordService {
 
         // CompletableFuture를 사용하여 모든 이미지 URL을 비동기적으로 조회
         List<CompletableFuture<String>> urlFutures = imageFileNames.stream()
-                .map(firebaseStorageService::getSignedUrlAsync) // 비동기 메서드 호출
+                // I/O 전용 스레드 풀을 사용하도록 명시적으로 지정
+                .map(fileName -> firebaseStorageService.getSignedUrlAsync(fileName, ioTaskExecutor))
                 .toList();
 
         // 모든 비동기 작업이 완료될 때까지 기다린 후, 결과를 리스트로 조합
@@ -172,7 +174,7 @@ public class TripRecordServiceImpl implements TripRecordService {
     /** 여행 기록 수정 **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public TripRecordResponseDto updateRecord(Long tripId, Long recordId, Long memberId, TripRecordRequestDto dto) {
+    public TripRecordResponseDto updateRecord(Long tripId, Long recordId, Long memberId, TripRecordUpdateRequestDto dto) {
         // 수정 권한 확인
         checkRecordAuthority(tripId, recordId, memberId, "수정");
 
@@ -185,15 +187,34 @@ public class TripRecordServiceImpl implements TripRecordService {
                 .build();
         tripRecordMapper.updateTripRecord(updateRecord);
 
-        // DB에서 이미지 정보를 삭제하기 전에, Storage에서 실제 파일을 먼저 삭제
-        List<String> oldImageFileNames = tripRecordMapper.findImageUrlsByRecordId(recordId);
-        oldImageFileNames.forEach(firebaseStorageService::deleteFile);
+        // DB에 저장된 현재 이미지 파일 목록 조회
+        List<String> currentDbImages = tripRecordMapper.findImageUrlsByRecordId(recordId);
 
-        // 이미지 정보 업데이트( 기존 이미지 모두 삭제 후 새로 추가 )
-        tripRecordImageMapper.deleteImagesByRecordId(recordId);
+        // DTO에서 유지할 이미지 목록 가져오기 (null일 경우 빈 리스트로 처리)
+        List<String> imagesToKeep = dto.getExistingImageFileNames() != null ? dto.getExistingImageFileNames() : Collections.emptyList();
 
-        // 이미지 저장 처리
-        uploadAndSaveImages(dto.getImageUrls(), recordId);
+        // 삭제할 이미지 목록 계산 (현재 이미지 - 유지할 이미지)
+        List<String> imagesToDelete = currentDbImages.stream()
+                .filter(dbImage -> !imagesToKeep.contains(dbImage))
+                .toList();
+
+        // 삭제할 이미지가 있으면 삭제 실행
+        if (!imagesToDelete.isEmpty()) {
+            // Storage에서 파일 병렬 삭제
+            CompletableFuture<Void> deleteStorageFuture = CompletableFuture.allOf(
+                    imagesToDelete.stream()
+                            .map(fileName -> CompletableFuture.runAsync(() -> firebaseStorageService.deleteFile(fileName), ioTaskExecutor))
+                            .toArray(CompletableFuture[]::new)
+            );
+
+            // DB에서 이미지 정보 삭제
+            tripRecordImageMapper.deleteImagesByRecordIdAndFileNames(recordId, imagesToDelete);
+
+            deleteStorageFuture.join(); // Storage 삭제 작업이 모두 끝날 때까지 대기
+        }
+
+        // 새로 추가할 이미지가 있으면 업로드 및 DB 저장
+        uploadAndSaveImages(dto.getNewImages(), recordId);
 
         // 업데이트된 정보를 다시 조회하여 반환
         TripRecord finalRecord = tripRecordMapper.findRecordById(recordId);
@@ -208,9 +229,14 @@ public class TripRecordServiceImpl implements TripRecordService {
         // 삭제 권한 확인
         checkRecordAuthority(tripId, recordId, memberId, "삭제");
 
-        // DB에서 이미지 정보를 삭제하기 전에, Storage에서 실제 파일을 먼저 삭제
+        // 여러 파일을 병렬로 삭제
         List<String> imageFileNamesToDelete = tripRecordMapper.findImageUrlsByRecordId(recordId);
-        imageFileNamesToDelete.forEach(firebaseStorageService::deleteFile);
+        if (imageFileNamesToDelete != null && !imageFileNamesToDelete.isEmpty()) {
+            CompletableFuture.allOf(imageFileNamesToDelete.stream()
+                    .map(fileName -> CompletableFuture.runAsync(() -> firebaseStorageService.deleteFile(fileName), ioTaskExecutor))
+                    .toArray(CompletableFuture[]::new)
+            ).join(); // 모든 파일이 Storage에서 삭제될 때까지 대기
+        }
 
         // 자식 테이블(이미지) 데이터 명시적 삭제
         tripRecordImageMapper.deleteImagesByRecordId(recordId);
@@ -235,18 +261,24 @@ public class TripRecordServiceImpl implements TripRecordService {
             return;
         }
 
-        for (var imageFile : imageFiles) {
-            // 리스트 안에 혹시 모를 빈 파일이 섞여있으면 건너뛰기
-            if (imageFile == null || imageFile.isEmpty()) {
-                continue;
-            }
-            try {
-                String storedFileName = firebaseStorageService.uploadAndGetFileName(imageFile);
-                TripRecordImage recordImage = TripRecordImage.builder().recordId(recordId).imageUrl(storedFileName).build();
-                tripRecordImageMapper.insertTripRecordImage(recordImage);
-            } catch (IOException e) {
-                throw new FileUploadException("파일 업로드에 실패했습니다.", e);
-            }
-        }
+        // 여러 파일을 병렬로 업로드
+        List<CompletableFuture<Void>> uploadFutures = imageFiles.stream()
+                .filter(file -> file != null && !file.isEmpty()) // 유효한 파일만 필터링
+                .map(imageFile -> CompletableFuture.runAsync(() -> {
+                    try {
+                        String storedFileName = firebaseStorageService.uploadAndGetFileName(imageFile);
+                        TripRecordImage recordImage = TripRecordImage.builder()
+                                .recordId(recordId)
+                                .imageUrl(storedFileName)
+                                .build();
+                        tripRecordImageMapper.insertTripRecordImage(recordImage);
+                    } catch (IOException e) {
+                        // 비동기 작업 내에서 발생하는 체크 예외를 런타임 예외로 래핑하여 전파
+                        throw new FileUploadException("파일 업로드 중 오류 발생: " + imageFile.getOriginalFilename(), e);
+                    }
+                }, ioTaskExecutor)).toList();
+
+        // 모든 업로드 작업이 완료될 때까지 대기
+        CompletableFuture.allOf(uploadFutures.toArray(new CompletableFuture[0])).join();
     }
 }

@@ -11,14 +11,20 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
 public class FirebaseStorageService {
 
+    private final Executor executor;
     @Value("${firebase.bucket-name}")
     private String bucketName;
+
+    public FirebaseStorageService(Executor executor) {
+        this.executor = executor;
+    }
 
     /** 파일을 Firebase Storage에 업로드하고, 저장된 파일 이름 반환 **/
     public String uploadAndGetFileName(MultipartFile file) throws IOException {
@@ -73,12 +79,12 @@ public class FirebaseStorageService {
     }
 
     /** 파일 이름을 받아, 서명된 URL을 비동기적으로 생성하여 반환 **/
-    public CompletableFuture<String> getSignedUrlAsync(String fileName) {
+    public CompletableFuture<String> getSignedUrlAsync(String fileName, Executor executor) {
         // CompletableFuture.supplyAsync를 사용해 별도의 스레드에서 작업을 실행
         return CompletableFuture.supplyAsync(() -> {
             // 기존의 동기 메서드를 호출하여 결과를 반환
             return getSignedUrl(fileName);
-        });
+        }, executor);
     }
 
 
