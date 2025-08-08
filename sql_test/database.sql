@@ -1070,6 +1070,11 @@ INSERT INTO REST_TIME_SLOT (rest_id, res_time, max_capacity) VALUES
 (15, '11:00', 5), (15, '12:00', 5), (15, '13:00', 5),
 (15, '14:00', 5), (15, '15:00', 5), (15, '16:00', 5),
 (15, '17:00', 5), (15, '18:00', 5), (15, '19:00', 5);
+
+-- 식당 예약 테스트용 데이터
+INSERT INTO REST_RES (rest_id, reservation_id, trip_day_id, res_num, rest_time_id) VALUES
+(1, 14, 1, 2, 1);
+
 -- 비용 테스트용 데이터
 INSERT INTO EXPENSE (trip_id, member_id, expense_name, expense_date, amount, location, settlement_completed)
 VALUES (2, 2, '교통비', '2025-08-05 17:10:00' ,149400, 'BUSAN', false),
