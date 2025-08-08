@@ -1,4 +1,4 @@
-package org.moa.reservation.dto;
+package org.moa.reservation.dto.qr;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserTransportReservationDto {
+    private Long tranResId; // 좌석 고유 ID
     private String type;
     private Long reservationId;
     private String departureName;

@@ -85,11 +85,11 @@ public class MemberQrController {
 
     // 사용자 예약 내역 QR 조회 API
     @GetMapping("/reservation")
-    public ResponseEntity<ApiResponse<String>> generateReservationQr(@AuthenticationPrincipal CustomUser user,
+    public ResponseEntity<ApiResponse<?>> generateReservationQr(@AuthenticationPrincipal CustomUser user,
                                                                      @RequestParam Long reservationId) {
         try {
             Long memberId = user.getMember().getMemberId();
-            String qrImage = qrService.generateReservationQr(reservationId, memberId);
+            Object qrImage = qrService.generateReservationQr(reservationId, memberId);
 
             return ResponseEntity
                     .status(HttpStatus.OK)

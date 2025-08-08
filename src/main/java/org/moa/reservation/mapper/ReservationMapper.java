@@ -2,8 +2,10 @@ package org.moa.reservation.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.moa.reservation.dto.*;
+import org.moa.reservation.dto.qr.*;
 import org.moa.reservation.entity.Reservation;
+
+import java.util.List;
 
 @Mapper
 public interface ReservationMapper {
@@ -18,14 +20,21 @@ public interface ReservationMapper {
 
 	// 식당 예약 내역 QR
 	QrRestaurantReservationDto findRestQrInfoByReservationId(@Param("reservationId") Long reservationId);
+
+	// 식당 예약 내역 정보
 	UserRestaurantReservationDto findUserRestInfoByReservationId(@Param("reservationId") Long reservationId);
 
 	// 숙박 예약 내역 QR
 	QrAccommodationReservationDto findAccomQrInfoByReservationId(@Param("reservationId") Long reservationId);
+	
+	// 숙박 예약 내역 정보
 	UserAccommodationReservationDto findUserAccomInfoByReservationId(@Param("reservationId") Long reservationId);
+	
 	// 교통 예약 내역 QR
-	QrTransportReservationDto findTransQrInfoByReservationId(@Param("reservationId") Long reservationId);
-	UserTransportReservationDto findUserTransInfoByReservationId(@Param("reservationId") Long reservationId);
+	QrTransportReservationDto findTransQrInfoByTranResId(@Param("tranResId") Long tranResId);
+	
+	// 교통 예약 내역 정보
+	List<UserTransportReservationDto> findUserTransInfoByReservationId(@Param("reservationId") Long reservationId);
 
 	// QR 권한 검증
 	boolean isTripMemberByReservationIdAndMemberId(@Param("reservationId") Long reservationId,

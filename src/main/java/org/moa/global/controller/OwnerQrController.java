@@ -1,24 +1,18 @@
 package org.moa.global.controller;
 
-import com.google.api.Http;
-import com.google.protobuf.Api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.moa.global.response.ApiResponse;
 import org.moa.global.service.qr.QrService;
 import org.moa.global.type.StatusCode;
 import org.moa.member.dto.qr.IdCardResponseDto;
-import org.moa.reservation.dto.QrRestaurantReservationDto;
 import org.moa.reservation.mapper.ReservationMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Objects;
 
 @Slf4j
 @RestController

@@ -30,7 +30,7 @@
     </select>
 
     <!-- 식당 예약 내역 QR -->
-    <select id="findRestQrInfoByReservationId" resultType="org.moa.reservation.dto.QrRestaurantReservationDto">
+    <select id="findRestQrInfoByReservationId" resultType="org.moa.reservation.dto.qr.QrRestaurantReservationDto">
         SELECT
             'RESTAURANT' AS type,
             rr.reservation_id AS reservationId,
@@ -47,7 +47,7 @@
         WHERE rr.reservation_id = #{reservationId}
     </select>
 
-    <select id="findUserRestInfoByReservationId" resultType="org.moa.reservation.dto.UserRestaurantReservationDto">
+    <select id="findUserRestInfoByReservationId" resultType="org.moa.reservation.dto.qr.UserRestaurantReservationDto">
         SELECT
             'RESTAURANT' AS type,
             rr.reservation_id AS reservationId,
@@ -65,7 +65,7 @@
     </select>
 
     <!-- 숙박 예약 내역 QR -->
-    <select id="findAccomQrInfoByReservationId" resultType="org.moa.reservation.dto.QrAccommodationReservationDto">
+    <select id="findAccomQrInfoByReservationId" resultType="org.moa.reservation.dto.qr.QrAccommodationReservationDto">
         SELECT
             'ACCOMMODATION' AS type,
             rr.reservation_id AS reservationId,
@@ -81,7 +81,7 @@
         WHERE ra.reservation_id = #{reservationId}
     </select>
 
-    <select id="findUserAccomInfoByReservationId" resultType="org.moa.reservation.dto.UserAccommodationReservationDto">
+    <select id="findUserAccomInfoByReservationId" resultType="org.moa.reservation.dto.qr.UserAccommodationReservationDto">
         SELECT
             'ACCOMMODATION' AS type,
             ra.reservation_id AS reservationId,
@@ -99,8 +99,9 @@
     </select>
 
     <!-- 교통 예약 내역 QR -->
-    <select id="findTransQrInfoByReservationId" resultType="org.moa.reservation.dto.QrTransportReservationDto">
+    <select id="findTransQrInfoByTranResId" resultType="org.moa.reservation.dto.qr.QrTransportReservationDto">
         SELECT
+            tr.tran_res_id AS tranResId,
             'TRANSPORT' AS type,
             tr.reservation_id AS reservationId,
             tr.transport_id AS transportId,
@@ -111,11 +112,12 @@
             tr.seat_type AS seatType,
             tr.status AS status
         FROM TRAN_RES tr
-        WHERE tr.reservation_id = #{reservationId}
+        WHERE tr.tran_res_id = #{tranResId}
     </select>
 
-    <select id="findUserTransInfoByReservationId" resultType="org.moa.reservation.dto.UserTransportReservationDto">
+    <select id="findUserTransInfoByReservationId" resultType="org.moa.reservation.dto.qr.UserTransportReservationDto">
         SELECT
+            tr.tran_res_id AS tranResId,
             'TRANSPORT' AS type,
             tr.reservation_id AS reservationId,
             ti.departure_name AS departureName,

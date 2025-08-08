@@ -1,4 +1,4 @@
-package org.moa.reservation.dto;
+package org.moa.reservation.dto.qr;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
