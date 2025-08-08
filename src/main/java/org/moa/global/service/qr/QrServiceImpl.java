@@ -206,7 +206,7 @@ public class QrServiceImpl implements QrService{
                 case "RESTAURANT" -> {
                     QrRestaurantReservationDto dto = reservationMapper.findRestQrInfoByReservationId(reservationId);
                     if (dto == null) throw new NoSuchElementException("식당 예약 정보를 찾을 수 없습니다.");
-                    if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getReservationId(), "RESTAURANT")) {
+                    if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getRestId(), "RESTAURANT")) {
                         throw new SecurityException("이 예약에 접근할 권한이 없습니다.");
                     }
                     yield dto;

@@ -16,6 +16,7 @@ public class UserTransportReservationDto {
     private Long tranResId; // 좌석 고유 ID
     private String type;
     private Long reservationId;
+    private String trainNo;
     private String departureName;
     private String arrivalName;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
@@ -25,7 +26,5 @@ public class UserTransportReservationDto {
     private Integer seatRoomNo;
     private String seatNumber;
     private String seatType;
-    private String trainType;
-    private String trainNo;
     private String status;
 }
