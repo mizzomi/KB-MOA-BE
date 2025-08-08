@@ -45,8 +45,6 @@ public class TripRecordServiceImpl implements TripRecordService {
     private record ProcessingResult(TripRecordCardDto record, long duration) {
     }
 
-    // @RequiredArgsConstructor를 제거하고 생성자를 직접 작성하여 의존성을 명시적으로 주입합니다.
-    // 이렇게 하면 @Qualifier 어노테이션을 정확한 위치(생성자 파라미터)에 지정할 수 있습니다.
     public TripRecordServiceImpl(TripRecordMapper tripRecordMapper,
                                  TripRecordImageMapper tripRecordImageMapper,
                                  TripMemberMapper tripMemberMapper,
