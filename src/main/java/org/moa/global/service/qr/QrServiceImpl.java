@@ -3,6 +3,7 @@ package org.moa.global.service.qr;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.moa.global.service.FirebaseStorageService;
 import org.moa.global.util.AesUtil;
 import org.moa.global.util.QrCodeUtil;
 import org.moa.member.dto.qr.IdCardResponseDto;
@@ -11,6 +12,7 @@ import org.moa.member.mapper.IdCardMapper;
 import org.moa.reservation.dto.qr.*;
         import org.moa.reservation.mapper.ReservationMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -22,6 +24,7 @@ public class QrServiceImpl implements QrService{
     private final IdCardMapper idCardMapper;
     private final ReservationMapper reservationMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final FirebaseStorageService firebaseStorageService;
 
     // 주민등록증 QR 생성 API
     @Override
@@ -59,14 +62,18 @@ public class QrServiceImpl implements QrService{
             throw new NoSuchElementException("해당 회원의 주민등록증 정보가 없습니다.");
         } // Controller에서 404 응답 처리
 
-
+        String signedImageUrl = null;
+        if (StringUtils.hasText(card.getImageUrl())) {
+            // DB에서 가져온 파일 이름을 서명된 URL로 변환
+            signedImageUrl = firebaseStorageService.getSignedUrl(card.getImageUrl());
+        }
 
         return new IdCardResponseDto(
                 card.getName(),
                 card.getIdCardNumber(),
                 card.getIssuedDate().toString(),
                 card.getAddress(),
-                card.getImageUrl()
+                signedImageUrl
         );
     }
 
