@@ -19,5 +19,5 @@ public class TripRecordRequestDto {
     private LocalDate recordDate;
 
     private String content;
-    private List<MultipartFile> images;
+    private List<MultipartFile> imageUrls;
 }

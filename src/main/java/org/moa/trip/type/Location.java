@@ -5,5 +5,9 @@ public enum Location {
     SEOUL,
     GWANGJU,
     GANGNEUNG,
-    JEJU
+    JEJU,
+    DAEGU,
+    DAEJEON,
+    MOKPO,
+
 }
