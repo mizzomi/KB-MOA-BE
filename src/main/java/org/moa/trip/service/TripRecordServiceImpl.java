@@ -1,6 +1,8 @@
 package org.moa.trip.service;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.moa.global.exception.ForbiddenAccessException;
 import org.moa.global.exception.RecordNotFoundException;
 import org.moa.global.handler.FileUploadException;
@@ -23,17 +25,39 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.Objects;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class TripRecordServiceImpl implements TripRecordService {
     private final TripRecordMapper tripRecordMapper;
     private final TripRecordImageMapper tripRecordImageMapper;
     private final TripMemberMapper tripMemberMapper;
     private final FirebaseStorageService firebaseStorageService;
+
+    private final Executor ioTaskExecutor;
+
+    // 비동기 처리 결과와 소요 시간을 함께 담기 위한 내부 헬퍼 클래스
+    private record ProcessingResult(TripRecordCardDto record, long duration) {
+    }
+
+    // @RequiredArgsConstructor를 제거하고 생성자를 직접 작성하여 의존성을 명시적으로 주입합니다.
+    // 이렇게 하면 @Qualifier 어노테이션을 정확한 위치(생성자 파라미터)에 지정할 수 있습니다.
+    public TripRecordServiceImpl(TripRecordMapper tripRecordMapper,
+                                 TripRecordImageMapper tripRecordImageMapper,
+                                 TripMemberMapper tripMemberMapper,
+                                 FirebaseStorageService firebaseStorageService,
+                                 @Qualifier("ioTaskExecutor") Executor ioTaskExecutor) {
+        this.tripRecordMapper = tripRecordMapper;
+        this.tripRecordImageMapper = tripRecordImageMapper;
+        this.tripMemberMapper = tripMemberMapper;
+        this.firebaseStorageService = firebaseStorageService;
+        this.ioTaskExecutor = ioTaskExecutor;
+    }
 
     /** 여행 기록 생성 **/
     @Override
@@ -68,25 +92,47 @@ public class TripRecordServiceImpl implements TripRecordService {
     @Override
     @Transactional(readOnly = true)
     public Page<TripRecordCardDto> getRecordsByDate(Long tripId, LocalDate date, Pageable pageable) {
+        long startTime = System.currentTimeMillis();
+
         List<TripRecordCardDto> records = tripRecordMapper.findRecordsByDate(tripId, date, pageable);
 
-        // 이미지 불러오기
-        records.forEach(record -> {
-            // DTO의 imageUrls 리스트가 비어있지 않다면,
-            if (record.getImageUrls() != null && !record.getImageUrls().isEmpty()) {
-                // 파일 이름 리스트를 서명된 URL 리스트로 변환
-                List<String> signedUrls = record.getImageUrls().stream()
-                        .filter(Objects::nonNull) // LEFT JOIN으로 인해 null이 포함될 수 있으므로 필터링
-                        .map(firebaseStorageService::getSignedUrl)
-                        .filter(Objects::nonNull) // URL 생성 실패 시 null을 필터링
-                        .collect(Collectors.toList());
-                record.setImageUrls(signedUrls); // DTO의 리스트를 교체
-            }
-        });
+        // 각 여행 기록의 이미지 URL을 비동기적으로 가져오고, 그 결과와 시간을 반환하는 작업 목록 생성
+        List<CompletableFuture<ProcessingResult>> futures = records.stream()
+                .map(record -> CompletableFuture.supplyAsync(() -> {
+                    long taskStartTime = System.currentTimeMillis();
+
+                    // DTO의 imageUrls 리스트(현재는 파일 이름 리스트)가 비어있지 않다면,
+                    if (record.getImageUrls() != null && !record.getImageUrls().isEmpty()) {
+                        // 파일 이름 리스트를 서명된 URL 리스트로 변환
+                        List<String> signedUrls = record.getImageUrls().parallelStream()
+                                .filter(Objects::nonNull) // LEFT JOIN으로 인해 null이 포함될 수 있으므로 필터링
+                                .map(firebaseStorageService::getSignedUrl) // 각 URL 요청이 병렬로 처리됨
+                                .filter(Objects::nonNull) // URL 생성 실패 시 null을 필터링
+                                .toList();
+                        record.setImageUrls(signedUrls); // DTO의 리스트를 교체
+                    }
+
+                    long taskEndTime = System.currentTimeMillis();
+                    return new ProcessingResult(record, taskEndTime - taskStartTime);
+                }, ioTaskExecutor)) // 커스텀 스레드 풀을 명시적으로 사용
+                .toList();
+
+        // 생성된 모든 비동기 작업이 완료될 때까지 대기
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        // [로그 추가] 각 작업의 결과와 소요 시간을 로그로 남김
+        List<TripRecordCardDto> finalRecords = futures.stream()
+                .map(CompletableFuture::join) // 완료된 Future에서 ProcessingResult를 가져옴
+                .peek(result -> log.info("개별 기록 처리 완료 - recordId: {}, 소요 시간: {}ms", result.record().getRecordId(), result.duration()))
+                .map(ProcessingResult::record) // ProcessingResult에서 최종 DTO만 추출
+                .toList();
 
         int total = tripRecordMapper.countRecordsByDate(tripId, date);
 
-        return new PageImpl<>(records, pageable, total);
+        long endTime = System.currentTimeMillis();
+        log.info("getRecordsByDate - 총 소요 시간 (비동기 처리): {}ms, 처리된 여행 기록 수: {}", (endTime - startTime), records.size());
+
+        return new PageImpl<>(finalRecords, pageable, total);
     }
 
     
@@ -94,6 +140,8 @@ public class TripRecordServiceImpl implements TripRecordService {
     @Override
     @Transactional(readOnly = true)
     public TripRecordDetailResponseDto getRecordDetail(Long tripId, Long recordId) {
+        long startTime = System.currentTimeMillis();
+
         // tripId와 recordId를 모두 사용해서 조회
         TripRecord tripRecord = tripRecordMapper.findRecordByTripIdAndRecordId(tripId, recordId);
         
@@ -104,11 +152,19 @@ public class TripRecordServiceImpl implements TripRecordService {
         // DB에서 이미지 파일 이름 목록 조회
         List<String> imageFileNames = tripRecordMapper.findImageUrlsByRecordId(recordId);
 
-        // 파일 이름 목록을 서명된 URL 목록으로 변환 (null은 필터링)
-        List<String> imageUrls = imageFileNames.stream()
-                .map(firebaseStorageService::getSignedUrl)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        // CompletableFuture를 사용하여 모든 이미지 URL을 비동기적으로 조회
+        List<CompletableFuture<String>> urlFutures = imageFileNames.stream()
+                .map(firebaseStorageService::getSignedUrlAsync) // 비동기 메서드 호출
+                .toList();
+
+        // 모든 비동기 작업이 완료될 때까지 기다린 후, 결과를 리스트로 조합
+        List<String> imageUrls = urlFutures.stream()
+                .map(CompletableFuture::join) // 각 Future의 결과(URL 문자열)를 가져옴
+                .filter(Objects::nonNull) // URL 생성 실패 시 null을 필터링
+                .toList();
+
+        long endTime = System.currentTimeMillis();
+        log.info("getRecordDetail - 총 소요 시간 (비동기 처리): {}ms, 이미지 수: {}", (endTime - startTime), imageUrls.size());
 
         // 조회된 정보들을 DTO로 조합하여 반환
         return TripRecordDetailResponseDto.of(tripRecord, imageUrls);
