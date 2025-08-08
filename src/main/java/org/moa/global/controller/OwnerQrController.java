@@ -2,13 +2,16 @@ package org.moa.global.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.C;
 import org.moa.global.response.ApiResponse;
+import org.moa.global.security.domain.CustomUser;
 import org.moa.global.service.qr.QrService;
 import org.moa.global.type.StatusCode;
 import org.moa.member.dto.qr.IdCardResponseDto;
 import org.moa.reservation.mapper.ReservationMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/public/qr")
+@RequestMapping("/api/owner/qr")
 public class OwnerQrController {
 
     private final QrService qrService;
@@ -47,8 +50,9 @@ public class OwnerQrController {
     // 예약 내역 QR 복호화 API
     @GetMapping("/reservation")
     public ResponseEntity<ApiResponse<?>> decryptReservationQr(@RequestParam("data") String encryptedText,
-                                                               @RequestParam("ownerId") Long ownerId) {
+                                                               @AuthenticationPrincipal CustomUser user) {
         try {
+            Long ownerId = user.getMember().getMemberId();
             Object response = qrService.decryptReservationQr(encryptedText, ownerId);
 
             if (response == null) {
