@@ -22,12 +22,12 @@ CREATE TABLE tran_res
 
     CONSTRAINT fk_tran_res_reservation_id
         FOREIGN KEY (reservation_id)
-            REFERENCES RESERVATION (reservation_id)
+            REFERENCES reservation (reservation_id)
             ON DELETE CASCADE,
 
     CONSTRAINT fk_tran_res_trip_day_id
         FOREIGN KEY (trip_day_id)
-            REFERENCES TRIP_DAY (trip_day_id)
+            REFERENCES trip_day (trip_day_id)
             ON DELETE CASCADE
 );
 INSERT INTO tran_res (
