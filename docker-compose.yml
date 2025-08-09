@@ -60,12 +60,15 @@ services:
       # Docker 환경용 설정 파일
       - ./src/main/resources/application-docker.properties:/usr/local/tomcat/conf/application.properties:ro
     environment:
-      # JVM 메모리 설정
-      JAVA_OPTS: "-Xms512m -Xmx1024m"
+      # JVM 메모리 설정 및 인코딩 설정
+      JAVA_OPTS: "-Xms512m -Xmx1024m -Dfile.encoding=UTF-8 -Duser.language=ko -Duser.country=KR"
       # 타임존 설정
       TZ: Asia/Seoul
       # Spring 프로필 설정 (docker 프로필 사용)
       SPRING_PROFILES_ACTIVE: docker
+      # 언어 및 인코딩 설정
+      LANG: ko_KR.UTF-8
+      LC_ALL: ko_KR.UTF-8
     depends_on:
       mysql:
         condition: service_healthy
