@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # MySQL 데이터베이스
+  mysql:
+    image: mysql:8.0
+    container_name: moa-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MOA_DB_ROOT_PASSWORD:?Set MOA_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: moa
+      MYSQL_CHARACTER_SET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+      TZ: Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      # 데이터 영속성
+      - mysql_data:/var/lib/mysql
+      # SQL 초기화 스크립트 제거 (수동으로 실행 필요)
+      # - ./sql_test/database.sql:/docker-entrypoint-initdb.d/01-database.sql:ro
+      # - ./sql_test/insert_tran_res_aug1_to_aug7_ver2.sql:/docker-entrypoint-initdb.d/02-insert-data.sql:ro
+    networks:
+      - moa-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$$MYSQL_ROOT_PASSWORD\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # UTF-8 설정
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # Redis 캐시 서버
+  redis:
+    image: redis:7-alpine
+    container_name: moa-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - moa-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Tomcat + Spring Application
+  tomcat:
+    image: tomcat:9-jdk17
+    container_name: moa-tomcat
+    ports:
+      - "8080:8080"
+    volumes:
+      # WAR 파일을 ROOT.war로 복사하여 배포
+      - ./build/libs:/tmp/wars:ro
+      # Firebase 키 파일 마운트 (있는 경우에만)
+      - ./src/main/resources/firebase:/usr/local/tomcat/firebase:ro
+      # Docker 환경용 설정 파일
+      - ./src/main/resources/application-docker.properties:/usr/local/tomcat/conf/application.properties:ro
+    environment:
+      # JVM 메모리 설정
+      JAVA_OPTS: "-Xms512m -Xmx1024m"
+      # 타임존 설정
+      TZ: Asia/Seoul
+      # Spring 프로필 설정 (docker 프로필 사용)
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - moa-network
+    # WAR 파일을 ROOT.war로 복사하는 스크립트 실행
+    command: >
+      sh -c "
+        echo '========================================' &&
+        echo 'Starting Tomcat deployment process...' &&
+        echo '========================================' &&
+        echo 'Clearing webapps directory...' &&
+        rm -rf /usr/local/tomcat/webapps/* &&
+        echo 'Finding WAR file in /tmp/wars...' &&
+        ls -la /tmp/wars/ &&
+        WAR_FILE=$$(find /tmp/wars -name '*.war' -type f | head -1) &&
+        if [ -z \"$$WAR_FILE\" ]; then
+          echo 'ERROR: No WAR file found in build/libs directory!';
+          echo 'Please run: ./gradlew clean build -x test';
+          exit 1;
+        fi &&
+        echo \"Found WAR file: $$WAR_FILE\" &&
+        echo 'Copying to ROOT.war...' &&
+        cp \"$$WAR_FILE\" /usr/local/tomcat/webapps/ROOT.war &&
+        echo 'WAR file deployed successfully!' &&
+        echo 'Starting Tomcat...' &&
+        catalina.sh run
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  moa-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
