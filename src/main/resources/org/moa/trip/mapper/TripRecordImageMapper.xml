@@ -4,13 +4,13 @@
 
     <!-- 이미지 저장 -->
     <insert id="insertTripRecordImage" parameterType="org.moa.trip.entity.TripRecordImage">
-        INSERT INTO TRIP_RECORD_IMAGES (record_id, image_url)
+        INSERT INTO trip_record_images (record_id, image_url)
         VALUES (#{recordId}, #{imageUrl})
     </insert>
 
     <!-- 이미지 삭제 -->
     <delete id="deleteImagesByRecordId">
-        DELETE FROM TRIP_RECORD_IMAGES
+        DELETE FROM trip_record_images
         WHERE record_id = #{recordId}
     </delete>
 </mapper>

@@ -5,7 +5,7 @@
 
 <mapper namespace="org.moa.trip.mapper.TripMemberMapper">
     <insert id="insert" parameterType="org.moa.trip.entity.TripMember" useGeneratedKeys="true" keyProperty="tripMemberId">
-        INSERT INTO TRIP_MEMBER (
+        INSERT INTO trip_member (
                                    trip_id,
                                    member_id,
                                    role,
@@ -20,13 +20,13 @@
     </insert>
     <select id="existMemberInTrip" resultType="int">
         SELECT COUNT(*)
-        FROM TRIP_MEMBER
+        FROM trip_member
         WHERE trip_id = #{tripId}
         AND member_id = #{memberId}
     </select>
     <select id="searchTripMembersByTripId" resultType="org.moa.trip.entity.TripMember">
         SELECT *
-        FROM TRIP_MEMBER
+        FROM trip_member
         WHERE trip_id = #{tripId}
     </select>
 

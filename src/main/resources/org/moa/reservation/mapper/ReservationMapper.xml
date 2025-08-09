@@ -5,27 +5,27 @@
 
 <mapper namespace="org.moa.reservation.mapper.ReservationMapper">
     <insert id="insertReservation" useGeneratedKeys="true" keyProperty="reservationId">
-        INSERT INTO RESERVATION (trip_day_id, res_kind)
+        INSERT INTO reservation (trip_day_id, res_kind)
         VALUES (#{tripDayId}, #{resKind})
     </insert>
     <delete id="cancelReservationByReservationId">
         DELETE
-        FROM RESERVATION
+        FROM reservation
         WHERE reservation_id = #{reservationId}
     </delete>
 
     <select id="findMemberIdByReservationId" parameterType="long" resultType="long">
         SELECT t.member_id
-        FROM RESERVATION r
-                 JOIN TRIP_DAY td ON r.trip_day_id = td.trip_day_id
-                 JOIN TRIP t ON td.trip_id = t.trip_id
+        FROM reservation r
+                 JOIN trip_day td ON r.trip_day_id = td.trip_day_id
+                 JOIN trip t ON td.trip_id = t.trip_id
         WHERE r.reservation_id = #{reservationId}
     </select>
 
     <!-- 식당 / 숙박 / 교통 -->
     <select id="findTypeByReservationId" resultType="string">
         SELECT res_kind
-        FROM RESERVATION
+        FROM reservation
         WHERE reservation_id = #{reservationId}
     </select>
 
@@ -40,10 +40,10 @@
             rts.res_time AS time,
             rr.res_num AS resNum,
             rr.status
-        FROM REST_RES rr
-            JOIN TRIP_DAY td ON rr.trip_day_id = td.trip_day_id
-            JOIN REST_TIME_SLOT rts ON rr.rest_time_id = rts.rest_time_id
-            JOIN RESTAURANT_INFO ri ON rr.rest_id = ri.rest_id
+        FROM rest_res rr
+            JOIN trip_day td ON rr.trip_day_id = td.trip_day_id
+            JOIN rest_time_slot rts ON rr.rest_time_id = rts.rest_time_id
+            JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
         WHERE rr.reservation_id = #{reservationId}
     </select>
 
@@ -57,10 +57,10 @@
             CAST(rts.res_time AS TIME) AS time,
             rr.res_num AS resNum,
             rr.status
-        FROM REST_RES rr
-                 JOIN RESTAURANT_INFO ri ON rr.rest_id = ri.rest_id
-                 JOIN TRIP_DAY td ON rr.trip_day_id = td.trip_day_id
-                 JOIN REST_TIME_SLOT rts ON rr.rest_time_id = rts.rest_time_id
+        FROM rest_res rr
+                 JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
+                 JOIN trip_day td ON rr.trip_day_id = td.trip_day_id
+                 JOIN rest_time_slot rts ON rr.rest_time_id = rts.rest_time_id
         WHERE rr.reservation_id = #{reservationId}
     </select>
 
@@ -76,8 +76,8 @@
             DATE_FORMAT(ra.checkout_day, '%Y-%m-%d %H:%i') AS checkoutDay,
             ra.guests,
             ra.status
-        FROM ACCOM_RES ra
-                 JOIN RESERVATION rr ON ra.reservation_id = rr.reservation_id
+        FROM accom_res ra
+                 JOIN reservation rr ON ra.reservation_id = rr.reservation_id
         WHERE ra.reservation_id = #{reservationId}
     </select>
 
@@ -93,8 +93,8 @@
             ra.guests,
             ai.location,
             ra.status
-        FROM ACCOM_RES ra
-                 JOIN ACCOMMODATION_INFO ai ON ra.accom_id = ai.accom_id
+        FROM accom_res ra
+                 JOIN accommodation_info ai ON ra.accom_id = ai.accom_id
         WHERE ra.reservation_id = #{reservationId}
     </select>
 
@@ -116,9 +116,9 @@
             tr.status AS status,
             tr.booked_at AS bookedAt
         FROM
-            TRAN_RES tr
+            tran_res tr
                 JOIN
-            TRANSPORT_INFO ti ON tr.transport_id = ti.transport_id
+            transport_info ti ON tr.transport_id = ti.transport_id
         WHERE tr.tran_res_id = #{tranResId}
     </select>
 
@@ -137,9 +137,9 @@
             tr.seat_type AS seatType,
             tr.status AS status
         FROM
-            TRAN_RES tr
+            tran_res tr
                 JOIN
-            TRANSPORT_INFO ti ON tr.transport_id = ti.transport_id
+            transport_info ti ON tr.transport_id = ti.transport_id
         WHERE tr.reservation_id = #{reservationId}
     </select>
 
@@ -147,9 +147,9 @@
     <select id="isTripMemberByReservationIdAndMemberId" resultType="boolean" parameterType="map">
         SELECT EXISTS (
             SELECT 1
-            FROM RESERVATION r
-                     JOIN TRIP_DAY td ON r.trip_day_id = td.trip_day_id
-                     JOIN TRIP_MEMBER tm ON td.trip_id = tm.trip_id
+            FROM reservation r
+                     JOIN trip_day td ON r.trip_day_id = td.trip_day_id
+                     JOIN trip_member tm ON td.trip_id = tm.trip_id
             WHERE r.reservation_id = #{reservationId}
               AND tm.member_id = #{memberId}
         )
@@ -159,7 +159,7 @@
     <select id="isOwnerOfBusiness" resultType="boolean">
         SELECT EXISTS (
             SELECT 1
-            FROM OWNER
+            FROM owner
             WHERE member_id = #{ownerId}
               AND business_id = #{businessId}
               AND business_kind = #{businessType}
