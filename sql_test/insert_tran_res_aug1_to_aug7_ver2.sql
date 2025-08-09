@@ -18,7 +18,7 @@ CREATE TABLE tran_res
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,   -- 수정일시
     status ENUM('AVAILABLE', 'PENDING', 'CONFIRMED') NOT NULL DEFAULT 'AVAILABLE',
 
-    FOREIGN KEY (transport_id) REFERENCES TRANSPORT_INFO (transport_id) ON DELETE CASCADE,
+    FOREIGN KEY (transport_id) REFERENCES transport_info (transport_id) ON DELETE CASCADE,
 
     CONSTRAINT fk_tran_res_reservation_id
         FOREIGN KEY (reservation_id)
@@ -26926,7 +26926,7 @@ UPDATE tran_res
 SET reservation_id = 8, trip_day_id = 4, booked_at = now(), status = 'CONFIRMED'
 WHERE tran_res_id = 14785;
 
--- 8641, 8642 가 윈터 지젤 11시 서울-> 부산, KTX, 1호차, A1,A2 
+-- 8641, 8642 가 윈터 지젤 11시 서울-> 부산, KTX, 1호차, A1,A2
 -- 8808 이 닝닝 12시 서울->부산 KTX , 7호차, F4
 -- 15619 가 윈터 10시 부산->서울, KTX 산천, 1호차, E3
 -- 18149, 18155 가 지젤,닝닝 15시 부산->서울, KTX 산천, 7호차, B1,C3
