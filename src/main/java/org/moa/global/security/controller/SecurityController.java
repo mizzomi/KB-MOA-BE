@@ -25,7 +25,8 @@ public class SecurityController {
 	public ResponseEntity<String> doAll() {
 		log.info("do all can access everybody");
 		LocalDateTime now = LocalDateTime.now();
-		return ResponseEntity.ok("all can access everybody, now is " + now);
+		// return ResponseEntity.ok("all can access everybody, now is " + now);
+		return ResponseEntity.ok("all can access everybody");
 	}
 
 	@GetMapping("/member")
