@@ -60,6 +60,13 @@ public class RootConfig {
 			config.setMaximumPoolSize(10);
 			config.setMinimumIdle(5);
 			config.setConnectionTimeout(30000);
+			
+			// UTF-8 인코딩 설정 추가
+			Properties props = new Properties();
+			props.setProperty("useUnicode", "true");
+			props.setProperty("characterEncoding", "UTF-8");
+			props.setProperty("connectionCollation", "utf8mb4_unicode_ci");
+			config.setDataSourceProperties(props);
 
 			System.out.println("========================================");
 			System.out.println("Using Local Configuration");
@@ -119,6 +126,13 @@ public class RootConfig {
 			config.setMaximumPoolSize(20);
 			config.setMinimumIdle(10);
 			config.setConnectionTimeout(60000);  // Docker 네트워크는 시간이 더 걸릴 수 있음
+			
+			// UTF-8 인코딩 설정 추가
+			Properties props = new Properties();
+			props.setProperty("useUnicode", "true");
+			props.setProperty("characterEncoding", "UTF-8");
+			props.setProperty("connectionCollation", "utf8mb4_unicode_ci");
+			config.setDataSourceProperties(props);
 
 			System.out.println("========================================");
 			System.out.println("Using Docker Configuration");
