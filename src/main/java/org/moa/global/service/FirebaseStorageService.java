@@ -17,14 +17,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 public class FirebaseStorageService {
-
-    private final Executor executor;
     @Value("${firebase.bucket-name}")
     private String bucketName;
-
-    public FirebaseStorageService(Executor executor) {
-        this.executor = executor;
-    }
 
     /** 파일을 Firebase Storage에 업로드하고, 저장된 파일 이름 반환 **/
     public String uploadAndGetFileName(MultipartFile file) throws IOException {

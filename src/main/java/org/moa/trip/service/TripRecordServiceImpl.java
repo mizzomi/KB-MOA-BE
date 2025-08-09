@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.concurrent.Executor;
 import java.util.Objects;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -152,22 +153,26 @@ public class TripRecordServiceImpl implements TripRecordService {
         List<String> imageFileNames = tripRecordMapper.findImageUrlsByRecordId(recordId);
 
         // CompletableFuture를 사용하여 모든 이미지 URL을 비동기적으로 조회
-        List<CompletableFuture<String>> urlFutures = imageFileNames.stream()
+        List<CompletableFuture<TripRecordDetailResponseDto.ImageInfo>> imageInfoFutures = imageFileNames.stream()
                 // I/O 전용 스레드 풀을 사용하도록 명시적으로 지정
-                .map(fileName -> firebaseStorageService.getSignedUrlAsync(fileName, ioTaskExecutor))
+                .map(fileName -> CompletableFuture.supplyAsync(() -> {
+                    String signedUrl = firebaseStorageService.getSignedUrl(fileName);
+                    // URL 생성에 실패하면 null 대신 fileName만 있는 객체를 반환하거나, 필터링 할 수 있음
+                    return signedUrl != null ? new TripRecordDetailResponseDto.ImageInfo(signedUrl, fileName) : null;
+                }, ioTaskExecutor))
                 .toList();
 
         // 모든 비동기 작업이 완료될 때까지 기다린 후, 결과를 리스트로 조합
-        List<String> imageUrls = urlFutures.stream()
+        List<TripRecordDetailResponseDto.ImageInfo> images = imageInfoFutures.stream()
                 .map(CompletableFuture::join) // 각 Future의 결과(URL 문자열)를 가져옴
-                .filter(Objects::nonNull) // URL 생성 실패 시 null을 필터링
+                .filter(Objects::nonNull) // 생성 실패 시 null을 필터링
                 .toList();
 
         long endTime = System.currentTimeMillis();
-        log.info("getRecordDetail - 총 소요 시간 (비동기 처리): {}ms, 이미지 수: {}", (endTime - startTime), imageUrls.size());
+        log.info("getRecordDetail - 총 소요 시간 (비동기 처리): {}ms, 이미지 수: {}", (endTime - startTime), images.size());
 
         // 조회된 정보들을 DTO로 조합하여 반환
-        return TripRecordDetailResponseDto.of(tripRecord, imageUrls);
+        return TripRecordDetailResponseDto.of(tripRecord, images);
     }
 
     
@@ -191,11 +196,12 @@ public class TripRecordServiceImpl implements TripRecordService {
         List<String> currentDbImages = tripRecordMapper.findImageUrlsByRecordId(recordId);
 
         // DTO에서 유지할 이미지 목록 가져오기 (null일 경우 빈 리스트로 처리)
-        List<String> imagesToKeep = dto.getExistingImageFileNames() != null ? dto.getExistingImageFileNames() : Collections.emptyList();
+        // Set을 사용하여 contains 연산의 성능을 O(1)으로 향상
+        Set<String> imagesToKeep = dto.getExistingImageFileNames() != null ? Set.copyOf(dto.getExistingImageFileNames()) : Collections.emptySet();
 
         // 삭제할 이미지 목록 계산 (현재 이미지 - 유지할 이미지)
         List<String> imagesToDelete = currentDbImages.stream()
-                .filter(dbImage -> !imagesToKeep.contains(dbImage))
+                .filter(dbImage -> !imagesToKeep.contains(dbImage)) // Set.contains()는 매우 빠름
                 .toList();
 
         // 삭제할 이미지가 있으면 삭제 실행
