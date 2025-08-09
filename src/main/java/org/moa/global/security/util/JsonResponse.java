@@ -14,6 +14,7 @@ public class JsonResponse {
 		ObjectMapper om = new ObjectMapper();
 
 		response.setContentType("application/json;charset=UTF-8");
+		response.setCharacterEncoding("UTF-8");
 		Writer out = response.getWriter();
 		out.write(om.writeValueAsString(result));
 		out.flush();
@@ -22,6 +23,7 @@ public class JsonResponse {
 	public static void sendError(HttpServletResponse response, HttpStatus status, String message) throws IOException {
 		response.setStatus(status.value());
 		response.setContentType("application/json;charset=UTF-8");
+		response.setCharacterEncoding("UTF-8");
 		Writer out = response.getWriter();
 		out.write(message);
 		out.flush();
