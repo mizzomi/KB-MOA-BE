@@ -1,6 +1,6 @@
 use moa;
 DROP TABLE IF EXISTS tran_res;
-CREATE TABLE TRAN_RES
+CREATE TABLE tran_res
 (
     tran_res_id    BIGINT   NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 교통 예약 ID (기본키)
     transport_id   BIGINT   NOT NULL,                            -- 교통 ID (외래키)
@@ -26918,11 +26918,11 @@ INSERT INTO tran_res (
 
 -- 위에는 카리나 2개
 
-UPDATE TRAN_RES
+UPDATE tran_res
 SET reservation_id = 7, trip_day_id = 1, booked_at = now(), status = 'CONFIRMED'
 WHERE tran_res_id = 1;
 
-UPDATE TRAN_RES
+UPDATE tran_res
 SET reservation_id = 8, trip_day_id = 4, booked_at = now(), status = 'CONFIRMED'
 WHERE tran_res_id = 14785;
 
@@ -26931,26 +26931,26 @@ WHERE tran_res_id = 14785;
 -- 15619 가 윈터 10시 부산->서울, KTX 산천, 1호차, E3
 -- 18149, 18155 가 지젤,닝닝 15시 부산->서울, KTX 산천, 7호차, B1,C3
 
-UPDATE TRAN_RES
+UPDATE tran_res
 SET reservation_id = 9, trip_day_id = 5, booked_at = now(), status = 'CONFIRMED'
 WHERE tran_res_id = 8641;
 
-UPDATE TRAN_RES
+UPDATE tran_res
 SET reservation_id = 9, trip_day_id = 5, booked_at = now(), status = 'CONFIRMED'
 WHERE tran_res_id = 8642;
 
-UPDATE TRAN_RES
+UPDATE tran_res
 SET reservation_id = 10, trip_day_id = 5, booked_at = now(), status = 'CONFIRMED'
 WHERE tran_res_id = 8808;
 
-UPDATE TRAN_RES
+UPDATE tran_res
 SET reservation_id = 11, trip_day_id = 7, booked_at = now(), status = 'CONFIRMED'
 WHERE tran_res_id = 15619;
 
-UPDATE TRAN_RES
+UPDATE tran_res
 SET reservation_id = 12, trip_day_id = 7, booked_at = now(), status = 'CONFIRMED'
 WHERE tran_res_id = 18149;
 
-UPDATE TRAN_RES
+UPDATE tran_res
 SET reservation_id = 12, trip_day_id = 7, booked_at = now(), status = 'CONFIRMED'
 WHERE tran_res_id = 18155;

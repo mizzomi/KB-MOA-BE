@@ -2,37 +2,38 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- DROP TABLES (FK 자식부터 → 부모순)
-DROP TABLE IF EXISTS TRIP_RECORD_IMAGES;
-DROP TABLE IF EXISTS TRIP_RECORDS;
-DROP TABLE IF EXISTS SETTLEMENT_NOTES;
-DROP TABLE IF EXISTS EXPENSE;
-DROP TABLE IF EXISTS REST_TIME_SLOT;
-DROP TABLE IF EXISTS REST_RES;
-DROP TABLE IF EXISTS RESTAURANT_INFO;
-DROP TABLE IF EXISTS TRAN_RES;
-DROP TABLE IF EXISTS TRANSPORT_INFO;
-DROP TABLE IF EXISTS ACCOM_RES;
-DROP TABLE IF EXISTS ROOM_INFO;
-DROP TABLE IF EXISTS ACCOMMODATION_INFO;
-DROP TABLE IF EXISTS RESERVATION;
-DROP TABLE IF EXISTS TRIP_DAY;
-DROP TABLE IF EXISTS TRIP_MEMBER;
-DROP TABLE IF EXISTS TRIP_LOCATION;
-DROP TABLE IF EXISTS TRIP;
-DROP TABLE IF EXISTS PAYMENT_RECORD;
-DROP TABLE IF EXISTS ACCOUNT;
-DROP TABLE IF EXISTS DRIVER_LICENSE;
-DROP TABLE IF EXISTS ID_CARD;
-DROP TABLE IF EXISTS NOTIFICATION;
-DROP TABLE IF EXISTS OWNER;
-DROP TABLE IF EXISTS MEMBER;
+DROP TABLE IF EXISTS trip_record_images;
+DROP TABLE IF EXISTS trip_records;
+DROP TABLE IF EXISTS settlement_notes;
+DROP TABLE IF EXISTS expense;
+DROP TABLE IF EXISTS rest_time_slot;
+DROP TABLE IF EXISTS rest_res;
+DROP TABLE IF EXISTS restaurant_info;
+DROP TABLE IF EXISTS tran_res;
+DROP TABLE IF EXISTS transport_info;
+DROP TABLE IF EXISTS accom_res;
+DROP TABLE IF EXISTS room_info;
+DROP TABLE IF EXISTS accommodation_info;
+DROP TABLE IF EXISTS reservation;
+DROP TABLE IF EXISTS trip_day;
+DROP TABLE IF EXISTS trip_member;
+DROP TABLE IF EXISTS trip_location;
+DROP TABLE IF EXISTS trip;
+DROP TABLE IF EXISTS payment_record;
+DROP TABLE IF EXISTS account;
+DROP TABLE IF EXISTS driver_license;
+DROP TABLE IF EXISTS id_card;
+DROP TABLE IF EXISTS notification;
+DROP TABLE IF EXISTS owner;
+DROP TABLE IF EXISTS member;
+DROP TABLE IF EXISTS tbl_security_audit_log;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ========================================================================================
 -- 회원 테이블
 -- ========================================================================================
-CREATE TABLE MEMBER
+CREATE TABLE member
 (
     member_id      BIGINT AUTO_INCREMENT PRIMARY KEY,
     member_type    ENUM ('ROLE_USER', 'ROLE_OWNER', 'ROLE_ADMIN') NOT NULL,
@@ -48,32 +49,59 @@ CREATE TABLE MEMBER
 -- ========================================================================================
 -- 사업자 테이블
 -- ========================================================================================
-CREATE TABLE owner (
-                       business_id     VARCHAR(255)   NOT NULL,
-                       business_kind   ENUM(
-                        'TRANSPORT',
-                        'ACCOMMODATION',
-                        'RESTAURANT'
-                    ) NOT NULL,
-                       member_id       BIGINT         NOT NULL,
-                       created_at      TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                       updated_at      TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
-                           ON UPDATE CURRENT_TIMESTAMP,
+CREATE TABLE owner
+(
+    business_id     VARCHAR(255)   NOT NULL,
+    business_kind   ENUM(
+        'TRANSPORT',
+        'ACCOMMODATION',
+        'RESTAURANT'
+        ) NOT NULL,
+    member_id       BIGINT         NOT NULL,
+    created_at      TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
 
     -- composite PK
-                       PRIMARY KEY (business_id, business_kind),
+    PRIMARY KEY (business_id, business_kind),
 
     -- member 테이블의 FK
-                       CONSTRAINT fk_owner_member
-                           FOREIGN KEY (member_id)
-                               REFERENCES member(member_id)
-                               ON DELETE CASCADE
+    CONSTRAINT fk_owner_member
+        FOREIGN KEY (member_id)
+            REFERENCES member(member_id)
+            ON DELETE CASCADE
 );
+
+-- Security Audit Log 테이블 (파티셔닝 없는 심플 버전)
+CREATE TABLE IF NOT EXISTS tbl_security_audit_log
+(
+    AUDIT_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
+    EVENT_TYPE VARCHAR(50) NOT NULL COMMENT '이벤트 타입',
+    MEMBER_ID BIGINT COMMENT '회원 ID',
+    USERNAME VARCHAR(100) COMMENT '사용자명',
+    IP_ADDRESS VARCHAR(45) NOT NULL COMMENT 'IP 주소',
+    USER_AGENT TEXT COMMENT '브라우저 정보',
+    REQUEST_METHOD VARCHAR(10) COMMENT 'HTTP 메소드',
+    REQUEST_URI VARCHAR(255) COMMENT '요청 URI',
+    EVENT_DETAIL TEXT COMMENT '상세 정보',
+    SUCCESS_YN CHAR(1) DEFAULT 'N' COMMENT '성공 여부',
+    ERROR_MESSAGE TEXT COMMENT '에러 메시지',
+    SESSION_ID VARCHAR(100) COMMENT '세션 ID',
+    ACCESS_TOKEN_ID VARCHAR(100) COMMENT 'Access Token ID',
+    REFRESH_TOKEN_ID VARCHAR(100) COMMENT 'Refresh Token ID',
+    CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시간',
+
+    INDEX IDX_MEMBER_ID (MEMBER_ID),
+    INDEX IDX_EVENT_TYPE (EVENT_TYPE),
+    INDEX IDX_CREATED_AT (CREATED_AT),
+    INDEX IDX_IP_ADDRESS (IP_ADDRESS)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='보안 감사 로그';
+
 
 -- ========================================================================================
 -- 주민등록증 테이블
 -- ========================================================================================
-CREATE TABLE ID_CARD
+CREATE TABLE id_card
 (
     id_card_id     BIGINT AUTO_INCREMENT,
     member_id      BIGINT UNIQUE,
@@ -86,15 +114,15 @@ CREATE TABLE ID_CARD
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id_card_id),
     UNIQUE (id_card_number),
-    CONSTRAINT FK_MEMBER_TO_ID_CARD_1
+    CONSTRAINT fk_member_to_id_card_1
         FOREIGN KEY (member_id)
-            REFERENCES MEMBER (member_id)
+            REFERENCES member (member_id)
 );
 
 -- ========================================================================================
 -- 운전면허증 테이블
 -- ========================================================================================
-CREATE TABLE DRIVER_LICENSE
+CREATE TABLE driver_license
 (
     license_id     BIGINT AUTO_INCREMENT PRIMARY KEY,
     member_id      BIGINT,
@@ -107,13 +135,13 @@ CREATE TABLE DRIVER_LICENSE
     issuing_agency VARCHAR(50),
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id)
+    FOREIGN KEY (member_id) REFERENCES member (member_id)
 );
 
 -- ========================================================================================
 -- 계좌 테이블
 -- ========================================================================================
-CREATE TABLE ACCOUNT
+CREATE TABLE account
 (
     account_id       BIGINT AUTO_INCREMENT PRIMARY KEY,
     member_id        BIGINT,
@@ -125,32 +153,32 @@ CREATE TABLE ACCOUNT
     is_active        BOOLEAN                 DEFAULT TRUE,
     created_at       TIMESTAMP               DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id)
+    FOREIGN KEY (member_id) REFERENCES member (member_id)
 );
 
 -- ========================================================================================
 -- 여행 테이블
 -- ========================================================================================
-CREATE TABLE TRIP
+CREATE TABLE trip
 (
     trip_id       BIGINT AUTO_INCREMENT PRIMARY KEY,                               -- 여행 ID (기본키)
     member_id     BIGINT                              NOT NULL,                    -- 생성자 ID (외래키)
     trip_name     VARCHAR(255),                                                    -- 여행 이름 (nullable)
-    trip_location ENUM ('BUSAN', 'GANGNEUNG', 'JEJU', 'SEOUL') NOT NULL,                    -- 여행 지역 (ENUM)
+    trip_location ENUM ('부산', '강릉', '제주', '서울', '대구', '대전', '광주', '목포') NOT NULL,                    -- 여행 지역 (ENUM)
     start_date    DATE                                NOT NULL,                    -- 시작일
     end_date      DATE                                NOT NULL,                    -- 종료일
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                             -- 생성일시
     updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- 수정일시
-    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id)                          -- MEMBER 테이블의 PK 참조
+    FOREIGN KEY (member_id) REFERENCES member (member_id)                          -- MEMBER 테이블의 PK 참조
 );
 
 -- ========================================================================================
 -- 여행 위치 테이블
 -- ========================================================================================
-CREATE TABLE TRIP_LOCATION
+CREATE TABLE trip_location
 (
     location_id   BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 위치 ID (기본키)
-    location_name      ENUM ('BUSAN', 'GANGNEUNG', 'JEJU', 'SEOUL' ) NOT NULL,                    -- 여행 지역 (ENUM)
+    location_name      ENUM ('부산', '강릉', '제주', '서울', '대구', '대전', '광주', '목포' ) NOT NULL,                    -- 여행 지역 (ENUM)
     latitude      DECIMAL(10, 8),                             -- 위도
     longitude     DECIMAL(11, 8),                             -- 경도
     address       VARCHAR(200)                                -- 주소
@@ -159,7 +187,7 @@ CREATE TABLE TRIP_LOCATION
 -- ========================================================================================
 -- 여행 멤버 테이블
 -- ========================================================================================
-CREATE TABLE TRIP_MEMBER
+CREATE TABLE trip_member
 (
     id        BIGINT AUTO_INCREMENT PRIMARY KEY, -- 여행 멤버 그룹 PK
     trip_id   BIGINT                  NOT NULL,  -- 여행 ID (FK → TRIP)
@@ -168,8 +196,8 @@ CREATE TABLE TRIP_MEMBER
     role      ENUM ('HOST', 'MEMBER') NOT NULL,  -- 역할 (host: 생성자, member: 동행자)
     joined_at DATETIME                NOT NULL,  -- 생성일시
 
-    FOREIGN KEY (trip_id) REFERENCES TRIP (trip_id),
-    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id),
+    FOREIGN KEY (trip_id) REFERENCES trip (trip_id),
+    FOREIGN KEY (member_id) REFERENCES member (member_id),
 
     -- 하나의 여행에 동일한 사용자가 여러 번 등록되지 않도록 제약 조건 추가
     UNIQUE KEY unique_trip_member (trip_id, member_id)
@@ -178,7 +206,7 @@ CREATE TABLE TRIP_MEMBER
 -- ========================================================================================
 -- 여행 날짜 테이블
 -- ========================================================================================
-CREATE TABLE TRIP_DAY
+CREATE TABLE trip_day
 (
     trip_day_id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 여행 날짜 ID (기본키)
     trip_id     BIGINT NOT NULL,                            -- 여행 ID (외래키)
@@ -187,14 +215,14 @@ CREATE TABLE TRIP_DAY
     -- 외래키 제약 조건: 여행이 삭제되면 날짜도 함께 삭제
     CONSTRAINT fk_trip_day_trip_id
         FOREIGN KEY (trip_id)
-            REFERENCES TRIP (trip_id)
+            REFERENCES trip (trip_id)
             ON DELETE CASCADE
 );
 
 -- ========================================================================================
 -- 결제 내역 테이블
 -- ========================================================================================
-CREATE TABLE PAYMENT_RECORD
+CREATE TABLE payment_record
 (
     record_id        BIGINT AUTO_INCREMENT PRIMARY KEY,
     account_id       BIGINT         NOT NULL,
@@ -204,15 +232,15 @@ CREATE TABLE PAYMENT_RECORD
     payment_price    DECIMAL(15, 2) NOT NULL,
     payment_date     DATETIME       NOT NULL,
     payment_location VARCHAR(255),
-    FOREIGN KEY (account_id) REFERENCES ACCOUNT (account_id),
-    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id),
-    FOREIGN KEY (trip_day_id) REFERENCES TRIP_DAY (trip_day_id)
+    FOREIGN KEY (account_id) REFERENCES account (account_id),
+    FOREIGN KEY (member_id) REFERENCES member (member_id),
+    FOREIGN KEY (trip_day_id) REFERENCES trip_day (trip_day_id)
 );
 
 -- ========================================================================================
 -- 예약 테이블
 -- ========================================================================================
-CREATE TABLE RESERVATION
+CREATE TABLE reservation
 (
     reservation_id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 예약 ID (기본키)
     trip_day_id    BIGINT NOT NULL,                            -- 여행 날짜 ID (외래키)
@@ -220,14 +248,14 @@ CREATE TABLE RESERVATION
 
     CONSTRAINT fk_reservation_trip_day_id
         FOREIGN KEY (trip_day_id)
-            REFERENCES TRIP_DAY (trip_day_id)
+            REFERENCES trip_day (trip_day_id)
             ON DELETE CASCADE
 );
 
 -- ========================================================================================
 -- 숙박 정보 테이블
 -- ========================================================================================
-CREATE TABLE ACCOMMODATION_INFO
+CREATE TABLE accommodation_info
 (
     accom_id        BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,               -- 숙박 ID (기본키)
     hotel_name      VARCHAR(255) NOT NULL,                                          -- 호텔 이름
@@ -244,7 +272,7 @@ CREATE TABLE ACCOMMODATION_INFO
 -- ========================================================================================
 -- 숙박 예약 테이블
 -- ========================================================================================
-CREATE TABLE ACCOM_RES
+CREATE TABLE accom_res
 (
     accom_res_id   BIGINT         NOT NULL AUTO_INCREMENT PRIMARY KEY,
     accom_id       BIGINT         NOT NULL,
@@ -263,15 +291,15 @@ CREATE TABLE ACCOM_RES
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     status         ENUM('AVAILABLE', 'PENDING', 'CONFIRMED') NOT NULL DEFAULT 'AVAILABLE',
 
-    FOREIGN KEY (accom_id) REFERENCES ACCOMMODATION_INFO (accom_id),
-    FOREIGN KEY (reservation_id) REFERENCES RESERVATION (reservation_id),
-    FOREIGN KEY (trip_day_id) REFERENCES TRIP_DAY (trip_day_id)
+    FOREIGN KEY (accom_id) REFERENCES accommodation_info (accom_id),
+    FOREIGN KEY (reservation_id) REFERENCES reservation (reservation_id),
+    FOREIGN KEY (trip_day_id) REFERENCES trip_day (trip_day_id)
 );
 
 -- ========================================================================================
 -- 교통 정보 테이블
 -- ========================================================================================
-CREATE TABLE TRANSPORT_INFO
+CREATE TABLE transport_info
 (
     transport_id   BIGINT                                              NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 교통 ID (기본키)
     departure_id   VARCHAR(30)                                         NOT NULL,                            -- 출발역 ID
@@ -292,7 +320,7 @@ CREATE TABLE TRANSPORT_INFO
 -- ========================================================================================
 -- 교통 예약 테이블
 -- ========================================================================================
-CREATE TABLE TRAN_RES
+CREATE TABLE tran_res
 (
     tran_res_id    BIGINT   NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 교통 예약 ID (기본키)
     transport_id   BIGINT   NOT NULL,                            -- 교통 ID (외래키)
@@ -305,27 +333,28 @@ CREATE TABLE TRAN_RES
     seat_type      ENUM ('general', 'first_class', 'silent', 'family') NOT NULL,   -- 좌석 종류
     booked_at      DATETIME   NULL,                              -- 예약 일자
     price          DECIMAL(15, 2)   NOT NULL,                    -- 가격
+    version        INT           NOT NULL DEFAULT 0,             -- 낙관적락을 위한 버전
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,          -- 생성일시
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,   -- 수정일시
     status ENUM('AVAILABLE', 'PENDING', 'CONFIRMED') NOT NULL DEFAULT 'AVAILABLE',
 
-    FOREIGN KEY (transport_id) REFERENCES TRANSPORT_INFO (transport_id) ON DELETE CASCADE,
+    FOREIGN KEY (transport_id) REFERENCES transport_info (transport_id) ON DELETE CASCADE,
 
     CONSTRAINT fk_tran_res_reservation_id
         FOREIGN KEY (reservation_id)
-            REFERENCES RESERVATION (reservation_id)
+            REFERENCES reservation (reservation_id)
             ON DELETE CASCADE,
 
     CONSTRAINT fk_tran_res_trip_day_id
         FOREIGN KEY (trip_day_id)
-            REFERENCES TRIP_DAY (trip_day_id)
+            REFERENCES trip_day (trip_day_id)
             ON DELETE CASCADE
 );
 
 -- ========================================================================================
 -- 식당 정보 테이블
 -- ========================================================================================
-CREATE TABLE RESTAURANT_INFO
+CREATE TABLE restaurant_info
 (
     rest_id        BIGINT                                                                        NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 식당 ID (PK)
     rest_name      VARCHAR(255)                                                                  NOT NULL,                            -- 식당 이름
@@ -344,20 +373,20 @@ CREATE TABLE RESTAURANT_INFO
 -- ========================================================================================
 -- 식당 시간 테이블
 -- ========================================================================================
-CREATE TABLE REST_TIME_SLOT
+CREATE TABLE rest_time_slot
 (
     rest_time_id   BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 식당 시간 ID (PK)
     rest_id        BIGINT       NOT NULL, -- 식당 ID (FK)
     res_time       VARCHAR(10)  NOT NULL, -- 식당 예약 시간
     max_capacity   INT          NOT NULL DEFAULT 10, -- 최대 예약 인원
 
-    FOREIGN KEY (rest_id) REFERENCES RESTAURANT_INFO (rest_id)
+    FOREIGN KEY (rest_id) REFERENCES restaurant_info (rest_id)
 );
 
 -- ========================================================================================
 -- 식당 예약 테이블
 -- ========================================================================================
-CREATE TABLE REST_RES
+CREATE TABLE rest_res
 (
     rest_res_id    BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,                        -- 식당 예약 ID (PK)
     rest_id        BIGINT       NOT NULL,                                                   -- 식당 ID (FK)
@@ -369,16 +398,16 @@ CREATE TABLE REST_RES
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                     -- 생성일시
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,         -- 수정일시
 
-    FOREIGN KEY (rest_id) REFERENCES RESTAURANT_INFO (rest_id),
-    FOREIGN KEY (reservation_id) REFERENCES RESERVATION (reservation_id),
-    FOREIGN KEY (trip_day_id) REFERENCES TRIP_DAY (trip_day_id),
-    FOREIGN KEY (rest_time_id) REFERENCES REST_TIME_SLOT (rest_time_id)
+    FOREIGN KEY (rest_id) REFERENCES restaurant_info (rest_id),
+    FOREIGN KEY (reservation_id) REFERENCES reservation (reservation_id),
+    FOREIGN KEY (trip_day_id) REFERENCES trip_day (trip_day_id),
+    FOREIGN KEY (rest_time_id) REFERENCES rest_time_slot (rest_time_id)
 );
 
 -- ========================================================================================
 -- 비용 테이블
 -- ========================================================================================
-CREATE TABLE EXPENSE
+CREATE TABLE expense
 (
     expense_id           BIGINT                              NOT NULL AUTO_INCREMENT PRIMARY KEY,                            -- 비용 ID (기본키)
     trip_id              BIGINT                              NOT NULL,                                                       -- 여행 ID (외래키)
@@ -391,14 +420,14 @@ CREATE TABLE EXPENSE
     created_at           TIMESTAMP                           NOT NULL DEFAULT CURRENT_TIMESTAMP,                             -- 작성일시
     updated_at           TIMESTAMP                           NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- 수정일시
 
-    FOREIGN KEY (trip_id) REFERENCES TRIP (trip_id)                                                                          -- 여행 ID 외래키
+    FOREIGN KEY (trip_id) REFERENCES trip (trip_id)                                                                          -- 여행 ID 외래키
         ON DELETE CASCADE
 );
 
 -- ========================================================================================
 -- 알림 테이블
 -- ========================================================================================
-CREATE TABLE NOTIFICATION
+CREATE TABLE notification
 (
     notification_id   BIGINT                                                                              NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 알림 ID (PK)
     member_id         BIGINT                                                                              NOT NULL,                            -- 수신자 ID (FK)
@@ -412,15 +441,15 @@ CREATE TABLE NOTIFICATION
     is_read           BOOLEAN                                                                             NOT NULL DEFAULT FALSE,              -- 읽음 여부
     created_at        TIMESTAMP                                                                           NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 생성일시 (자동 등록)
 
-    FOREIGN KEY (member_id) REFERENCES MEMBER (member_id),                                                                                      -- 수신자 ID 외래키
-    FOREIGN KEY (trip_id) REFERENCES TRIP (trip_id),
-    FOREIGN KEY (expense_id) REFERENCES EXPENSE (expense_id)
+    FOREIGN KEY (member_id) REFERENCES member (member_id),                                                                                      -- 수신자 ID 외래키
+    FOREIGN KEY (trip_id) REFERENCES trip (trip_id),
+    FOREIGN KEY (expense_id) REFERENCES expense (expense_id)
 );
 
 -- ========================================================================================
 -- 정산 내역 테이블
 -- ========================================================================================
-CREATE TABLE SETTLEMENT_NOTES
+CREATE TABLE settlement_notes
 (
     settlement_id BIGINT         NOT NULL AUTO_INCREMENT PRIMARY KEY,                            -- 정산 ID (기본키)
     expense_id    BIGINT         NOT NULL,                                                       -- 비용 ID (외래키)
@@ -432,17 +461,17 @@ CREATE TABLE SETTLEMENT_NOTES
     created_at    TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,                             -- 작성일시
     updated_at    TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- 수정일시
 
-    FOREIGN KEY (expense_id) REFERENCES EXPENSE (expense_id)                                     -- 비용 ID 외래키
+    FOREIGN KEY (expense_id) REFERENCES expense (expense_id)                                     -- 비용 ID 외래키
         ON DELETE CASCADE,
 
-    FOREIGN KEY (trip_id) REFERENCES TRIP (trip_id)                                              -- 여행 ID 외래키
+    FOREIGN KEY (trip_id) REFERENCES trip (trip_id)                                              -- 여행 ID 외래키
         ON DELETE CASCADE
 );
 
 -- ========================================================================================
 -- 여행 기록 테이블
 -- ========================================================================================
-CREATE TABLE TRIP_RECORDS
+CREATE TABLE trip_records
 (
     record_id   BIGINT AUTO_INCREMENT PRIMARY KEY,    -- 기록 ID (PK)
     trip_id     BIGINT       NOT NULL,                -- 여행 ID (FK)
@@ -454,8 +483,8 @@ CREATE TABLE TRIP_RECORDS
     updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- 수정일시
 
     -- 여행 삭제되면 해당 여행기록도 같이 삭제
-    FOREIGN KEY (trip_id) REFERENCES TRIP (trip_id) ON DELETE CASCADE,
-    CONSTRAINT fk_record_to_member FOREIGN KEY (member_id) REFERENCES MEMBER (member_id),
+    FOREIGN KEY (trip_id) REFERENCES trip (trip_id) ON DELETE CASCADE,
+    CONSTRAINT fk_record_to_member FOREIGN KEY (member_id) REFERENCES member (member_id),
 
     -- 성능 향상을 위한 인덱스 (Indexes) -> 일자별 여행기록 조회 기능
     INDEX idx_trip_id_record_date (trip_id, record_date)
@@ -464,7 +493,7 @@ CREATE TABLE TRIP_RECORDS
 -- ========================================================================================
 -- 여행 기록 사진 테이블
 -- ========================================================================================
-CREATE TABLE TRIP_RECORD_IMAGES
+CREATE TABLE trip_record_images
 (
     image_id  BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
     record_id BIGINT       NOT NULL,
@@ -474,19 +503,20 @@ CREATE TABLE TRIP_RECORD_IMAGES
 
     CONSTRAINT fk_trip_record_image_record_id_v2
         FOREIGN KEY (record_id)
-            REFERENCES TRIP_RECORDS (record_id)
+            REFERENCES trip_records (record_id)
             ON DELETE CASCADE
 );
 
 -- 회원 테스트용 데이터
-INSERT INTO MEMBER (member_id, member_type, email, password, name, fcm_token, id_card_number)
+INSERT INTO member (member_id, member_type, email, password, name, fcm_token, id_card_number)
 VALUES (1, 'ROLE_USER', 'karina@test.com', '1234', '카리나', 'asdf1234', '0004114000001'),
        (2, 'ROLE_USER', 'winter@test.com', '1234', '윈터', 'qwer1234', '0101014000002'),
        (3, 'ROLE_USER', 'giselle@test.com', '1234', '지젤', 'asdf5678', '0010304000003'),
        (4, 'ROLE_USER', 'ningning@test.com', '1234', '닝닝', 'qwer5678', '0210234000002');
 
+
 -- 1) MEMBER 테이블에 사업자 계정 추가
-INSERT INTO MEMBER (
+INSERT INTO member (
     member_id,
     member_type,
     email,
@@ -504,7 +534,7 @@ INSERT INTO MEMBER (
       (11, 'ROLE_OWNER', '456-78-90123-5',    '1234',  '이색분식연구소사업자',NULL,'OWN0000007')
 ;
 -- 2) OWNER 테이블에 business ↔ member 연결
-INSERT INTO OWNER (
+INSERT INTO owner (
     business_id,
     business_kind,
     member_id
@@ -518,41 +548,42 @@ INSERT INTO OWNER (
       (15, 'RESTAURANT',  11)   -- 이색분식연구소
 ;
 
+
 -- 주민등록증 테스트용 데이터
-INSERT INTO ID_CARD (member_id, id_card_number, name, issued_date, address, image_url)
+INSERT INTO id_card (member_id, id_card_number, name, issued_date, address, image_url)
 VALUES (1, '0004114000001', '카리나', '2020-01-01', '서울특별시 성동구 왕십리로 83-21', 'IDphoto/karina.jfif');
 
-INSERT INTO ID_CARD (member_id, id_card_number, name, issued_date, address, image_url)
+INSERT INTO id_card (member_id, id_card_number, name, issued_date, address, image_url)
 VALUES (2, '0101014000002', '윈터', '2020-01-01', '서울특별시 성동구 왕십리로 83-21', 'IDphoto/winter.jfif');
 
-INSERT INTO ID_CARD (member_id, id_card_number, name, issued_date, address, image_url)
+INSERT INTO id_card (member_id, id_card_number, name, issued_date, address, image_url)
 VALUES (3, '0010304000003', '지젤', '2020-01-01', '서울특별시 성동구 왕십리로 83-21', 'IDphoto/giselle.jfif');
 
-INSERT INTO ID_CARD (member_id, id_card_number, name, issued_date, address, image_url)
+INSERT INTO id_card (member_id, id_card_number, name, issued_date, address, image_url)
 VALUES (4, '0210234000002', '닝닝', '2020-01-01', '서울특별시 성동구 왕십리로 83-21', 'IDphoto/ningning.jfif');
 
 
 -- 운전면허증 테스트용 데이터
 -- 카리나 (경남 양산 → 울산남부경찰서)
-INSERT INTO DRIVER_LICENSE (member_id, id_card_number, license_number, license_type,
+INSERT INTO driver_license (member_id, id_card_number, license_number, license_type,
                             issued_date, expiry_date, issuing_agency, image_url)
 VALUES (1, '0004114000001', '201234567810', '1종 보통',
         '2020-06-15', '2030-06-15', '울산남부경찰서', 'IDphoto/karina.jfif');
 
 -- 윈터 (부산 해운대 → 부산해운대경찰서)
-INSERT INTO DRIVER_LICENSE (member_id, id_card_number, license_number, license_type,
+INSERT INTO driver_license (member_id, id_card_number, license_number, license_type,
                             issued_date, expiry_date, issuing_agency, image_url)
 VALUES (2, '0101014000002', '211198765421', '2종 소형',
         '2021-03-10', '2031-03-10', '부산해운대경찰서', 'IDphoto/winter.jfif');
 
 -- 지젤 (도쿄 출신 → 서울 활동지 기준 서울성동경찰서)
-INSERT INTO DRIVER_LICENSE (member_id, id_card_number, license_number, license_type,
+INSERT INTO driver_license (member_id, id_card_number, license_number, license_type,
                             issued_date, expiry_date, issuing_agency, image_url)
 VALUES (3, '0010304000003', '221011223309', '2종 보통',
         '2022-07-22', '2032-07-22', '서울성동경찰서', 'IDphoto/giselle.jfif');
 
 -- 닝닝 (하얼빈 출신 → 서울 활동지 기준 서울성동경찰서)
-INSERT INTO DRIVER_LICENSE (member_id, id_card_number, license_number, license_type,
+INSERT INTO driver_license (member_id, id_card_number, license_number, license_type,
                             issued_date, expiry_date, issuing_agency, image_url)
 VALUES (4, '0210234000002', '230944556633', '원동기장치자전거',
         '2023-01-05', '2033-01-05', '서울성동경찰서', 'IDphoto/ningning.jfif');
@@ -560,75 +591,237 @@ VALUES (4, '0210234000002', '230944556633', '원동기장치자전거',
 
 -- 계좌 테스트용 데이터
 -- 카리나
-INSERT INTO ACCOUNT (member_id, name, account_number, account_password, bank_name, balance)
+INSERT INTO account (member_id, name, account_number, account_password, bank_name, balance)
 VALUES (1, '카리나', '1234567890001', '1111', 'KB', 10000000.00);
 
 -- 윈터
-INSERT INTO ACCOUNT (member_id, name, account_number, account_password, bank_name, balance)
+INSERT INTO account (member_id, name, account_number, account_password, bank_name, balance)
 VALUES (2, '윈터', '1234567890002', '2222', 'KB', 1000000.00);
 
 -- 지젤
-INSERT INTO ACCOUNT (member_id, name, account_number, account_password, bank_name, balance)
+INSERT INTO account (member_id, name, account_number, account_password, bank_name, balance)
 VALUES (3, '지젤', '1234567890003', '3333', 'KB', 100000.00);
 
 -- 닝닝
-INSERT INTO ACCOUNT (member_id, name, account_number, account_password, bank_name, balance)
+INSERT INTO account (member_id, name, account_number, account_password, bank_name, balance)
 VALUES (4, '닝닝', '1234567890004', '4444', 'KB', 1000000.00);
 
 
 -- 결제 내역 테스트용 데이터
 -- 카리나 (member_id=1)
-INSERT INTO PAYMENT_RECORD (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
-VALUES (1, 1, '편의점 간식', 4500.00, '2025-08-01 09:10:00', 'BUSAN'),
-       (1, 1, '부산 파스타하우스', 21000.00, '2025-08-03 12:43:25', 'BUSAN'),
-       (1, 1, '카페 커피', 6500.00, '2025-08-05 15:40:00', 'BUSAN');
+INSERT INTO payment_record (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
+VALUES (1, 1, '편의점 간식', 4500.00, '2025-08-01 09:10:00', '부산'),
+       (1, 1, '부산 파스타하우스', 21000.00, '2025-08-03 12:43:25', '부산'),
+       (1, 1, '카페 커피', 6500.00, '2025-08-05 15:40:00', '부산');
 
 -- 윈터 (member_id=2)
-INSERT INTO PAYMENT_RECORD (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
-VALUES (2, 2, '주유소 결제', 54000.00, '2025-08-03 10:20:00', 'BUSAN'),
-       (2, 2, '숙박 비용', 193000.00, '2025-08-03 12:00:00', 'BUSAN'),
-       (2, 2, '교통비', 105000.00, '2025-08-04 13:30:00', 'BUSAN'),
-       (2, 2, '길거리 간식', 9999.00, '2025-08-04 17:30:00', 'BUSAN'),
-       (2, 2, '편의점 물품', 12000.00, '2025-08-05 22:10:00', 'BUSAN');
+INSERT INTO payment_record (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
+VALUES (2, 2, '주유소 결제', 54000.00, '2025-08-03 10:20:00', '부산'),
+       (2, 2, '숙박 비용', 193000.00, '2025-08-03 12:00:00', '부산'),
+       (2, 2, '교통비', 105000.00, '2025-08-04 13:30:00', '부산'),
+       (2, 2, '길거리 간식', 9999.00, '2025-08-04 17:30:00', '부산'),
+       (2, 2, '편의점 물품', 12000.00, '2025-08-05 22:10:00', '부산');
 
 -- 지젤 (member_id=3)
-INSERT INTO PAYMENT_RECORD (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
-VALUES (3, 3, '팔선생 중화요리', 61000.00, '2025-08-04 12:56:43', 'BUSAN'),
-       (3, 3, '이색분식연구소', 10000.00, '2025-08-04 19:44:26', 'BUSAN'),
-       (3, 3, '기념품 구매', 22000.00, '2025-08-04 11:15:00', 'BUSAN'),
-       (3, 3, '카페 디저트', 8500.00, '2025-08-04 15:45:00', 'BUSAN');
+INSERT INTO payment_record (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
+VALUES (3, 3, '팔선생 중화요리', 61000.00, '2025-08-04 12:56:43', '부산'),
+       (3, 3, '이색분식연구소', 10000.00, '2025-08-04 19:44:26', '부산'),
+       (3, 3, '기념품 구매', 22000.00, '2025-08-04 11:15:00', '부산'),
+       (3, 3, '카페 디저트', 8500.00, '2025-08-04 15:45:00', '부산');
 
 -- 닝닝 (member_id=4)
-INSERT INTO PAYMENT_RECORD (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
-VALUES (4, 4, '이자카야 코이', 24300.00, '2025-08-03 18:35:47', 'BUSAN'),
-       (4, 4, '편의점 간식', 5500.00, '2025-08-04 12:20:00', 'BUSAN'),
-       (4, 4, '기념품', 17000.00, '2025-08-05 16:30:00', 'BUSAN');
+INSERT INTO payment_record (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
+VALUES (4, 4, '이자카야 코이', 24300.00, '2025-08-03 18:35:47', '부산'),
+       (4, 4, '편의점 간식', 5500.00, '2025-08-04 12:20:00', '부산'),
+       (4, 4, '기념품', 17000.00, '2025-08-05 16:30:00', '부산');
+
 
 -- 여행 테스트용 데이터(카리나 1인여행 8/1 ~ 8/4)
-INSERT INTO TRIP (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '혼자 부산 여행', 'BUSAN', '2025-08-01', '2025-08-04');
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (1, '혼자 부산 여행', '부산', '2025-08-01', '2025-08-04');
 
 -- 여행 테스트용 데이터(윈터, 지젤, 닝닝 3인여행 8/3 ~ 8/5)
-INSERT INTO TRIP (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (2, '셋이서 부산 여행', 'BUSAN', '2025-08-03', '2025-08-05');
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (2, '셋이서 부산 여행', '부산', '2025-08-03', '2025-08-05');
+
+-- 여행 테스트용 데이터 기존 2개 + 여행 15개 추가 -> 총 17개
+-- (카리나, 윈터, 지젤, 닝닝 | MOKPO 여행 1)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (1, '에스파, 낭만을 걷다 - 목포 편', '목포', '2025-09-29', '2025-09-30');
+
+-- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 2)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (1, 'aespa in Busan: 파도와 함께', '부산', '2025-03-16', '2025-03-19');
+
+-- (카리나, 윈터, 지젤, 닝닝 | DAEJEON 여행 3)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (3, '한적한 오후, 대전 산책', '대전', '2025-10-04', '2025-10-07');
+
+-- (카리나, 윈터, 지젤, 닝닝 | DAEGU 여행 4)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (2, '햇살 가득한 대구, 여름의 기억', '대구', '2025-06-11', '2025-06-14');
+
+-- (카리나, 윈터, 지젤, 닝닝 | GWANGJU 여행 5)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (1, '광주에서 찾은 작은 평화', '광주', '2025-05-10', '2025-05-12');
+
+-- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 6)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (2, '푸른 바다, 다시 부산에서', '부산', '2025-10-10', '2025-10-13');
+
+-- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 7)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (1, '서울 감성충전 투어', '서울', '2025-08-13', '2025-08-14');
+
+-- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 8)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (2, '서울 속 서울 여행', '서울', '2025-09-01', '2025-09-02');
+
+-- (닝닝, 윈터 | DAEJEON 여행 9)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (4, '성심당을 위한 대전 여행', '대전', '2025-07-21', '2025-07-24');
+
+-- (윈터, 카리나 | JEJU 여행 10)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (2, '윈터랑 카리나의 제주 여행', '제주', '2025-10-25', '2025-10-27');
+
+-- (카리나, 지젤, 윈터 | JEJU 여행 11)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (1, '닝닝 없는 제주 여행', '제주', '2025-05-16', '2025-05-18');
+
+-- (카리나, 지젤 | BUSAN 여행 12)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (1, '부산 맛집 탐방기', '부산', '2025-08-08', '2025-08-10');
+
+-- (닝닝, 지젤 | GANGNEUNG 여행 13)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (4, '바다 보고 싶어서, 강릉', '강릉', '2025-04-13', '2025-04-15');
+
+-- (카리나, 닝닝 | DAEJEON 여행 14)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (1, '가볍게 떠난 대전 소풍', '대전', '2025-11-10', '2025-11-11');
+
+-- (지젤, 닝닝, 윈터 | BUSAN 여행 15)
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
+VALUES (3, '세 명이서 부산 미식여행', '부산', '2025-09-16', '2025-09-18');
 
 
 
-INSERT INTO TRIP_LOCATION (location_name, latitude, longitude, address)
-VALUES ('BUSAN', 35.179554, 129.075642, '부산광역시 중구 중앙대로 100'),
-       ('GANGNEUNG', 37.751853, 128.876057, '강원특별자치도 강릉시 교동광장로 100'),
-       ('JEJU', 33.499621, 126.531188, '제주특별자치도 제주시 중앙로 100'),
-       ('SEOUL', 37.566535, 126.977969, '서울특별시 중구 세종대로 110');
+
+
+INSERT INTO trip_location (location_name, latitude, longitude, address)
+VALUES ('부산', 35.179554, 129.075642, '부산광역시 중구 중앙대로 100'),
+       ('강릉', 37.751853, 128.876057, '강원특별자치도 강릉시 교동광장로 100'),
+       ('제주', 33.499621, 126.531188, '제주특별자치도 제주시 중앙로 100'),
+       ('서울', 37.566535, 126.977969, '서울특별시 중구 세종대로 110'),
+       ('대구', 35.87222, 128.6025, '대구광역시 중구 공평로 88'),
+       ('대전', 36.35041, 127.38455, '대전광역시 중구 중앙로 101'),
+       ('광주', 35.15954, 126.8526, '광주광역시 서구 상무대로 100'),
+       ('목포', 34.81184, 126.39257, '전라남도 목포시 영산로 100');
 
 
 
-INSERT INTO TRIP_MEMBER (trip_id, member_id, role, joined_at)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
 VALUES  (1, 1, 'HOST', NOW()), -- 카리나 호스트 부산여행
         (2, 2, 'HOST', NOW()), -- 윈터 호스트 부산여행
         (2, 3, 'MEMBER', NOW()), -- 닝닝 멤버 부산여행
         (2, 4, 'MEMBER', NOW()); -- 지젤 멤버 부산여행
+-- (카리나, 윈터, 지젤, 닝닝 | MOKPO 여행 1)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (3, 1, 'HOST', NOW()),
+       (3, 2, 'MEMBER', NOW()),
+       (3, 3, 'MEMBER', NOW()),
+       (3, 4, 'MEMBER', NOW());
 
-INSERT INTO TRIP_DAY (trip_id, day)
+-- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 2)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (4, 1, 'HOST', NOW()),
+       (4, 2, 'MEMBER', NOW()),
+       (4, 3, 'MEMBER', NOW()),
+       (4, 4, 'MEMBER', NOW());
+
+-- (카리나, 윈터, 지젤, 닝닝 | DAEJEON 여행 3)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (5, 3, 'HOST', NOW()),
+       (5, 1, 'MEMBER', NOW()),
+       (5, 2, 'MEMBER', NOW()),
+       (5, 4, 'MEMBER', NOW());
+
+-- (카리나, 윈터, 지젤, 닝닝 | DAEGU 여행 4)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (6, 2, 'HOST', NOW()),
+       (6, 1, 'MEMBER', NOW()),
+       (6, 3, 'MEMBER', NOW()),
+       (6, 4, 'MEMBER', NOW());
+
+-- (카리나, 윈터, 지젤, 닝닝 | GWANGJU 여행 5)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (7, 1, 'HOST', NOW()),
+       (7, 2, 'MEMBER', NOW()),
+       (7, 3, 'MEMBER', NOW()),
+       (7, 4, 'MEMBER', NOW());
+
+-- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 6)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (8, 2, 'HOST', NOW()),
+       (8, 1, 'MEMBER', NOW()),
+       (8, 3, 'MEMBER', NOW()),
+       (8, 4, 'MEMBER', NOW());
+
+-- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 7)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (9, 1, 'HOST', NOW()),
+       (9, 2, 'MEMBER', NOW()),
+       (9, 3, 'MEMBER', NOW()),
+       (9, 4, 'MEMBER', NOW());
+
+-- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 8)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (10, 2, 'HOST', NOW()),
+       (10, 1, 'MEMBER', NOW()),
+       (10, 3, 'MEMBER', NOW()),
+       (10, 4, 'MEMBER', NOW());
+
+-- (닝닝, 윈터 | DAEJEON 여행 9)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (11, 4, 'HOST', NOW()),
+       (11, 2, 'MEMBER', NOW());
+
+-- (윈터, 카리나 | JEJU 여행 10)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (12, 2, 'HOST', NOW()),
+       (12, 1, 'MEMBER', NOW());
+
+-- (카리나, 지젤, 윈터 | JEJU 여행 11)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (13, 1, 'HOST', NOW()),
+       (13, 3, 'MEMBER', NOW()),
+       (13, 2, 'MEMBER', NOW());
+
+-- (카리나, 지젤 | BUSAN 여행 12)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (14, 1, 'HOST', NOW()),
+       (14, 3, 'MEMBER', NOW());
+
+-- (닝닝, 지젤 | GANGNEUNG 여행 13)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (15, 4, 'HOST', NOW()),
+       (15, 3, 'MEMBER', NOW());
+
+-- (카리나, 닝닝 | DAEJEON 여행 14)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (16, 1, 'HOST', NOW()),
+       (16, 4, 'MEMBER', NOW());
+
+-- (지젤, 닝닝, 윈터 | BUSAN 여행 15)
+INSERT INTO trip_member (trip_id, member_id, role, joined_at)
+VALUES (17, 3, 'HOST', NOW()),
+       (17, 4, 'MEMBER', NOW()),
+       (17, 2, 'MEMBER', NOW());
+
+
+
+INSERT INTO trip_day (trip_id, day)
 VALUES
 -- 카리나 부산 여행 (3일)
 (1, '2025-08-01'), -- tripDayId = 1
@@ -639,8 +832,101 @@ VALUES
 (2, '2025-08-03'), -- 5
 (2, '2025-08-04'), -- 6
 (2, '2025-08-05'); -- 7
+-- 여행 날짜 INSERT 추가
+-- (카리나, 윈터, 지젤, 닝닝 | MOKPO 여행 1)
+INSERT INTO trip_day (trip_id, day)
+VALUES (3, '2025-09-29'),
+       (3, '2025-09-30');
 
-INSERT INTO RESERVATION (trip_day_id, res_kind)
+-- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 2)
+INSERT INTO trip_day (trip_id, day)
+VALUES (4, '2025-03-16'),
+       (4, '2025-03-17'),
+       (4, '2025-03-18'),
+       (4, '2025-03-19');
+
+-- (카리나, 윈터, 지젤, 닝닝 | DAEJEON 여행 3)
+INSERT INTO trip_day (trip_id, day)
+VALUES (5, '2025-10-04'),
+       (5, '2025-10-05'),
+       (5, '2025-10-06'),
+       (5, '2025-10-07');
+
+-- (카리나, 윈터, 지젤, 닝닝 | DAEGU 여행 4)
+INSERT INTO trip_day (trip_id, day)
+VALUES (6, '2025-06-11'),
+       (6, '2025-06-12'),
+       (6, '2025-06-13'),
+       (6, '2025-06-14');
+
+-- (카리나, 윈터, 지젤, 닝닝 | GWANGJU 여행 5)
+INSERT INTO trip_day (trip_id, day)
+VALUES (7, '2025-05-10'),
+       (7, '2025-05-11'),
+       (7, '2025-05-12');
+
+-- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 6)
+INSERT INTO trip_day (trip_id, day)
+VALUES (8, '2025-10-10'),
+       (8, '2025-10-11'),
+       (8, '2025-10-12'),
+       (8, '2025-10-13');
+
+-- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 7)
+INSERT INTO trip_day (trip_id, day)
+VALUES (9, '2025-08-13'),
+       (9, '2025-08-14');
+
+-- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 8)
+INSERT INTO trip_day (trip_id, day)
+VALUES (10, '2025-09-01'),
+       (10, '2025-09-02');
+
+-- (닝닝, 윈터 | DAEJEON 여행 9)
+INSERT INTO trip_day (trip_id, day)
+VALUES (11, '2025-07-21'),
+       (11, '2025-07-22'),
+       (11, '2025-07-23'),
+       (11, '2025-07-24');
+
+-- (윈터, 카리나 | JEJU 여행 10)
+INSERT INTO trip_day (trip_id, day)
+VALUES (12, '2025-10-25'),
+       (12, '2025-10-26'),
+       (12, '2025-10-27');
+
+-- (카리나, 지젤, 윈터 | JEJU 여행 11)
+INSERT INTO trip_day (trip_id, day)
+VALUES (13, '2025-05-16'),
+       (13, '2025-05-17'),
+       (13, '2025-05-18');
+
+-- (카리나, 지젤 | BUSAN 여행 12)
+INSERT INTO trip_day (trip_id, day)
+VALUES (14, '2025-08-08'),
+       (14, '2025-08-09'),
+       (14, '2025-08-10');
+
+-- (닝닝, 지젤 | GANGNEUNG 여행 13)
+INSERT INTO trip_day (trip_id, day)
+VALUES (15, '2025-04-13'),
+       (15, '2025-04-14'),
+       (15, '2025-04-15');
+
+-- (카리나, 닝닝 | DAEJEON 여행 14)
+INSERT INTO trip_day (trip_id, day)
+VALUES (16, '2025-11-10'),
+       (16, '2025-11-11');
+
+-- (지젤, 닝닝, 윈터 | BUSAN 여행 15)
+INSERT INTO trip_day (trip_id, day)
+VALUES (17, '2025-09-16'),
+       (17, '2025-09-17'),
+       (17, '2025-09-18');
+
+
+
+INSERT INTO reservation (trip_day_id, res_kind)
 VALUES
 -- trip_day_id: 1, 2, 3, 4 => 카리나 부산 여행
 (1,'ACCOMMODATION'), -- 숙박
@@ -650,7 +936,6 @@ VALUES
 -- trip_day_id : 5, 6, 7 => 윈닝젤 부산 여행
 (5,'ACCOMMODATION'), -- 숙박
 (6,'ACCOMMODATION'), -- 숙박
-(7,'ACCOMMODATION'), -- 숙박
 -- 교통 데이터 추가
 (1, 'TRANSPORT'), -- (카리나 1인 부산여행) 8/1 서울역 -> 부산역 10:00 출발 reservationId = 8 , tripDayId = 1
 (4, 'TRANSPORT'), -- (카리나 1인 부산여행) 8/4 부산역 -> 서울역 16:00 출발 reservationId = 9, tripDayId = 4
@@ -658,6 +943,7 @@ VALUES
 (5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/5 서울역 -> 부산역 12:00 출발 (닝닝) reservationId = 11, tripDayId = 5
 (7, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 10:00 출발 (윈터 스케줄 바쁨) reservationId = 12, tripDayId = 7
 (7, 'TRANSPORT'); -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 15:00 출발 (지젤, 닝닝 느긋) reservationId = 13, tripDayId = 7
+
 
 -- 교통 예약 테스트 데이터
 INSERT INTO transport_info (
@@ -778,7 +1064,8 @@ INSERT INTO transport_info (
       ('SEOUL_STN', 'BUSAN_STN', '서울역', '부산역', '2025-08-07 17:00:00', '2025-08-07 19:30:00', 'ktx', 'KTX-911', 'general', 240, 240, 49800.00, 1),
       ('BUSAN_STN', 'SEOUL_STN', '부산역', '서울역', '2025-08-07 17:00:00', '2025-08-07 19:30:00', 'ktx-sancheon', 'KTX-912', 'general', 240, 240, 49800.00, 1);
 
-INSERT INTO ACCOMMODATION_INFO (hotel_name, address, location , latitude, longitude, description, hotel_image_url)
+
+INSERT INTO accommodation_info (hotel_name, address, location , latitude, longitude, description, hotel_image_url)
 VALUES ('부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 'BUSAN',  35.1664, 129.0624,
         '중심 업무 지구의 고층 유리 건물에 자리한 이 고급 호텔은 서면역에서 도보 5분, 광안리 해수욕장에서 지하철로 33분 거리에 있습니다. \n\n아늑하고 우아한 객실에 무료 Wi-Fi, 평면 TV, 차 및 커피 메이커가 갖춰져 있습니다. 스위트룸에는 거실이 추가되며 업그레이드 스위트룸에는 사우나, 벽난로, 식탁이 마련되어 있습니다. 클럽층 객실에는 무료 조식, 스낵, 애프터눈 티가 제공됩니다. 야구를 테마로 꾸민 스위트룸이 2곳 있습니다. 룸 서비스도 이용 가능합니다. \n\n레스토랑 5곳, 베이커리, 정기 라이브 음악 공연이 열리는 바가 있습니다. 헬스장, 사우나, 골프 연습장, 실내외 수영장도 이용할 수 있습니다.',
         'https://yaimg.yanolja.com/v5/2023/01/04/10/1280/63b55a0edcb3e9.58092209.jpg'),
@@ -795,29 +1082,29 @@ VALUES ('부산 롯데 호텔', '부산광역시 부산진구 가야대로 772',
 
 
 -- 숙박 정보 테스트용 데이터
-INSERT INTO ACCOM_RES (accom_res.accom_res_id,accom_id, reservation_id, trip_day_id, guests, hotel_name, address, price, room_type, room_image_url, checkin_day, checkout_day, max_guests, status)
+INSERT INTO accom_res (accom_res.accom_res_id,accom_id, reservation_id, trip_day_id, guests, hotel_name, address, price, room_type, room_image_url, checkin_day, checkout_day, max_guests, status)
 VALUES
     -- 카리나 -> 부산 롯데(8/1) twin, 시그니엘(8/2) twin, 그랜드조선(8/3) twin, 파크 하얏트(8/4) deluxe
-    -- 윈닝젤 -> 부산 롯데(8/1~8/2) family, 시그니엘(8/3) deluxe
+    -- 윈닝젤 -> 부산 롯데(8/3~8/4) family, 시그니엘(8/4~8/5) deluxe
     -- 부산 롯데 호텔(accom_id=1, 방 종류 3개, 방은 2개씩)
     -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
     (1,1, 1, 1, 1, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'CONFIRMED'),
     (2,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'AVAILABLE'),
-    (3,1, 5, 5, 3, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
+    (3,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
     (4,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
     (5,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
     (6,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
     -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
     (7,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
     (8,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
-    (9,1, 5, 6, 3, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
+    (9,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
     (10,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
     (11,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
     (12,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
     -- 8월 3일: 모든 방 AVAILABLE (검색 가능)
     (13,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 2, 'AVAILABLE'),
     (14,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', 'https://pix8.agoda.net/hotelImages/42958/1077789081/1e9796c0384a0d4d4e644146abcc44d5.jpg?ce=2&s=1024x', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 2, 'AVAILABLE'),
-    (15,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 4, 'AVAILABLE'),
+    (15,1, 5, 5, 3, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 4, 'CONFIRMED'),
     (16,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', 'https://pix8.agoda.net/hotelImages/42958/1077789232/439433e711e91007255552a8680dedcd.jpg?ce=2&s=1024x', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 4, 'AVAILABLE'),
     (17,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 3, 'AVAILABLE'),
     (18,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', 'https://pix8.agoda.net/hotelImages/42958/1077789167/ddbd6c29806e83f114af8ad178fc1f31.jpg?ce=2&s=208x117&ar=16x9', '2025-08-03 15:00:00', '2025-08-04 11:00:00', 3, 'AVAILABLE'),
@@ -867,10 +1154,11 @@ VALUES
     (48,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',2,'AVAILABLE'),
     -- 8월 3일: 모든 방 AVAILABLE (검색 가능)
     (49,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',230000,'twin','https://pix8.agoda.net/hotelImages/34297119/1150527990/a92210af40041d811b7c170cae042485.jpeg?ce=2&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',2,'AVAILABLE'),
-    (50,4,6,7,3,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',2,'AVAILABLE'),
+    (50,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',2,'AVAILABLE'),
     -- 8월 4일: 모든 방 AVAILABLE (검색 가능)
     (51,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',230000,'twin','https://pix8.agoda.net/hotelImages/34297119/1150527990/a92210af40041d811b7c170cae042485.jpeg?ce=2&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',2,'AVAILABLE'),
-    (52,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',2,'AVAILABLE'),
+    (52,4,6,6,3,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',2,'CONFIRMED'),
+
     -- 그랜드조선 부산(accom_id=5 방 종류 3개 방 1개씩 8/1~8/6)
     -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
     (53,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',2,'AVAILABLE'),
@@ -924,7 +1212,7 @@ VALUES
     (88,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',3,'AVAILABLE');
 
 -- 식당 정보 테스트용 데이터 (가짜 firebase 경로)
-INSERT INTO RESTAURANT_INFO (
+INSERT INTO restaurant_info (
     rest_name, address, category, rest_image_url,
     phone, description, latitude, longitude, menu_url
 ) VALUES
@@ -995,7 +1283,7 @@ INSERT INTO RESTAURANT_INFO (
 
 -- 식당 시간 테스트용 데이터
 -- 식당별 예약 시간 슬롯 생성 (rest_id: 1 ~ 15, 시간: 11시 ~ 19시, max_capacity: 5)
-INSERT INTO REST_TIME_SLOT (rest_id, res_time, max_capacity) VALUES
+INSERT INTO rest_time_slot (rest_id, res_time, max_capacity) VALUES
 -- 해운대 곰장어집 (1) (1 ~ 9)
 (1, '11:00', 5), (1, '12:00', 5), (1, '13:00', 5),
 (1, '14:00', 5), (1, '15:00', 5), (1, '16:00', 5),
@@ -1071,63 +1359,60 @@ INSERT INTO REST_TIME_SLOT (rest_id, res_time, max_capacity) VALUES
 (15, '14:00', 5), (15, '15:00', 5), (15, '16:00', 5),
 (15, '17:00', 5), (15, '18:00', 5), (15, '19:00', 5);
 
--- 식당 예약 테스트용 데이터
-INSERT INTO REST_RES (rest_id, reservation_id, trip_day_id, res_num, rest_time_id) VALUES
-(1, 14, 1, 2, 1);
-
 -- 비용 테스트용 데이터
-INSERT INTO EXPENSE (trip_id, member_id, expense_name, expense_date, amount, location, settlement_completed)
-VALUES (2, 2, '교통비', '2025-08-05 17:10:00' ,149400, 'BUSAN', false),
-       (2, 2, '숙박 비용', '2025-08-06 18:10:00' ,193000, 'BUSAN', false),
-       (2, 3, '돼지 국밥', '2025-08-06 19:10:00' ,45000, 'BUSAN', false),
-       (2, 4, '부산 밀면', '2025-08-06 19:10:00' ,30000, 'BUSAN', false),
-       (2, 2, '부산 꼼장어', '2025-08-06 19:10:00' ,50000, 'BUSAN', false),
-       (2, 2, '숙박 비용', '2025-08-06 19:10:00' ,210000, 'BUSAN', false),
-       (2, 3, '이재모 피자', '2025-08-06 19:10:00' ,40000, 'BUSAN', false),
-       (2, 4, '버블티&카페', '2025-08-06 20:10:00' ,18000, 'BUSAN', false),
-       (2, 2, '교통비', '2025-08-06 21:10:00' ,149400, 'BUSAN', false);
+INSERT INTO expense(trip_id, member_id, expense_name, expense_date, amount, location, settlement_completed)
+VALUES (2, 2, '교통비', '2025-08-03 17:10:00' ,99600, 'BUSAN', false),
+       (2, 2, '숙박 비용 롯데호텔', '2025-08-03 18:10:00' ,193000, 'BUSAN', false),
+       (2, 2, '1일차 저녁 파스타', '2025-08-03 20:00:00', 54000, 'BUSAN', false),
+       (2, 3, '2일차 아침 돼지 국밥', '2025-08-04 21:10:00' ,45000, 'BUSAN', false),
+       (2, 4, '2일차 점심 부산 밀면', '2025-08-04 21:10:00' ,30000, 'BUSAN', false),
+       (2, 2, '2일차 저녁 부산 꼼장어', '2025-08-04 21:10:00' ,50000, 'BUSAN', false),
+       (2, 2, '숙박 비용 시그니엘 부산', '2025-08-04 21:10:00' ,300000, 'BUSAN', false),
+       (2, 3, '3일차 아침 이재모 피자', '2025-08-05 11:00:00' ,40000, 'BUSAN', false),
+       (2, 4, '버블티&카페', '2025-08-05 20:10:00' ,18000, 'BUSAN', false),
+       (2, 4, '교통비', '2025-08-05 21:10:00' ,99600, 'BUSAN', false);
 
-INSERT INTO SETTLEMENT_NOTES (expense_id, trip_id, member_id, share_amount, is_payed, received, created_at)
+INSERT INTO settlement_notes (expense_id, trip_id, member_id, share_amount, is_payed, received, created_at)
 VALUES
--- (2, 2, '교통비', 149400, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(1, 2, 2, 49800, true, false, '2025-08-05 17:10:00'),
-(1, 2, 3, 49800, false, true, '2025-08-05 17:10:00'),
-(1, 2, 4, 49800, false, true, '2025-08-05 17:10:00'),
--- (2, 2, '숙박 비용', 193000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(2, 2, 2, 38600, true, false, '2025-08-06 18:10:00'),
-(2, 2, 3, 38600, false, true, '2025-08-06 18:10:00'),
-(2, 2, 4, 38600, false, true, '2025-08-06 18:10:00'),
--- (2, 3, '돼지 국밥', 45000, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
-(3, 2, 2, 15000, false, true, '2025-08-06 19:10:00'),
-(3, 2, 3, 15000, true, false, '2025-08-06 19:10:00'),
-(3, 2, 4, 15000, false, true, '2025-08-06 19:10:00'),
--- (2, 2, '부산 밀면', 30000, 'BUSAN', false)에 대한 정산 (지젤이 계산)
-(4, 2, 2, 10000, false, true, '2025-08-06 19:10:00'),
-(4, 2, 3, 10000, false, true, '2025-08-06 19:10:00'),
-(4, 2, 4, 10000, true, false, '2025-08-06 19:10:00'),
+-- (2, 2, '교통비', 149400, 'BUSAN', false)에 대한 정산 (윈터가 계산, 윈터+지젤 교통비)
+(1, 2, 2, 49800, true, false, '2025-08-03 17:10:00'),
+(1, 2, 3, 49800, false, true, '2025-08-03 17:10:00'),
+-- (2, 2, '숙박 비용 롯데호텔', 193000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
+(2, 2, 2, 64334, true, false, '2025-08-03 18:10:00'),
+(2, 2, 3, 64333, false, true, '2025-08-03 18:10:00'),
+(2, 2, 4, 64333, false, true, '2025-08-03 18:10:00'),
+-- (2, 2, '1일차 저녁 파스타', 54000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
+(2, 2, 2, 18000, true, false, '2025-08-03 20:00:00'),
+(2, 2, 3, 18000, false, true, '2025-08-03 20:00:00'),
+(2, 2, 4, 18000, false, true, '2025-08-03 20:00:00'),
+-- (2, 3, '돼지 국밥', 45000, 'BUSAN', false)에 대한 정산 (지젤이 계산)
+(3, 2, 2, 15000, false, true, '2025-08-04 21:10:00'),
+(3, 2, 3, 15000, true, false, '2025-08-04 21:10:00'),
+(3, 2, 4, 15000, false, true, '2025-08-04 21:10:00'),
+-- (2, 2, '부산 밀면', 30000, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
+(4, 2, 2, 10000, false, true, '2025-08-04 21:10:00'),
+(4, 2, 3, 10000, false, true, '2025-08-04 21:10:00'),
+(4, 2, 4, 10000, true, false, '2025-08-04 21:10:00'),
 -- (2, 2, '부산 꼼장어', 50000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(5, 2, 2, 16667, true, false, '2025-08-06 19:10:00'),
-(5, 2, 3, 16666, false, true, '2025-08-06 19:10:00'),
-(5, 2, 4, 16666, false, true, '2025-08-06 19:10:00'),
--- (2, 2, '숙박 비용', 210000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(6, 2, 2, 70000, true, false, '2025-08-06 19:10:00'),
-(6, 2, 3, 70000, false, true, '2025-08-06 19:10:00'),
-(6, 2, 4, 70000, false, true, '2025-08-06 19:10:00'),
+(5, 2, 2, 16667, true, false, '2025-08-04 21:10:00'),
+(5, 2, 3, 16666, false, true, '2025-08-04 21:10:00'),
+(5, 2, 4, 16666, false, true, '2025-08-04 21:10:00'),
+-- (2, 2, '숙박 비용 시그니엘 부산', 300000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
+(6, 2, 2, 100000, true, false, '2025-08-04 21:10:00'),
+(6, 2, 3, 100000, false, true, '2025-08-04 21:10:00'),
+(6, 2, 4, 100000, false, true, '2025-08-04 21:10:00'),
 -- (2, 3, '이재모 피자', 40000, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
-(7, 2, 2, 13334, false, true, '2025-08-06 19:10:00'),
-(7, 2, 3, 13333, true, false, '2025-08-06 19:10:00'),
-(7, 2, 4, 13333, false, true, '2025-08-06 19:10:00'),
--- (2, 2, '버블티&카페', 18000, 'BUSAN', false)에 대한 정산 (지젤이 계산)
-(8, 2, 2, 6000, false, true, '2025-08-06 20:10:00'),
-(8, 2, 3, 6000, false, true, '2025-08-06 20:10:00'),
-(8, 2, 4, 6000, true, false, '2025-08-06 20:10:00'),
--- (2, 2, '교통비', 149400, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(9, 2, 2, 49800, true, false, '2025-08-06 21:10:00'),
-(9, 2, 3, 49800, false, true, '2025-08-06 21:10:00'),
-(9, 2, 4, 49800, false, true, '2025-08-06 21:10:00');
+(7, 2, 2, 13334, false, true, '2025-08-05 11:00:00'),
+(7, 2, 3, 13333, true, false, '2025-08-05 11:00:00'),
+(7, 2, 4, 13333, false, true, '2025-08-05 11:00:00'),
+-- (2, 2, '버블티&카페', 18000, 'BUSAN', false)에 대한 정산 (지젤이 계산, 윈터는 먼저 감 ㅜ)
+(8, 2, 3, 9000, false, true, '2025-08-05 20:10:00'),
+(8, 2, 4, 9000, true, false, '2025-08-05 20:10:00'),
+-- (2, 2, '교통비', 149400, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
+(9, 2, 3, 49800, false, true, '2025-08-05 21:10:00'),
+(9, 2, 4, 49800, true, false, '2025-08-05 21:10:00');
 
-
-INSERT INTO TRIP_RECORDS (trip_id, member_id, title, record_date, content)
+INSERT INTO trip_records (trip_id, member_id, title, record_date, content)
 VALUES (1, 1, '부산 도착~', '2025-08-01', '내일 이재모 피자 먹어야지 ㅎㅎ 숙소도 너무 좋다'),
        (1, 1, '이재모 피자', '2025-08-02', '진짜 맛있음. 다음엔 다른 메뉴 먹어봐야지'),
        (1, 1, '남포동 투어', '2025-08-02', null),
@@ -1135,7 +1420,8 @@ VALUES (1, 1, '부산 도착~', '2025-08-01', '내일 이재모 피자 먹어야
        (1, 1, '해운대', '2025-08-03', '더운데 경치가 너무 좋았다~~'),
        (1, 1, '부산 마지막날 ㅜㅜ', '2025-08-04', '아쉽다. 다음에 또 와야지');
 
-INSERT INTO TRIP_RECORD_IMAGES (record_id, image_url)
+
+INSERT INTO trip_record_images (record_id, image_url)
 VALUES (1, '2b1d7834-3f92-4fb8-8e39-dac2c952c6f4.webp'),
        (1, '1482b39b-981d-43d9-9747-446f0c08c545.jpg'),
        (2, '73eed0e4-cfeb-4fad-b890-45a95affb559.webp'),
@@ -1145,7 +1431,7 @@ VALUES (1, '2b1d7834-3f92-4fb8-8e39-dac2c952c6f4.webp'),
        (5, '7fb93cf9-02d4-4678-8a6b-d30371dfcf75.jpg');
 
 -- 숙박 테스트 데이터셋 추가
-# INSERT INTO RESERVATION (trip_day_id, res_kind)
+# INSERT INTO reservation (trip_day_id, res_kind)
 # VALUES
 # -- trip_day_id: 1, 2, 3, 4 => 카리나 부산 여행
 # (1,'ACCOMMODATION'), -- 숙박
