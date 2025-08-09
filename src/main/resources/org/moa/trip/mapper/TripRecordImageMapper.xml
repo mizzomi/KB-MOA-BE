@@ -15,7 +15,7 @@
     </delete>
 
     <delete id="deleteImagesByRecordIdAndFileNames">
-        DELETE FROM trip_record_image
+        DELETE FROM TRIP_RECORD_IMAGES
         WHERE record_id = #{recordId}
         AND image_url IN
         <foreach item="fileName" collection="fileNames" open="(" separator="," close=")">
