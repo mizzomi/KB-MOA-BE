@@ -2,6 +2,7 @@ package org.moa.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -21,13 +22,17 @@ import java.util.List;
 
 @EnableWebMvc
 @ComponentScan(basePackages = {
-	"org.moa.global",
-	"org.moa.member",
+	"org.moa.global.controller",
+	"org.moa.global.handler",  // GlobalExceptionHandler
+	"org.moa.member.controller",
 	"org.moa.trip.controller",
 	"org.moa.reservation.controller",
-	"org.moa.reservation.transport",
-	"org.moa.reservation.accommodation",
-	"org.moa.reservation.restaurant"
+	"org.moa.reservation.transport.controller",
+	"org.moa.reservation.accommodation.controller",
+	"org.moa.reservation.restaurant.controller",
+	"org.moa.global.security.controller",
+	"org.moa.global.notification.controller",
+	"org.moa.global.account.controller"
 })
 public class ServletConfig implements WebMvcConfigurer {
 

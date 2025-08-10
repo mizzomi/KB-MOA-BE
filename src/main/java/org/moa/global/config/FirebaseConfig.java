@@ -62,13 +62,21 @@ public class FirebaseConfig {
             // 4. 클래스패스에서 시도 (로컬 개발 환경)
             else if (keyPath != null) {
                 try {
-                    Resource resource = new FileSystemResource("src/main/resources/" + keyPath);
-                    if (resource.exists()) {
-                        log.info("Firebase 초기화: 클래스패스 파일({})에서 키를 로드합니다.", keyPath);
-                        serviceAccount = resource.getInputStream();
+                    // 먼저 클래스패스에서 시도
+                    InputStream classPathStream = getClass().getClassLoader().getResourceAsStream(keyPath);
+                    if (classPathStream != null) {
+                        log.info("Firebase 초기화: 클래스패스({})에서 키를 로드합니다.", keyPath);
+                        serviceAccount = classPathStream;
+                    } else {
+                        // FileSystemResource로 시도 (IDE에서 실행 시)
+                        Resource resource = new FileSystemResource("src/main/resources/" + keyPath);
+                        if (resource.exists()) {
+                            log.info("Firebase 초기화: 파일시스템({})에서 키를 로드합니다.", "src/main/resources/" + keyPath);
+                            serviceAccount = resource.getInputStream();
+                        }
                     }
                 } catch (Exception e) {
-                    log.warn("Firebase 키 파일을 클래스패스에서 찾을 수 없습니다: {}", keyPath);
+                    log.warn("Firebase 키 파일을 찾을 수 없습니다: {}", keyPath, e);
                 }
             }
 
