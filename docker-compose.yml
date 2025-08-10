@@ -8,19 +8,19 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MOA_DB_ROOT_PASSWORD:?Set MOA_DB_ROOT_PASSWORD}
       MYSQL_DATABASE: moa
-      MYSQL_CHARACTER_SET: utf8mb4
-      MYSQL_COLLATION: utf8mb4_unicode_ci
       TZ: Asia/Seoul
+      # MySQL 인코딩 환경변수 (8.0 버전용)
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
     ports:
       - "3306:3306"
     volumes:
       # 데이터 영속성
       - mysql_data:/var/lib/mysql
-      # MySQL 설정 파일 마운트 (추가)
-      - ./mysql/conf.d:/etc/mysql/conf.d
-      # SQL 초기화 스크립트 제거 (수동으로 실행 필요)
-      # - ./sql_test/database.sql:/docker-entrypoint-initdb.d/01-database.sql:ro
-      # - ./sql_test/insert_tran_res_aug1_to_aug7_ver2.sql:/docker-entrypoint-initdb.d/02-insert-data.sql:ro
+      # MySQL 설정 파일 마운트
+      - ./mysql/conf.d:/etc/mysql/conf.d:ro
+      # SQL 초기화 스크립트 (UTF-8로 실행되도록 설정)
+      # - ./sql_test:/docker-entrypoint-initdb.d:ro
     networks:
       - moa-network
     healthcheck:
@@ -28,13 +28,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # UTF-8 설정 강화
+    # UTF-8 설정 명령어 (가장 강력한 설정)
     command: >
+      mysqld
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
-      --character-set-client-handshake=FALSE
-      --init-connect='SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci'
       --skip-character-set-client-handshake
+      --init-connect='SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci'
 
   # Redis 캐시 서버
   redis:

@@ -1,3 +1,7 @@
+-- UTF-8 인코딩 설정
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
+
 -- 초기화
 SET FOREIGN_KEY_CHECKS = 0;
 

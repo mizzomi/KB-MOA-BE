@@ -32,6 +32,13 @@ public class FirebaseConfig {
     @PostConstruct
     public void initialize() {
         try {
+            // 이미 초기화되어 있는지 먼저 확인
+            if (!FirebaseApp.getApps().isEmpty()) {
+                log.info("Firebase App이 이미 초기화되어 있습니다.");
+                firebaseEnabled = true;
+                return;
+            }
+            
             // 1. 환경 변수에서 키 값(JSON 문자열)을 먼저 읽어옴
             String credentialsJson = System.getenv("FIREBASE_CREDENTIALS");
 
@@ -66,7 +73,7 @@ public class FirebaseConfig {
             }
 
             // Firebase 초기화
-            if (serviceAccount != null && FirebaseApp.getApps().isEmpty()) {
+            if (serviceAccount != null) {
                 FirebaseOptions options = FirebaseOptions.builder()
                         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                         .setProjectId(projectId)
@@ -76,7 +83,8 @@ public class FirebaseConfig {
                 log.info("Firebase App이 성공적으로 초기화되었습니다.");
                 serviceAccount.close();
             } else {
-                log.warn("Firebase가 초기화되지 않았습니다. FCM 기능이 비활성화됩니다.");
+                log.warn("Firebase 키 파일을 찾을 수 없어 초기화하지 못했습니다. FCM 기능이 비활성화됩니다.");
+                firebaseEnabled = false;
             }
         } catch (Exception e) {
             log.error("Firebase App 초기화 중 오류 발생 - FCM 기능이 비활성화됩니다.", e);
