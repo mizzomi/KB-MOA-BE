@@ -15,11 +15,11 @@
             a.description,
             a.hotel_image_url
         FROM
-            ACCOMMODATION_INFO a
+            accommodation_info a
         WHERE
             EXISTS (
             SELECT 1
-            FROM ACCOM_RES av
+            FROM accom_res av
             WHERE
                 av.accom_id = a.accom_id
                 AND av.status = 'AVAILABLE'
@@ -38,9 +38,9 @@
             ar.max_guests AS maxGuests,
             ar.price AS price
         FROM
-            ACCOM_RES ar
+            accom_res ar
                 LEFT JOIN
-            ACCOMMODATION_INFO a ON ar.accom_id = a.accom_id
+            accommodation_info a ON ar.accom_id = a.accom_id
         WHERE
             a.accom_id = #{accomId}
           AND a.location = #{location}
@@ -59,7 +59,7 @@
             hotel_name,
             address,
             hotel_image_url
-        FROM ACCOMMODATION_INFO
+        FROM accommodation_info
         WHERE accom_id = #{accomId}
     </select>
 
@@ -72,9 +72,9 @@
             td.day as date,
             ar.created_at as createdAt,
             'ACCOMMODATION' as resKind
-        FROM ACCOM_RES ar
-            JOIN TRIP_DAY td ON ar.trip_day_id = td.trip_day_id
-            JOIN ACCOMMODATION_INFO ai ON ar.accom_id = ai.accom_id
+        FROM accom_res ar
+            JOIN trip_day td ON ar.trip_day_id = td.trip_day_id
+            JOIN accommodation_info ai ON ar.accom_id = ai.accom_id
         WHERE td.trip_id = #{tripId}
           AND ar.status = 'CONFIRMED'
         ORDER BY td.day
@@ -89,11 +89,11 @@
             td.day as date,
             ar.created_at as createdAt,
             'ACCOMMODATION' as resKind
-        FROM ACCOM_RES ar
-            JOIN TRIP_DAY td ON ar.trip_day_id = td.trip_day_id
-            JOIN ACCOMMODATION_INFO ai ON ar.accom_id = ai.accom_id
-            JOIN TRIP t ON td.trip_id = t.trip_id
-            JOIN TRIP_MEMBER tm ON t.trip_id = tm.trip_id
+        FROM accom_res ar
+            JOIN trip_day td ON ar.trip_day_id = td.trip_day_id
+            JOIN accommodation_info ai ON ar.accom_id = ai.accom_id
+            JOIN trip t ON td.trip_id = t.trip_id
+            JOIN trip_member tm ON t.trip_id = tm.trip_id
         WHERE td.trip_id = #{tripId}
           AND tm.member_id = #{memberId}
           AND td.day = #{date}

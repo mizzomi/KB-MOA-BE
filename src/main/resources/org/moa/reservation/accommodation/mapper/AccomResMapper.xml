@@ -22,8 +22,8 @@
             created_at,
             updated_at,
             status
-        FROM ACCOM_RES
-        WHERE accom_id = (SELECT accom_id FROM ACCOM_RES WHERE accom_res_id = #{accomResId} LIMIT 1)
+        FROM accom_res
+        WHERE accom_id = (SELECT accom_id FROM accom_res WHERE accom_res_id = #{accomResId} LIMIT 1)
           AND status = 'AVAILABLE'
           AND max_guests >= #{guests}
           AND DATE(checkin_day) &lt;= #{checkinDay}
@@ -32,19 +32,19 @@
     </select>
     <select id="searchAccomIdByAccomResId" resultType="long">
         SELECT accom_id
-        FROM ACCOM_RES
+        FROM accom_res
         WHERE accom_res_id = #{accomResId}
     </select>
     <update id="updateAccomResByDate">
-        UPDATE ACCOM_RES
+        UPDATE accom_res
         SET reservation_id = #{reservationId},
             trip_day_id = #{tripDayId},
             guests = #{guests},
             status = 'CONFIRMED',
             updated_at = NOW()
-        WHERE accom_id = (SELECT accom_id FROM (SELECT accom_id FROM ACCOM_RES WHERE accom_res_id = #{accomResId}) AS temp)
-          AND room_type = (SELECT room_type FROM (SELECT room_type FROM ACCOM_RES WHERE accom_res_id = #{accomResId}) AS temp2)
-          AND price = (SELECT price FROM (SELECT price FROM ACCOM_RES WHERE accom_res_id = #{accomResId}) AS temp3)
+        WHERE accom_id = (SELECT accom_id FROM (SELECT accom_id FROM accom_res WHERE accom_res_id = #{accomResId}) AS temp)
+          AND room_type = (SELECT room_type FROM (SELECT room_type FROM accom_res WHERE accom_res_id = #{accomResId}) AS temp2)
+          AND price = (SELECT price FROM (SELECT price FROM accom_res WHERE accom_res_id = #{accomResId}) AS temp3)
           AND DATE(checkin_day) = DATE(#{checkInTime})
           AND DATE(checkout_day) = DATE(#{checkOutTime})
           AND reservation_id IS NULL
@@ -59,10 +59,10 @@
     </update>
     <select id="checkAvailability" resultType="int">
         SELECT COUNT(*)
-        FROM ACCOM_RES
-        WHERE accom_id = (SELECT accom_id FROM ACCOM_RES WHERE accom_res_id = #{accomResId})
-          AND room_type = (SELECT room_type FROM ACCOM_RES WHERE accom_res_id = #{accomResId})
-          AND price = (SELECT price FROM ACCOM_RES WHERE accom_res_id = #{accomResId})
+        FROM accom_res
+        WHERE accom_id = (SELECT accom_id FROM accom_res WHERE accom_res_id = #{accomResId})
+          AND room_type = (SELECT room_type FROM accom_res WHERE accom_res_id = #{accomResId})
+          AND price = (SELECT price FROM accom_res WHERE accom_res_id = #{accomResId})
           AND DATE(checkin_day) >= DATE(#{checkInDate})
           AND DATE(checkin_day) &lt; DATE(#{checkOutDate})
           AND reservation_id IS NULL
@@ -71,13 +71,13 @@
     </select>
     <select id="searchHotelNameByAccomResId" resultType="string">
         SELECT ac.hotel_name
-        FROM ACCOMMODATION_INFO ac
-                 JOIN ACCOM_RES ar ON ac.accom_id = ar.accom_id
+        FROM accommodation_info ac
+                 JOIN accom_res ar ON ac.accom_id = ar.accom_id
         WHERE ar.accom_res_id = #{accomResId}
     </select>
     <select id="searchHotelPriceById" resultType="decimal">
         SELECT price
-        FROM ACCOM_RES
+        FROM accom_res
         WHERE accom_res_id = #{accomResId}
     </select>
 </mapper>

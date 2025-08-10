@@ -5,7 +5,7 @@
 
 <mapper namespace="org.moa.reservation.transport.mapper.TransportMapper">
     <update id="cancelSeatsByReservationId">
-        UPDATE TRAN_RES
+        UPDATE tran_res
         SET reservation_id = NULL,
             trip_day_id = NULL,
             booked_at = NULL,
@@ -64,7 +64,7 @@
 
     <select id="findStatusesByIds" parameterType="list" resultType="org.moa.reservation.transport.dto.TransResStatusDto">
         SELECT tran_res_id, status
-        FROM TRAN_RES
+        FROM tran_res
         WHERE tran_res_id IN
         <foreach item="id" collection="list" open="(" separator="," close=")">
             #{id}
@@ -72,20 +72,20 @@
     </select>
     <select id="getTotalPriceByReservationId" resultType="java.math.BigDecimal">
         SELECT COALESCE(SUM(price), 0)
-        FROM TRAN_RES
+        FROM tran_res
         WHERE reservation_id = #{reservationId} AND status = 'PENDING'
     </select>
     <select id="selectTrainNoByReservationId" resultType="java.lang.String">
         SELECT I.train_no
-        FROM TRANSPORT_INFO I
+        FROM transport_info I
         WHERE I.transport_id = (SELECT R.transport_id
-                                FROM TRAN_RES R
+                                FROM tran_res R
                                 WHERE R.reservation_id = #{reservationId}
                                 LIMIT 1);
     </select>
     <select id="findExistingTranResIds" resultType="java.lang.Long">
         SELECT tran_res_id
-        FROM TRAN_RES
+        FROM tran_res
         WHERE tran_res_id IN
         <foreach item="id" collection="tranResIds" open="(" separator="," close=")">
             #{id}
@@ -93,7 +93,7 @@
     </select>
 
     <update id="updateSeatsToPending">
-        UPDATE TRAN_RES
+        UPDATE tran_res
         SET
         reservation_id = #{reservationId},
         trip_day_id = #{tripDayId},
@@ -105,7 +105,7 @@
         </foreach>
     </update>
     <update id="confirmSeatsByReservationId">
-        UPDATE TRAN_RES
+        UPDATE tran_res
         SET status = 'CONFIRMED',
             updated_at = CURRENT_TIMESTAMP,
             booked_at = CURRENT_TIMESTAMP
@@ -122,9 +122,9 @@
             td.day as date,
             tr.created_at as createdAt,
             'TRANSPORT' as resKind
-        FROM TRAN_RES tr
-            JOIN TRANSPORT_INFO ti ON tr.transport_id = ti.transport_id
-            JOIN TRIP_DAY td ON tr.trip_day_id = td.trip_day_id
+        FROM tran_res tr
+            JOIN transport_info ti ON tr.transport_id = ti.transport_id
+            JOIN trip_day td ON tr.trip_day_id = td.trip_day_id
         WHERE td.trip_id = #{tripId}
           AND tr.status = 'CONFIRMED'
         ORDER BY td.day
@@ -139,11 +139,11 @@
             td.day as date,
             tr.created_at as createdAt,
             'TRANSPORT' as resKind
-        FROM TRAN_RES tr
-            JOIN TRANSPORT_INFO ti ON tr.transport_id = ti.transport_id
-            JOIN TRIP_DAY td ON tr.trip_day_id = td.trip_day_id
-            JOIN TRIP t ON td.trip_id = t.trip_id
-            JOIN TRIP_MEMBER tm ON t.trip_id = tm.trip_id
+        FROM tran_res tr
+            JOIN transport_info ti ON tr.transport_id = ti.transport_id
+            JOIN trip_day td ON tr.trip_day_id = td.trip_day_id
+            JOIN trip t ON td.trip_id = t.trip_id
+            JOIN trip_member tm ON t.trip_id = tm.trip_id
         WHERE td.trip_id = #{tripId}
           AND tm.member_id = #{memberId}
           AND td.day = #{date}

@@ -7,7 +7,7 @@
 
 
     <update id="updateMemberIdByIdCardNumber">
-        UPDATE DRIVER_LICENSE
+        UPDATE driver_license
         SET member_id = #{memberId}
         WHERE id_card_number = #{idCardNumber}
     </update>
@@ -23,9 +23,9 @@
             dl.issued_date AS issuedDate,
             dl.expiry_date AS expiryDate
         FROM
-            DRIVER_LICENSE dl
+            driver_license dl
                 INNER JOIN
-            MEMBER m ON dl.member_id = m.member_id
+            member m ON dl.member_id = m.member_id
         WHERE
             dl.member_id = #{memberId}
     </select>

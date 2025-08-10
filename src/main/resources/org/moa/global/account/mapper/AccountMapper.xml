@@ -18,28 +18,28 @@
     </resultMap>
 
     <update id="updateMemberIdByAccountNumber">
-        UPDATE ACCOUNT
+        UPDATE account
         SET member_id = #{memberId}
         WHERE account_number = #{accountNumber}
     </update>
     <select id="existsByAccountNumberAndAccountPassword" resultType="java.lang.Boolean">
         SELECT EXISTS (SELECT 1
-                       FROM ACCOUNT
+                       FROM account
                        WHERE account_number = #{accountNumber}
                          AND account_password = #{accountPassword})
     </select>
     <select id="existsByNameAndAccountNumberAndAccountPassword" resultType="java.lang.Boolean">
         SELECT EXISTS(SELECT 1
-                      FROM ACCOUNT
+                      FROM account
                       WHERE name = #{name}
                         AND account_number = #{accountNumber}
                         AND account_password = #{accountPassword})
     </select>
     <select id="searchAccountByMemberId" resultMap="AccountResultMap">
-        SELECT * FROM ACCOUNT WHERE member_id = #{memberId}
+        SELECT * FROM account WHERE member_id = #{memberId}
     </select>
     <update id="transactionBalance" >
-        UPDATE ACCOUNT
+        UPDATE account
         SET balance = CASE
                           WHEN member_id = #{receiverId} THEN balance + #{amount}
                           WHEN member_id = #{senderId} THEN balance - #{amount}
@@ -48,7 +48,7 @@
         WHERE member_id IN (#{receiverId}, #{senderId})
     </update>
     <update id="withdraw">
-        UPDATE ACCOUNT
+        UPDATE account
         SET balance = balance - #{amount}
         WHERE account_number = #{accountNumber};
     </update>

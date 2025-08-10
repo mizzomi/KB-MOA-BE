@@ -5,7 +5,7 @@
 
 <mapper namespace="org.moa.trip.mapper.ExpenseMapper">
     <insert id="insert" parameterType="org.moa.trip.entity.Expense" useGeneratedKeys="true" keyProperty="expenseId">
-        INSERT INTO EXPENSE(trip_id,
+        INSERT INTO expense(trip_id,
                             member_id,
                             expense_name,
                             expense_date,
@@ -28,11 +28,11 @@
     </insert>
     <select id="searchByExpenseId" resultType="org.moa.trip.entity.Expense">
         SELECT *
-        FROM EXPENSE
+        FROM expense
         WHERE expense_id = #{expenseId}
     </select>
     <update id="updateSettlementCompleted">
-        UPDATE EXPENSE
+        UPDATE expense
         SET settlement_completed = #{completed}
         WHERE expense_id = #{expenseId}
     </update>
