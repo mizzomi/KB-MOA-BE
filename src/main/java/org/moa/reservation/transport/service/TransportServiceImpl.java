@@ -69,12 +69,12 @@ public class TransportServiceImpl implements TransportService {
 			departureName, destinationName, departureDateTime, pageable.getPageNumber() * pageable.getPageSize(), pageable.getPageSize()
 		);
 
-		//전체 건수 조회
+		// 전체 건수 조회
 		int total = transportMapper.countTransports(
 			departureName, destinationName, departureDateTime
 		);
 
-		//Spring Data의 PageImpl로 감싸서 반환
+		// Spring Data의 PageImpl로 감싸서 반환
 		return new PageImpl<>(transportInfos, pageable, total);
 	}
 
@@ -96,9 +96,7 @@ public class TransportServiceImpl implements TransportService {
 		return reservationId;
 	}
 	
-	/**
-	 * Trip Day ID 조회 헬퍼 메서드
-	 */
+	// Trip Day ID 조회 헬퍼 메서드
 	private Long findTripDayIdOrThrow(Long tripId, LocalDateTime departureDateTime) {
 		Long tripDayId = tripMapper.findTripDayId(tripId, departureDateTime.toLocalDate());
 		if (tripDayId == null) {
@@ -107,9 +105,7 @@ public class TransportServiceImpl implements TransportService {
 		return tripDayId;
 	}
 	
-	/**
-	 * Reservation 생성 헬퍼 메서드
-	 */
+	// Reservation 생성 헬퍼 메서드
 	private Long createReservation(Long tripDayId) {
 		Reservation reservation = Reservation.builder()
 			.tripDayId(tripDayId)
@@ -119,9 +115,7 @@ public class TransportServiceImpl implements TransportService {
 		return reservation.getReservationId();
 	}
 	
-	/**
-	 * 좌석 상태 업데이트 헬퍼 메서드
-	 */
+	// 좌석 상태 업데이트 헬퍼 메서드
 	private void updateSeatsToPending(Long reservationId, Long tripDayId, List<Long> tranResIds) {
 		int updatedCount = transportMapper.updateSeatsToPending(
 			reservationId,
@@ -153,9 +147,7 @@ public class TransportServiceImpl implements TransportService {
 		return true;
 	}
 	
-	/**
-	 * 결제 처리 헬퍼 메서드
-	 */
+	// 결제 처리 헬퍼 메서드
 	private void processPayment(Long memberId, BigDecimal amount, Long reservationId) {
 		String trainNo = transportMapper.selectTrainNoByReservationId(reservationId);
 		
@@ -164,9 +156,7 @@ public class TransportServiceImpl implements TransportService {
 		log.info("결제 완료: reservationId={}, amount={}", reservationId, amount);
 	}
 	
-	/**
-	 * 좌석 확정 처리 헬퍼 메서드
-	 */
+	// 좌석 확정 처리 헬퍼 메서드
 	private void confirmSeats(Long reservationId) {
 		int updated = transportMapper.confirmSeatsByReservationId(reservationId);
 		if (updated == 0) {
@@ -192,9 +182,7 @@ public class TransportServiceImpl implements TransportService {
 		return cancelSeats;
 	}
 	
-	/**
-	 * 좌석 취소 처리 헬퍼 메서드
-	 */
+	// 좌석 취소 처리 헬퍼 메서드
 	private int cancelSeats(Long reservationId) {
 		int cancelSeats = transportMapper.cancelSeatsByReservationId(reservationId);
 		if (cancelSeats == 0) {
@@ -203,9 +191,7 @@ public class TransportServiceImpl implements TransportService {
 		return cancelSeats;
 	}
 	
-	/**
-	 * 예약 삭제 처리 헬퍼 메서드
-	 */
+	// 예약 삭제 처리 헬퍼 메서드
 	private void deleteReservation(Long reservationId) {
 		int cancelReservation = reservationMapper.cancelReservationByReservationId(reservationId);
 		log.info("예약 삭제 완료: reservationId={}", reservationId);
