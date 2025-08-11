@@ -5,17 +5,17 @@
 
 <mapper namespace="org.moa.member.mapper.MemberMapper">
     <update id="updateFcmToken">
-        UPDATE MEMBER
+        UPDATE member
         SET fcm_token = #{FcmToken}
         WHERE member_id = #{memberId}
     </update>
     <delete id="deleteFcmToken">
-        UPDATE MEMBER
+        UPDATE member
         SET fcm_token = NULL
         WHERE member_id = #{memberId}
     </delete>
     <insert id="insert" parameterType="org.moa.member.entity.Member" useGeneratedKeys="true" keyProperty="memberId">
-        INSERT INTO MEMBER (member_type,
+        INSERT INTO member (member_type,
                             email,
                             password,
                             name,
@@ -32,17 +32,17 @@
     </insert>
     <select id="searchTokenById" resultType="string">
         SELECT fcm_token
-        FROM MEMBER
+        FROM member
         WHERE member_id = #{memberId}
     </select>
     <select id="getByEmail" resultType="org.moa.member.entity.Member">
         SELECT *
-        FROM MEMBER
+        FROM member
         WHERE email = #{email}
     </select>
     <select id="getByMemberId" resultType="org.moa.member.entity.Member">
         SELECT *
-        FROM MEMBER
+        FROM member
         WHERE member_id = #{memberId}
     </select>
 </mapper>

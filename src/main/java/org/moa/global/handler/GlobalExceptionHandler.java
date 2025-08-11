@@ -20,20 +20,20 @@ import lombok.extern.slf4j.Slf4j;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-	//JSON 파싱 / 타입 변환 실패 시
+	// JSON 파싱 / 타입 변환 실패 시
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	protected ResponseEntity<ApiResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
 
-		//상세 에러는 로그
+		// 상세 에러는 로그
 		log.error("Message not readable exeption occurred", ex);
 
-		//클라이언트에는 최소한의 정보
+		// 클라이언트에는 최소한의 정보
 		return ResponseEntity
 			.status(StatusCode.BAD_REQUEST.getStatus())
 			.body(ApiResponse.error(StatusCode.BAD_REQUEST, "Invalid request format"));
 	}
 
-	//@Valid 미충족시
+	// @Valid 미충족시
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	protected ResponseEntity<ApiResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
 		log.error("Method argument not valid exeption occurred", ex);

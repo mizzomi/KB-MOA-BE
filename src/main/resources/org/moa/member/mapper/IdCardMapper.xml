@@ -5,7 +5,7 @@
 
 <mapper namespace="org.moa.member.mapper.IdCardMapper">
     <update id="updateMemberIdByIdCardNumber">
-        UPDATE ID_CARD
+        UPDATE id_card
         SET member_id = #{memberId}
         WHERE id_card_number = #{idCardNumber}
     </update>
@@ -13,7 +13,7 @@
 
     <select id="existsByNameAndIdCardNumber" resultType="java.lang.Boolean">
         SELECT EXISTS(SELECT 1
-                      FROM ID_CARD
+                      FROM id_card
                       WHERE name = #{name}
                         AND id_card_number = #{idCardNumber})
     </select>
@@ -30,7 +30,7 @@
             image_url,
             created_at,
             updated_at
-        FROM ID_CARD
+        FROM id_card
         WHERE member_id = #{memberId}
     </select>
 
@@ -42,9 +42,9 @@
             ic.id_card_number AS idCardNumber,
             ic.issued_date AS issuedDate
         FROM
-            ID_CARD ic
+            id_card ic
                 INNER JOIN
-            MEMBER m ON ic.member_id = m.member_id
+            member m ON ic.member_id = m.member_id
         WHERE
             ic.member_id = #{memberId}
     </select>

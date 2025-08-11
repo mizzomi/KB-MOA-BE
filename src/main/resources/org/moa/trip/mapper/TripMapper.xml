@@ -57,11 +57,11 @@
     </select>
     <select id="searchTripById" resultType="org.moa.trip.entity.Trip">
         SELECT *
-        FROM TRIP
+        FROM trip
         WHERE trip_id = #{tripId}
     </select>
     <insert id="insert" parameterType="org.moa.trip.entity.Trip" useGeneratedKeys="true" keyProperty="tripId">
-        INSERT INTO TRIP (member_id,
+        INSERT INTO trip (member_id,
                           trip_name,
                           trip_location,
                           start_date,
@@ -80,11 +80,11 @@
     </insert>
     <select id="searchDayByTripId" resultType="java.time.LocalDateTime">
         SELECT day
-        FROM TRIP_DAY
+        FROM trip_day
         WHERE trip_id = #{tripId}
     </select>
     <insert id="insertTripDays">
-        INSERT INTO TRIP_DAY(
+        INSERT INTO trip_day(
                              trip_id,
                              day
         )
@@ -98,13 +98,13 @@
     </insert>
     <select id="findTripDayId" resultType="long">
         SELECT trip_day_id
-        FROM TRIP_DAY
+        FROM trip_day
         WHERE trip_id = #{tripId}
                   AND day = #{day}
     </select>
     <select id="searchTripLocations" resultType="org.moa.trip.entity.TripLocation">
         SELECT *
-        FROM TRIP_LOCATION
+        FROM trip_location
     </select>
     <select id="searchIdsByDays" resultType="java.lang.Long">
         SELECT id

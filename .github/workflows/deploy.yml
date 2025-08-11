@@ -1,0 +1,58 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        id: deploy
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "========================================="
+            echo "Starting deployment process..."
+            echo "========================================="
+            
+            # 프로젝트 디렉토리로 이동
+            cd /home/ubuntu/spring-deployment/BE
+            
+            # 최신 코드 pull (deploy.sh 보존)
+            echo "📥 Pulling latest code from GitHub..."
+            git stash
+            git pull origin main
+            git stash pop || true
+            
+            # deploy.sh 실행 권한 부여
+            chmod +x deploy.sh
+            
+            # 배포 스크립트 실행
+            echo "🚀 Running deployment script..."
+            ./deploy.sh
+            
+            # 배포 완료
+            echo "========================================="
+            echo "✨ Deployment completed successfully!"
+            echo "========================================="
+
+      - name: Send notification
+        if: always()
+        run: |
+          if [ "${{ steps.deploy.outcome }}" == "success" ]; then
+            echo "✅ 배포 성공!"
+            echo "배포된 커밋: ${{ github.sha }}"
+            echo "배포자: ${{ github.actor }}"
+            echo "브랜치: ${{ github.ref_name }}"
+            # 여기에 Slack, Discord, 이메일 등 알림 추가 가능
+          else
+            echo "❌ 배포 실패!"
+            echo "실패한 커밋: ${{ github.sha }}"
+            echo "배포자: ${{ github.actor }}"
+          fi
