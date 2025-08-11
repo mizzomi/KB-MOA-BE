@@ -38,7 +38,7 @@ public class MemberController {
 	public ResponseEntity<ApiResponse<?>> searchUserIdByEmail(@RequestParam String email) {
 		return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(memberService.searchUserIdByEmail(email)));
 	}
-
+	// 이미 존재하는 여행에 멤버 추가할때 검증하는 로직입니다.
 	@GetMapping("/exist-by-email")
 	public ResponseEntity<ApiResponse<?>> existUserIdByEmail(@RequestParam String email , @RequestParam Long tripId) {
 		return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.of(memberService.existUserIdByEmail(email,tripId)));
