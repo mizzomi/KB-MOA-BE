@@ -1,0 +1,28 @@
+# ===================================
+# Docker ?? ?? ?? (AWS)
+# ===================================
+
+# JDBC ?? - Docker ???? ???? ??
+jdbc.driver=com.mysql.cj.jdbc.Driver
+jdbc.url=jdbc:mysql://mysql:3306/{database}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&useUnicode=true
+jdbc.username={username}
+jdbc.password={password}
+
+# Redis ?? - Docker ???? ???? ??
+redis.host=redis
+redis.port=6379
+
+# ?? secret key
+my.security.secret-key=MySpuerSecretKey
+
+# Firebase ?? (Docker ???? ?? ??)
+firebase.key-path=/usr/local/tomcat/firebase/moa-firebase-service-account-key.json
+firebase.project-id=kb-pjt-moa
+firebase.bucket-name=kb-pjt-moa.firebasestorage.app
+
+# ===================================
+# ?? ?? ??
+# ===================================
+# ???? ?? (AWS EC2 + HTTPS)
+server.env=production
+server.use.secure.cookie=true
