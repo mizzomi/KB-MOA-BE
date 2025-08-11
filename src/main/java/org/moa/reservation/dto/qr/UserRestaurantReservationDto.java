@@ -14,8 +14,10 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserRestaurantReservationDto {
+    private Long restResId;
     private String type;
     private Long reservationId;
+    private Long restId;
     private String restName;
     private String address;
     @JsonFormat(pattern = "yyyy-MM-dd")

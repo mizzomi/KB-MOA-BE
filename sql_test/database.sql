@@ -336,7 +336,6 @@ CREATE TABLE RESTAURANT_INFO
     description    TEXT                                                                          NULL,                                -- 설명
     latitude       DECIMAL(10, 7)                                                                NULL,                                -- 위도
     longitude      DECIMAL(10, 7)                                                                NULL,                                -- 경도
-    menu_url       VARCHAR(255)                                                                  NULL,                                -- 메뉴 URL
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                                                               -- 생성일시
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP                                                    -- 수정일시
 );
@@ -657,8 +656,9 @@ VALUES
 (5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/3 서울역 -> 부산역 11:00 출발 (윈터, 지젤) reservationId = 10, tripDayId = 5
 (5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/5 서울역 -> 부산역 12:00 출발 (닝닝) reservationId = 11, tripDayId = 5
 (7, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 10:00 출발 (윈터 스케줄 바쁨) reservationId = 12, tripDayId = 7
-(7, 'TRANSPORT'); -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 15:00 출발 (지젤, 닝닝 느긋) reservationId = 13, tripDayId = 7
-
+(7, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 15:00 출발 (지젤, 닝닝 느긋) reservationId = 13, tripDayId = 7
+-- 식당 데이터 추가
+(1, 'RESTAURANT'); -- 식당
 -- 교통 예약 테스트 데이터
 INSERT INTO transport_info (
     departure_id, arrival_id, departure_name, arrival_name,
@@ -923,75 +923,75 @@ VALUES
     (87,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',3,'AVAILABLE'),
     (88,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',3,'AVAILABLE');
 
--- 식당 정보 테스트용 데이터 (가짜 firebase 경로)
+-- 식당 정보 테스트용 데이터
 INSERT INTO RESTAURANT_INFO (
     rest_name, address, category, rest_image_url,
-    phone, description, latitude, longitude, menu_url
+    phone, description, latitude, longitude
 ) VALUES
 -- 한식 (rest_id: 1 ~ 3)
 ('해운대 곰장어집', '부산광역시 해운대구 중동2로 10', 'korean',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/korean1.jpg?alt=media',
- '051-111-2222', '불맛 가득한 곰장어 전문점', 35.163, 129.163, 'https://example.com/korean1'),
+ 'https://png.pngtree.com/thumb_back/fh260/background/20210910/pngtree-dining-room-at-night-image_842471.jpg',
+ '051-111-2222', '불맛 가득한 곰장어 전문점', 35.163, 129.163),
 
 ('부산 밀면집', '부산광역시 동래구 충렬대로 237', 'korean',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/korean2.jpg?alt=media',
- '051-333-4444', '시원한 육수의 전통 밀면집', 35.205, 129.086, 'https://example.com/korean2'),
+ 'https://png.pngtree.com/thumb_back/fh260/background/20210910/pngtree-dining-room-at-night-image_842471.jpg',
+ '051-333-4444', '시원한 육수의 전통 밀면집', 35.205, 129.086),
 
 ('돼지국밥천국', '부산광역시 부산진구 중앙대로 708', 'korean',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/korean3.jpg?alt=media',
- '051-555-6666', '진한 육수의 돼지국밥 명가', 35.152, 129.060, 'https://example.com/korean3'),
+ 'https://png.pngtree.com/thumb_back/fh260/background/20210910/pngtree-dining-room-at-night-image_842471.jpg',
+ '051-555-6666', '진한 육수의 돼지국밥 명가', 35.152, 129.060),
 
 -- 일식 (4 ~ 6)
 ('스시하루 부산점', '부산광역시 수영구 수영로 570', 'japanese',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/japanese1.jpg?alt=media',
- '051-777-8888', '정통 오마카세 전문점', 35.160, 129.115, 'https://example.com/japanese1'),
+ 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdAn8yesg8uOqwEKgJZIjzKhSC8HMbtY_ykA&s',
+ '051-777-8888', '정통 오마카세 전문점', 35.160, 129.115),
 
 ('이자카야 코이', '부산광역시 남구 용소로 45', 'japanese',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/japanese2.jpg?alt=media',
- '051-222-3333', '감성 가득한 이자카야', 35.128, 129.093, 'https://example.com/japanese2'),
+ 'https://media.timeout.com/images/102190657/750/562/image.jpg',
+ '051-222-3333', '감성 가득한 이자카야', 35.128, 129.093),
 
 ('돈카츠연구소', '부산광역시 해운대구 해운대로 569', 'japanese',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/japanese3.jpg?alt=media',
- '051-444-5555', '두툼한 수제 돈카츠', 35.162, 129.163, 'https://example.com/japanese3'),
+ 'https://www.qplace.kr/content/images/2023/11/9_4247.jpg',
+ '051-444-5555', '두툼한 수제 돈카츠', 35.162, 129.163),
 
 -- 중식 (7 ~ 9)
 ('팔선생 중화요리', '부산광역시 부산진구 동천로 92', 'chinese',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/chinese1.jpg?alt=media',
- '051-123-1234', '짜장면·짬뽕 명가', 35.160, 129.065, 'https://example.com/chinese1'),
+ 'https://s3.qplace.kr/portfolio/4186/4f53dc96a5ab531a78c68316ea57daf4_w800.webp',
+ '051-123-1234', '짜장면·짬뽕 명가', 35.160, 129.065),
 
 ('홍콩반점41 부산대점', '부산광역시 금정구 장전온천천로 66', 'chinese',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/chinese2.jpg?alt=media',
- '051-321-4321', '프랜차이즈 중식당', 35.230, 129.089, 'https://example.com/chinese2'),
+ 'https://s3.qplace.kr/portfolio/4241/ab1d0a81a28848fc72f5f9a7e45129f8_w800.webp',
+ '051-321-4321', '프랜차이즈 중식당', 35.230, 129.089),
 
 ('루이하오 중국요리', '부산광역시 연제구 중앙대로 1156', 'chinese',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/chinese3.jpg?alt=media',
- '051-444-2222', '정통 중식당', 35.181, 129.081, 'https://example.com/chinese3'),
+ 'https://s3.qplace.kr/portfolio/4241/b0a6ff000a70a3fc24529f68491cf02c_w800.webp',
+ '051-444-2222', '정통 중식당', 35.181, 129.081),
 
 -- 양식 (10 ~ 12)
 ('부산 파스타하우스', '부산광역시 수영구 광안해변로 193', 'western',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/western1.jpg?alt=media',
- '051-123-4567', '오션뷰 감성 파스타 맛집', 35.153, 129.118, 'https://example.com/western1'),
+ 'https://s3.qplace.kr/portfolio/4382/5f12bdc3fdb449d7d51dfe3b460099ef_w800.webp',
+ '051-123-4567', '오션뷰 감성 파스타 맛집', 35.153, 129.118),
 
 ('스테이크 팩토리', '부산광역시 남구 분포로 145', 'western',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/western2.jpg?alt=media',
- '051-999-8888', '두툼한 스테이크 전문점', 35.127, 129.100, 'https://example.com/western2'),
+ 'https://s3.qplace.kr/portfolio/2933/4ca799bb3e3813a87258fb32f1dd0a9e_w800.webp',
+ '051-999-8888', '두툼한 스테이크 전문점', 35.127, 129.100),
 
 ('마리나 피자', '부산광역시 해운대구 우동 1418-2', 'western',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/western3.jpg?alt=media',
- '051-555-7777', '화덕 피자 전문점', 35.164, 129.163, 'https://example.com/western3'),
+ 'https://s3.qplace.kr/portfolio/2933/d79f6181e3c2e6adb05d34a2c60afe49_w800.webp',
+ '051-555-7777', '화덕 피자 전문점', 35.164, 129.163),
 
 -- 기타 (13 ~ 15)
 ('비건그린 키친', '부산광역시 동구 중앙대로 248', 'etc',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/etc1.jpg?alt=media',
- '051-000-1111', '채식주의자를 위한 건강식당', 35.137, 129.059, 'https://example.com/etc1'),
+ 'https://street-h.com/wp-content/uploads/2021/03/pyeongsangshi.jpg',
+ '051-000-1111', '채식주의자를 위한 건강식당', 35.137, 129.059),
 
 ('버블티&카페', '부산광역시 해운대구 좌동로 63', 'etc',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/etc2.jpg?alt=media',
- '051-321-8765', '음료와 디저트 전문 카페', 35.167, 129.176, 'https://example.com/etc2'),
+ 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBGoWdfQH9Px179V7bEj1LXefV9XTrS_EwjA&s',
+ '051-321-8765', '음료와 디저트 전문 카페', 35.167, 129.176),
 
 ('이색분식연구소', '부산광역시 중구 광복로 12', 'etc',
- 'https://firebasestorage.googleapis.com/v0/b/test-app.appspot.com/o/etc3.jpg?alt=media',
- '051-888-1111', '퓨전 분식 전문점', 35.101, 129.033, 'https://example.com/etc3');
+ 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoGoVsFpGXiWMTgYnIhE-j37LpzjtOtde_iA&s',
+ '051-888-1111', '퓨전 분식 전문점', 35.101, 129.033);
 
 -- 식당 시간 테스트용 데이터
 -- 식당별 예약 시간 슬롯 생성 (rest_id: 1 ~ 15, 시간: 11시 ~ 19시, max_capacity: 5)
@@ -1071,9 +1071,11 @@ INSERT INTO REST_TIME_SLOT (rest_id, res_time, max_capacity) VALUES
 (15, '14:00', 5), (15, '15:00', 5), (15, '16:00', 5),
 (15, '17:00', 5), (15, '18:00', 5), (15, '19:00', 5);
 
+
 -- 식당 예약 테스트용 데이터
 INSERT INTO REST_RES (rest_id, reservation_id, trip_day_id, res_num, rest_time_id) VALUES
-(1, 14, 1, 2, 1);
+    (1, 14, 1, 2, 1);
+
 
 -- 비용 테스트용 데이터
 INSERT INTO EXPENSE (trip_id, member_id, expense_name, expense_date, amount, location, settlement_completed)
