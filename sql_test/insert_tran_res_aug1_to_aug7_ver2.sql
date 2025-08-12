@@ -26886,15 +26886,16 @@ INSERT INTO tran_res (
 
 -- 위에는 카리나 2개
 
+-- 1호차 A1
 UPDATE tran_res
 SET reservation_id = 7, trip_day_id = 1, booked_at = now(), status = 'CONFIRMED'
 WHERE tran_res_id = 1;
-
+-- 7호차 A1
 UPDATE tran_res
 SET reservation_id = 8, trip_day_id = 4, booked_at = now(), status = 'CONFIRMED'
 WHERE tran_res_id = 14785;
 
--- 8641, 8642 가 윈터 지젤 11시 서울-> 부산, KTX, 1호차, A1,A2
+-- 8161, 8162 가 윈터 지젤 11시 서울-> 부산, KTX, 1호차, A1,A2
 -- 8808 이 닝닝 12시 서울->부산 KTX , 7호차, F4
 -- 15619 가 윈터 10시 부산->서울, KTX 산천, 1호차, E3
 -- 18149, 18155 가 지젤,닝닝 15시 부산->서울, KTX 산천, 7호차, B1,C3
