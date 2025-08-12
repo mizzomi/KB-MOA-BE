@@ -26901,11 +26901,11 @@ WHERE tran_res_id = 14785;
 
 UPDATE tran_res
 SET reservation_id = 9, trip_day_id = 5, booked_at = now(), status = 'CONFIRMED'
-WHERE tran_res_id = 8641;
+WHERE tran_res_id = 8161;
 
 UPDATE tran_res
 SET reservation_id = 9, trip_day_id = 5, booked_at = now(), status = 'CONFIRMED'
-WHERE tran_res_id = 8642;
+WHERE tran_res_id = 8162;
 
 UPDATE tran_res
 SET reservation_id = 10, trip_day_id = 5, booked_at = now(), status = 'CONFIRMED'
