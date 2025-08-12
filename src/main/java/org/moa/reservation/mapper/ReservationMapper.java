@@ -18,22 +18,16 @@ public interface ReservationMapper {
 	// 식당 / 숙박 / 교통
 	String findTypeByReservationId(@Param("reservationId") Long reservationId);
 
-	// 식당 예약 내역 QR
-	QrRestaurantReservationDto findRestQrInfoByReservationId(@Param("reservationId") Long reservationId);
+	// 식당 예약
+	UserRestaurantReservationDto findRestInfoByRestResId(@Param("restResId") Long restResId);
+	List<UserRestaurantReservationDto> findUserRestInfoByReservationId(@Param("reservationId") Long reservationId);
 
-	// 식당 예약 내역 정보
-	UserRestaurantReservationDto findUserRestInfoByReservationId(@Param("reservationId") Long reservationId);
-
-	// 숙박 예약 내역 QR
-	QrAccommodationReservationDto findAccomQrInfoByReservationId(@Param("reservationId") Long reservationId);
+	// 숙박 예약
+	UserAccommodationReservationDto findAccomInfoByAccomResId(@Param("accomResId") Long accomResId);
+	List<UserAccommodationReservationDto> findUserAccomInfoByReservationId(@Param("reservationId") Long reservationId);
 	
-	// 숙박 예약 내역 정보
-	UserAccommodationReservationDto findUserAccomInfoByReservationId(@Param("reservationId") Long reservationId);
-	
-	// 교통 예약 내역 QR
-	QrTransportReservationDto findTransQrInfoByTranResId(@Param("tranResId") Long tranResId);
-	
-	// 교통 예약 내역 정보
+	// 교통 예약
+	UserTransportReservationDto findTransInfoByTranResId(@Param("tranResId") Long tranResId);
 	List<UserTransportReservationDto> findUserTransInfoByReservationId(@Param("reservationId") Long reservationId);
 
 	// QR 권한 검증

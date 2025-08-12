@@ -1,9 +1,6 @@
 package org.moa.trip.service;
 
-import org.moa.trip.dto.record.TripRecordCardDto;
-import org.moa.trip.dto.record.TripRecordDetailResponseDto;
-import org.moa.trip.dto.record.TripRecordRequestDto;
-import org.moa.trip.dto.record.TripRecordResponseDto;
+import org.moa.trip.dto.record.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -20,7 +17,7 @@ public interface TripRecordService {
     TripRecordDetailResponseDto getRecordDetail(Long tripId, Long recordId);
 
     // 여행 기록 수정
-    TripRecordResponseDto updateRecord(Long tripId, Long recordId, Long memberId, TripRecordRequestDto dto);
+    TripRecordResponseDto updateRecord(Long tripId, Long recordId, Long memberId, TripRecordUpdateRequestDto dto);
 
     // 여행 기록 삭제
     void deleteRecord(Long tripId, Long recordId, Long memberId);
