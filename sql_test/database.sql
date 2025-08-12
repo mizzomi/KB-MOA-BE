@@ -72,7 +72,9 @@ CREATE TABLE owner
             ON DELETE CASCADE
 );
 
+-- ========================================================================================
 -- Security Audit Log 테이블
+-- ========================================================================================
 CREATE TABLE IF NOT EXISTS tbl_security_audit_log
 (
     AUDIT_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -512,37 +514,28 @@ VALUES (1, 'ROLE_USER', 'karina@test.com', '1234', '카리나', 'asdf1234', '000
 
 
 -- 1) MEMBER 테이블에 사업자 계정 추가
-INSERT INTO member (
-    member_id,
-    member_type,
-    email,
-    password,
-    name,
-    fcm_token,
-    id_card_number
-) VALUES
+INSERT INTO member (member_id, member_type, email, password, name, fcm_token, id_card_number)
+VALUES
       (5, 'ROLE_OWNER', '123-45-67890',    '1234',  '교통사업자',       NULL, 'OWN0000001'),
       (6, 'ROLE_OWNER', '987-65-43210',    '1234',  '숙박사업자',       NULL, 'OWN0000002'),
       (7, 'ROLE_OWNER', '456-78-90123-1',    '1234',  '해운대곰장어사업자', NULL, 'OWN0000003'),
       (8, 'ROLE_OWNER', '456-78-90123-2',    '1234',  '코이이자카야사업자', NULL, 'OWN0000004'),
       (9, 'ROLE_OWNER', '456-78-90123-3',    '1234',  '팔선생중화요리사업자',NULL,'OWN0000005'),
       (10, 'ROLE_OWNER', '789-23-45678-4',    '1234',  '파스타하우스사업자',  NULL, 'OWN0000006'),
-      (11, 'ROLE_OWNER', '456-78-90123-5',    '1234',  '이색분식연구소사업자',NULL,'OWN0000007')
-;
+      (11, 'ROLE_OWNER', '456-78-90123-5',    '1234',  '이색분식연구소사업자',NULL,'OWN0000007');
+
+
+-- 사장님 테스트용 데이터
 -- 2) OWNER 테이블에 business ↔ member 연결
-INSERT INTO owner (
-    business_id,
-    business_kind,
-    member_id
-) VALUES
+INSERT INTO owner (business_id, business_kind, member_id)
+VALUES
       ( 1, 'TRANSPORT',    5),
       ( 1, 'ACCOMMODATION', 6),
       ( 1, 'RESTAURANT',   7),  -- 해운대 곰장어집
       ( 5, 'RESTAURANT',   8),  -- 코이 이자카야
       ( 7, 'RESTAURANT',   9),  -- 팔선생 중화요리
-      (10, 'RESTAURANT',  10),  -- 파스타하우스
-      (15, 'RESTAURANT',  11)   -- 이색분식연구소
-;
+      (10, 'RESTAURANT',  10),  -- 부산 파스타하우스
+      (15, 'RESTAURANT',  11);   -- 이색분식연구소
 
 
 -- 주민등록증 테스트용 데이터
@@ -632,11 +625,11 @@ VALUES (4, 4, '이자카야 코이', 24300.00, '2025-08-03 18:35:47', 'BUSAN'),
        (4, 4, '기념품', 17000.00, '2025-08-05 16:30:00', 'BUSAN');
 
 
--- 여행 테스트용 데이터(카리나 1인여행 8/1 ~ 8/4)
+-- 여행 테스트용 데이터 (카리나 1인여행 8/1 ~ 8/4)
 INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
 VALUES (1, '혼자 부산 여행', 'BUSAN', '2025-08-01', '2025-08-04');
 
--- 여행 테스트용 데이터(윈터, 지젤, 닝닝 3인여행 8/3 ~ 8/5)
+-- 여행 테스트용 데이터 (윈터, 지젤, 닝닝 3인여행 8/3 ~ 8/5)
 INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
 VALUES (2, '셋이서 부산 여행', 'BUSAN', '2025-08-03', '2025-08-05');
 
@@ -682,9 +675,7 @@ INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date) VAL
 (1, '2025 마무리 제주여행', 'JEJU', '2025-12-27', '2025-12-30');
 
 
-
-
-
+-- 여행 위치 테스트용 데이터
 INSERT INTO trip_location (location_name, latitude, longitude, address)
 VALUES ('BUSAN', 35.179554, 129.075642, '부산광역시 중구 중앙대로 100'),
        ('GANGNEUNG', 37.751853, 128.876057, '강원특별자치도 강릉시 교동광장로 100'),
@@ -692,14 +683,14 @@ VALUES ('BUSAN', 35.179554, 129.075642, '부산광역시 중구 중앙대로 100
        ('SEOUL', 37.566535, 126.977969, '서울특별시 중구 세종대로 110');
 
 
-
+-- 여행 멤버 테스트용 데이터
 INSERT INTO trip_member (trip_id, member_id, role, joined_at)
 VALUES  (1, 1, 'HOST', NOW()), -- 카리나 호스트 부산여행
         (2, 2, 'HOST', NOW()), -- 윈터 호스트 부산여행
         (2, 3, 'MEMBER', NOW()), -- 닝닝 멤버 부산여행
         (2, 4, 'MEMBER', NOW()); -- 지젤 멤버 부산여행
 
--- 여행멤버 데이터 추가
+-- 여행 멤버 데이터 추가
 INSERT INTO trip_member (trip_id, member_id, role, joined_at) VALUES
 -- trip_id = 1 ~ 13
 (3, 1, 'HOST', NOW()), (3, 2, 'MEMBER', NOW()), (3, 3, 'MEMBER', NOW()), (3, 4, 'MEMBER', NOW()),
@@ -717,7 +708,7 @@ INSERT INTO trip_member (trip_id, member_id, role, joined_at) VALUES
 (15, 1, 'HOST', NOW()), (15, 2, 'MEMBER', NOW()), (15, 3, 'MEMBER', NOW()), (15, 4, 'MEMBER', NOW());
 
 
-
+-- 여행 날짜 테스트용 데이터
 INSERT INTO trip_day (trip_id, day)
 VALUES
 -- 카리나 부산 여행 (3일)
@@ -772,7 +763,7 @@ INSERT INTO trip_day (trip_id, day) VALUES
 (15, '2025-12-27'), (15, '2025-12-28'), (15, '2025-12-29'), (15, '2025-12-30');
 
 
-
+-- 예약 테스트용 데이터
 INSERT INTO reservation (trip_day_id, res_kind)
 VALUES
 -- trip_day_id: 1, 2, 3, 4 => 카리나 부산 여행
@@ -784,15 +775,23 @@ VALUES
 (5,'ACCOMMODATION'), -- 숙박
 (6,'ACCOMMODATION'), -- 숙박
 -- 교통 데이터 추가
-(1, 'TRANSPORT'), -- (카리나 1인 부산여행) 8/1 서울역 -> 부산역 10:00 출발 reservationId = 8 , tripDayId = 1
-(4, 'TRANSPORT'), -- (카리나 1인 부산여행) 8/4 부산역 -> 서울역 16:00 출발 reservationId = 9, tripDayId = 4
-(5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/3 서울역 -> 부산역 11:00 출발 (윈터, 지젤) reservationId = 10, tripDayId = 5
-(5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/3 서울역 -> 부산역 12:00 출발 (닝닝) reservationId = 11, tripDayId = 5
-(7, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/5 부산역 -> 서울역 10:00 출발 (윈터 스케줄 바쁨) reservationId = 12, tripDayId = 7
-(7, 'TRANSPORT'); -- (윈터, 지젤, 닝닝 부산여행) 8/5 부산역 -> 서울역 15:00 출발 (지젤, 닝닝 느긋) reservationId = 13, tripDayId = 7
+(1, 'TRANSPORT'), -- (카리나 1인 부산여행) 8/1 서울역 -> 부산역 10:00 출발 reservationId = 7 , tripDayId = 1
+(4, 'TRANSPORT'), -- (카리나 1인 부산여행) 8/4 부산역 -> 서울역 16:00 출발 reservationId = 8, tripDayId = 4
+(5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/3 서울역 -> 부산역 11:00 출발 (윈터, 지젤) reservationId = 9, tripDayId = 5
+(5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/3 서울역 -> 부산역 12:00 출발 (닝닝) reservationId = 10, tripDayId = 5
+(7, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/5 부산역 -> 서울역 10:00 출발 (윈터 스케줄 바쁨) reservationId = 11, tripDayId = 7
+(7, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/5 부산역 -> 서울역 15:00 출발 (지젤, 닝닝 느긋) reservationId = 12, tripDayId = 7
+-- 식당 데이터 추가
+(1, 'RESTAURANT'), -- reservationId = 13
+(2, 'RESTAURANT'), -- reservationId = 14
+(3, 'RESTAURANT'), -- reservationId = 15
+(3, 'RESTAURANT'), -- reservationId = 16
+(5, 'RESTAURANT'), -- reservationId = 17
+(6, 'RESTAURANT'), -- reservationId = 18
+(7, 'RESTAURANT'); -- reservationId = 19
 
 
--- 교통 예약 테스트 데이터
+-- 교통 예약 테스트용 데이터
 INSERT INTO transport_info (
     transport_id,
     departure_id, arrival_id, departure_name, arrival_name,
@@ -1065,89 +1064,13 @@ INSERT INTO rest_time_slot (rest_id, res_time, max_capacity) VALUES
 
 -- 식당 예약 테스트용 데이터
 INSERT INTO rest_res (rest_id, reservation_id, trip_day_id, res_num, rest_time_id) VALUES
-       (1, 13, 1, 1, 8), -- 1일 18시 1명 해운대 곰장어집
-       (7, 14, 2, 1, 57), -- 2일 13시 1명 팔선생 중화요리
-       (15, 15, 3, 1, 128), -- 3일 12시 1명 이색분식연구소
-       (5, 16, 3, 1, 45), -- 3일 19시 1명 이자카야 코지
-       (5, 17, 5, 3, 44), -- 3일 18시 3명 이자카야 코지
-       (10, 18, 6, 3, 84), -- 4일 13시 3명 부산 파스타하우스
-       (15, 19, 7, 2, 127); -- 5일 11시 2명 이색분식연구소
-
-
--- 비용 테스트용 데이터
-INSERT INTO expense(trip_id, member_id, expense_name, expense_date, amount, location, settlement_completed)
-VALUES (2, 2, '교통비', '2025-08-03 17:10:00' ,99600, 'BUSAN', false),
-       (2, 2, '숙박 비용 롯데호텔', '2025-08-03 18:10:00' ,193000, 'BUSAN', false),
-       (2, 2, '1일차 저녁 파스타', '2025-08-03 20:00:00', 54000, 'BUSAN', false),
-       (2, 3, '2일차 아침 돼지 국밥', '2025-08-04 21:10:00' ,45000, 'BUSAN', false),
-       (2, 4, '2일차 점심 부산 밀면', '2025-08-04 21:10:00' ,30000, 'BUSAN', false),
-       (2, 2, '2일차 저녁 부산 꼼장어', '2025-08-04 21:10:00' ,50000, 'BUSAN', false),
-       (2, 2, '숙박 비용 시그니엘 부산', '2025-08-04 21:10:00' ,300000, 'BUSAN', false),
-       (2, 3, '3일차 아침 이재모 피자', '2025-08-05 11:00:00' ,40000, 'BUSAN', false),
-       (2, 4, '버블티&카페', '2025-08-05 20:10:00' ,18000, 'BUSAN', false),
-       (2, 4, '교통비', '2025-08-05 21:10:00' ,99600, 'BUSAN', false);
-
-INSERT INTO settlement_notes (expense_id, trip_id, member_id, share_amount, is_payed, received, created_at)
-VALUES
--- (2, 2, '교통비', 149400, 'BUSAN', false)에 대한 정산 (윈터가 계산, 윈터+지젤 교통비)
-(1, 2, 2, 49800, true, false, '2025-08-03 17:10:00'),
-(1, 2, 3, 49800, false, true, '2025-08-03 17:10:00'),
--- (2, 2, '숙박 비용 롯데호텔', 193000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(2, 2, 2, 64334, true, false, '2025-08-03 18:10:00'),
-(2, 2, 3, 64333, false, true, '2025-08-03 18:10:00'),
-(2, 2, 4, 64333, false, true, '2025-08-03 18:10:00'),
--- (2, 2, '1일차 저녁 파스타', 54000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(2, 2, 2, 18000, true, false, '2025-08-03 20:00:00'),
-(2, 2, 3, 18000, false, true, '2025-08-03 20:00:00'),
-(2, 2, 4, 18000, false, true, '2025-08-03 20:00:00'),
--- (2, 3, '돼지 국밥', 45000, 'BUSAN', false)에 대한 정산 (지젤이 계산)
-(3, 2, 2, 15000, false, true, '2025-08-04 21:10:00'),
-(3, 2, 3, 15000, true, false, '2025-08-04 21:10:00'),
-(3, 2, 4, 15000, false, true, '2025-08-04 21:10:00'),
--- (2, 2, '부산 밀면', 30000, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
-(4, 2, 2, 10000, false, true, '2025-08-04 21:10:00'),
-(4, 2, 3, 10000, false, true, '2025-08-04 21:10:00'),
-(4, 2, 4, 10000, true, false, '2025-08-04 21:10:00'),
--- (2, 2, '부산 꼼장어', 50000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(5, 2, 2, 16667, true, false, '2025-08-04 21:10:00'),
-(5, 2, 3, 16666, false, true, '2025-08-04 21:10:00'),
-(5, 2, 4, 16666, false, true, '2025-08-04 21:10:00'),
--- (2, 2, '숙박 비용 시그니엘 부산', 300000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(6, 2, 2, 100000, true, false, '2025-08-04 21:10:00'),
-(6, 2, 3, 100000, false, true, '2025-08-04 21:10:00'),
-(6, 2, 4, 100000, false, true, '2025-08-04 21:10:00'),
--- (2, 3, '이재모 피자', 40000, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
-(7, 2, 2, 13334, false, true, '2025-08-05 11:00:00'),
-(7, 2, 3, 13333, true, false, '2025-08-05 11:00:00'),
-(7, 2, 4, 13333, false, true, '2025-08-05 11:00:00'),
--- (2, 2, '버블티&카페', 18000, 'BUSAN', false)에 대한 정산 (지젤이 계산, 윈터는 먼저 감 ㅜ)
-(8, 2, 3, 9000, false, true, '2025-08-05 20:10:00'),
-(8, 2, 4, 9000, true, false, '2025-08-05 20:10:00'),
--- (2, 2, '교통비', 149400, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
-(9, 2, 3, 49800, false, true, '2025-08-05 21:10:00'),
-(9, 2, 4, 49800, true, false, '2025-08-05 21:10:00');
-
-
-INSERT INTO trip_records (trip_id, member_id, title, record_date, content)
-VALUES (1, 1, '부산 도착~', '2025-08-01', '내일 이재모 피자 먹어야지 ㅎㅎ 숙소도 너무 좋다'),
-       (1, 1, '이재모 피자', '2025-08-02', '진짜 맛있음. 다음엔 다른 메뉴 먹어봐야지'),
-       (1, 1, '남포동 투어', '2025-08-02', null),
-       (1, 1, '롯데호텔 조식', '2025-08-03', '짱 맛있음'),
-       (1, 1, '해운대', '2025-08-03', '더운데 경치가 너무 좋았다~~'),
-       (1, 1, '부산 마지막날 ㅜㅜ', '2025-08-04', '아쉽다. 다음에 또 와야지');
-
-
-INSERT INTO trip_record_images (record_id, image_url)
-VALUES (1, '2b1d7834-3f92-4fb8-8e39-dac2c952c6f4.webp'),
-       (1, '1482b39b-981d-43d9-9747-446f0c08c545.jpg'),
-       (2, '73eed0e4-cfeb-4fad-b890-45a95affb559.webp'),
-       (2, '6078349e-db19-4a53-9d82-f9b2e81cbee3.png'),
-       (3, '773215b6-3a11-4dc5-8050-234d3aaf7b78.webp'),
-       (4, 'b290a04d-d05c-4975-9d52-cd56138bdaf5.jpg'),
-       (5, '7fb93cf9-02d4-4678-8a6b-d30371dfcf75.jpg');
-
-
-
+(1, 13, 1, 1, 8), -- 1일 18시 1명 해운대 곰장어집
+(7, 14, 2, 1, 57), -- 2일 13시 1명 팔선생 중화요리
+(15, 15, 3, 1, 128), -- 3일 12시 1명 이색분식연구소
+(5, 16, 3, 1, 45), -- 3일 19시 1명 이자카야 코지
+(5, 17, 5, 3, 44), -- 3일 18시 3명 이자카야 코지
+(10, 18, 6, 3, 84), -- 4일 13시 3명 부산 파스타하우스
+(15, 19, 7, 2, 127); -- 5일 11시 2명 이색분식연구소
 
 
 SET FOREIGN_KEY_CHECKS = 1;

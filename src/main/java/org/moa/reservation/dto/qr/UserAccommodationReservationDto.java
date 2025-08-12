@@ -13,8 +13,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserAccommodationReservationDto {
+    private Long accomResId;
     private String type;
     private Long reservationId;
+    private Long accomId;
     private String hotelName;
     private String address;
     private String roomType;

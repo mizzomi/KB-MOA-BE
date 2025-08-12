@@ -30,27 +30,31 @@
     </select>
 
     <!-- 식당 예약 내역 QR -->
-    <select id="findRestQrInfoByReservationId" resultType="org.moa.reservation.dto.qr.QrRestaurantReservationDto">
+    <select id="findRestInfoByRestResId" resultType="org.moa.reservation.dto.qr.UserRestaurantReservationDto">
         SELECT
+            rr.rest_res_id AS restResId,
             'RESTAURANT' AS type,
             rr.reservation_id AS reservationId,
             rr.rest_id AS restId,
             ri.rest_name AS restName,
+            ri.address,
             td.day AS date,
-            rts.res_time AS time,
+            CAST(rts.res_time AS TIME) AS time,
             rr.res_num AS resNum,
             rr.status
         FROM rest_res rr
             JOIN trip_day td ON rr.trip_day_id = td.trip_day_id
             JOIN rest_time_slot rts ON rr.rest_time_id = rts.rest_time_id
             JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
-        WHERE rr.reservation_id = #{reservationId}
+        WHERE rr.rest_res_id = #{restResId}
     </select>
 
     <select id="findUserRestInfoByReservationId" resultType="org.moa.reservation.dto.qr.UserRestaurantReservationDto">
         SELECT
+            rr.rest_res_id AS restResId,
             'RESTAURANT' AS type,
             rr.reservation_id AS reservationId,
+            rr.rest_id AS restId,
             ri.rest_name AS restName,
             ri.address,
             td.day AS date,
@@ -65,26 +69,31 @@
     </select>
 
     <!-- 숙박 예약 내역 QR -->
-    <select id="findAccomQrInfoByReservationId" resultType="org.moa.reservation.dto.qr.QrAccommodationReservationDto">
+    <select id="findAccomInfoByAccomResId" resultType="org.moa.reservation.dto.qr.UserAccommodationReservationDto">
         SELECT
+            ra.accom_res_id AS accomResId,
             'ACCOMMODATION' AS type,
-            rr.reservation_id AS reservationId,
+            ra.reservation_id AS reservationId,
             ra.accom_id AS accomId,
-            ra.hotel_name AS hotelName,
+            ai.hotel_name AS hotelName,
+            ai.address,
             ra.room_type AS roomType,
-            DATE_FORMAT(ra.checkin_day, '%Y-%m-%d %H:%i') AS checkinDay,
-            DATE_FORMAT(ra.checkout_day, '%Y-%m-%d %H:%i') AS checkoutDay,
+            ra.checkin_day AS checkinDay,
+            ra.checkout_day AS checkoutDay,
             ra.guests,
+            ai.location,
             ra.status
         FROM accom_res ra
-                 JOIN reservation rr ON ra.reservation_id = rr.reservation_id
-        WHERE ra.reservation_id = #{reservationId}
+                 JOIN accommodation_info ai ON ra.accom_id = ai.accom_id
+        WHERE ra.accom_res_id = #{accomResId}
     </select>
 
     <select id="findUserAccomInfoByReservationId" resultType="org.moa.reservation.dto.qr.UserAccommodationReservationDto">
         SELECT
+            ra.accom_res_id AS accomResId,
             'ACCOMMODATION' AS type,
             ra.reservation_id AS reservationId,
+            ra.accom_id AS accomId,
             ai.hotel_name AS hotelName,
             ai.address,
             ra.room_type AS roomType,
@@ -99,7 +108,7 @@
     </select>
 
     <!-- 교통 예약 내역 QR -->
-    <select id="findTransQrInfoByTranResId" resultType="org.moa.reservation.dto.qr.QrTransportReservationDto">
+    <select id="findTransInfoByTranResId" resultType="org.moa.reservation.dto.qr.UserTransportReservationDto">
         SELECT
             tr.tran_res_id AS tranResId,
             'TRANSPORT' AS type,
@@ -113,12 +122,10 @@
             tr.seat_room_no AS seatRoomNo,
             tr.seat_number AS seatNumber,
             tr.seat_type AS seatType,
-            tr.status AS status,
+            tr.status,
             tr.booked_at AS bookedAt
-        FROM
-            tran_res tr
-                JOIN
-            transport_info ti ON tr.transport_id = ti.transport_id
+        FROM tran_res tr
+                 JOIN transport_info ti ON tr.transport_id = ti.transport_id
         WHERE tr.tran_res_id = #{tranResId}
     </select>
 
@@ -127,6 +134,7 @@
             tr.tran_res_id AS tranResId,
             'TRANSPORT' AS type,
             tr.reservation_id AS reservationId,
+            tr.transport_id AS transportId,
             ti.train_no AS trainNo,
             ti.departure_name AS departureName,
             ti.arrival_name AS arrivalName,
@@ -135,11 +143,10 @@
             tr.seat_room_no AS seatRoomNo,
             tr.seat_number AS seatNumber,
             tr.seat_type AS seatType,
-            tr.status AS status
-        FROM
-            tran_res tr
-                JOIN
-            transport_info ti ON tr.transport_id = ti.transport_id
+            tr.status,
+            tr.booked_at AS bookedAt
+        FROM tran_res tr
+                 JOIN transport_info ti ON tr.transport_id = ti.transport_id
         WHERE tr.reservation_id = #{reservationId}
     </select>
 

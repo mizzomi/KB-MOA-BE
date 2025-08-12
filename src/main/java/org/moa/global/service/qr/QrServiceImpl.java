@@ -10,7 +10,7 @@ import org.moa.member.dto.qr.IdCardResponseDto;
 import org.moa.member.entity.IdCard;
 import org.moa.member.mapper.IdCardMapper;
 import org.moa.reservation.dto.qr.*;
-        import org.moa.reservation.mapper.ReservationMapper;
+import org.moa.reservation.mapper.ReservationMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -23,8 +23,8 @@ public class QrServiceImpl implements QrService{
 
     private final IdCardMapper idCardMapper;
     private final ReservationMapper reservationMapper;
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final FirebaseStorageService firebaseStorageService;
+    private final ObjectMapper objectMapper;
 
     // 주민등록증 QR 생성 API
     @Override
@@ -96,39 +96,63 @@ public class QrServiceImpl implements QrService{
         }
 
         // 3. 예약 타입에 따라 분기
-        if ("TRANSPORT".equals(type)) { // 교통
-            List<UserTransportReservationDto> seats = reservationMapper.findUserTransInfoByReservationId(reservationId);
-            if (seats == null || seats.isEmpty()) {
-                throw new NoSuchElementException("해당 예약의 좌석 정보를 찾을 수 없습니다.");
+        switch (type) {
+            case "TRANSPORT" : {
+                List<UserTransportReservationDto> trans = reservationMapper.findUserTransInfoByReservationId(reservationId);
+                if (trans == null || trans.isEmpty()) {
+                    throw new NoSuchElementException("해당 예약의 교통 정보를 찾을 수 없습니다.");
+                }
+
+                List<QrItemResponseDto<UserTransportReservationDto>> responseList = new ArrayList<>();
+                for (UserTransportReservationDto tran : trans) {
+                    Map<String, Long> info = Collections.singletonMap("tran_res_id", tran.getTranResId());
+                    String json = toJson(info);
+                    String encrypted = AesUtil.encryptWithIv(json);
+                    String qrCodeString = QrCodeUtil.generateEncryptedQr(encrypted);
+                    responseList.add(new QrItemResponseDto<>(qrCodeString, tran));
+                }
+
+                return responseList;
             }
 
-            List<TransportSeatResponseDto> responseDtoList = new ArrayList<>();
-            for (UserTransportReservationDto seat : seats) {
-                Map<String, Long> info = new HashMap<>();
-                info.put("tran_res_id", seat.getTranResId()); // QR 안에 들어갈 단일 값 : tranResId
+            case "ACCOMMODATION" : {
+                List<UserAccommodationReservationDto> accoms = reservationMapper.findUserAccomInfoByReservationId(reservationId);
+                if (accoms == null || accoms.isEmpty()) {
+                    throw new NoSuchElementException("해당 예약의 숙소 정보를 찾을 수 없습니다.");
+                }
 
-                String json = toJson(info);
-                String encrypted = AesUtil.encryptWithIv(json);
-                String qrCodeString = QrCodeUtil.generateEncryptedQr(encrypted);
+                List<QrItemResponseDto<UserAccommodationReservationDto>> responseList = new ArrayList<>();
+                for (UserAccommodationReservationDto accom : accoms) {
+                    Map<String, Long> info = Collections.singletonMap("accom_res_id", accom.getAccomResId());
+                    String json = toJson(info);
+                    String encrypted = AesUtil.encryptWithIv(json);
+                    String qrCodeString = QrCodeUtil.generateEncryptedQr(encrypted);
+                    responseList.add(new QrItemResponseDto<>(qrCodeString, accom));
+                }
 
-                responseDtoList.add(new TransportSeatResponseDto(qrCodeString,seat));
+                return responseList;
             }
 
-            return responseDtoList; // 좌석별 QR과 정보가 담긴 리스트 반환
-        } else { // 식당, 숙박
-            Object reservationDetails = getReservationInfo(reservationId, memberId);
-            if (reservationDetails == null) {
-                throw new NoSuchElementException("해당 예약 정보를 찾을 수 없습니다.");
+            case "RESTAURANT" : {
+                List<UserRestaurantReservationDto> rests = reservationMapper.findUserRestInfoByReservationId(reservationId);
+                if (rests == null || rests.isEmpty()) {
+                    throw new NoSuchElementException("해당 예약의 숙소 정보를 찾을 수 없습니다.");
+                }
+
+                List<QrItemResponseDto<UserRestaurantReservationDto>> responseList = new ArrayList<>();
+                for (UserRestaurantReservationDto rest : rests) {
+                    Map<String, Long> info = Collections.singletonMap("rest_res_id", rest.getRestResId());
+                    String json = toJson(info);
+                    String encrypted = AesUtil.encryptWithIv(json);
+                    String qrCodeString = QrCodeUtil.generateEncryptedQr(encrypted);
+                    responseList.add(new QrItemResponseDto<>(qrCodeString, rest));
+                }
+
+                return responseList;
             }
 
-            Map<String, Long> info = new HashMap<>();
-            info.put("reservation_id", reservationId); // QR 안에 들어갈 단일 값 : reservationId
-
-            String json = toJson(info);
-            String encrypted = AesUtil.encryptWithIv(json);
-            String qrCodeString = QrCodeUtil.generateEncryptedQr(encrypted);
-
-            return new ReservationResponseDto(qrCodeString, reservationDetails);
+            default :
+                throw new IllegalArgumentException("지원하지 않는 예약 타입입니다." + type);
         }
     }
 
@@ -186,7 +210,7 @@ public class QrServiceImpl implements QrService{
         if (data.containsKey("tran_res_id")) {
             Long tranResId = Long.valueOf(data.get("tran_res_id").toString());
 
-            QrTransportReservationDto dto = reservationMapper.findTransQrInfoByTranResId(tranResId);
+            UserTransportReservationDto dto = reservationMapper.findTransInfoByTranResId(tranResId);
             if (dto == null) throw new NoSuchElementException("교통 예약 좌석 정보를 찾을 수 없습니다.");
 
             if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getTransportId(),"TRANSPORT")) {
@@ -194,33 +218,28 @@ public class QrServiceImpl implements QrService{
             }
 
             return dto;
-        }
+        } else if (data.containsKey("rest_res_id")) {
+            Long restResId = Long.valueOf(data.get("rest_res_id").toString());
 
-        if (data.containsKey("reservation_id")) {
-            Long reservationId = Long.valueOf(data.get("reservation_id").toString());
-            String type = reservationMapper.findTypeByReservationId(reservationId);
+            UserRestaurantReservationDto dto = reservationMapper.findRestInfoByRestResId(restResId);
+            if (dto == null) throw new NoSuchElementException("식당 예약 정보를 찾을 수 없습니다.");
 
-            if (type == null) throw new NoSuchElementException("예약 정보를 찾을 수 없습니다.");
+            if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getRestId(),"RESTAURANT")) {
+                throw new SecurityException("이 예약에 접근할 권한이 없습니다.");
+            }
 
-            return switch (type) {
-                case "RESTAURANT" -> {
-                    QrRestaurantReservationDto dto = reservationMapper.findRestQrInfoByReservationId(reservationId);
-                    if (dto == null) throw new NoSuchElementException("식당 예약 정보를 찾을 수 없습니다.");
-                    if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getRestId(), "RESTAURANT")) {
-                        throw new SecurityException("이 예약에 접근할 권한이 없습니다.");
-                    }
-                    yield dto;
-                }
-                case "ACCOMMODATION" -> {
-                    QrAccommodationReservationDto dto = reservationMapper.findAccomQrInfoByReservationId(reservationId);
-                    if (dto == null) throw new NoSuchElementException("숙박 예약 정보를 찾을 수 없습니다.");
-                    if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getAccomId(), "ACCOMMODATION")) {
-                        throw new SecurityException("이 예약에 접근할 권한이 없습니다.");
-                    }
-                    yield dto;
-                }
-                default -> throw new IllegalArgumentException("지원하지 않는 예약 타입입니다."+ type);
-            };
+            return dto;
+        } else if (data.containsKey("accom_res_id")) {
+            Long accomResId = Long.valueOf(data.get("accom_res_id").toString());
+
+            UserAccommodationReservationDto dto = reservationMapper.findAccomInfoByAccomResId(accomResId);
+            if (dto == null) throw new NoSuchElementException("숙소 예약 정보를 찾을 수 없습니다.");
+
+            if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getAccomId(),"ACCOMMODATION")) {
+                throw new SecurityException("이 예약에 접근할 권한이 없습니다.");
+            }
+
+            return dto;
         }
         throw new IllegalArgumentException("유효하지 않은 QR 데이터입니다.");
     }
