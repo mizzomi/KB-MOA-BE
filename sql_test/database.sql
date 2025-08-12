@@ -164,7 +164,7 @@ CREATE TABLE trip
     trip_id       BIGINT AUTO_INCREMENT PRIMARY KEY,
     member_id     BIGINT                              NOT NULL,
     trip_name     VARCHAR(255),
-    trip_location ENUM ('부산', '강릉', '제주', '서울', '대구', '대전', '광주', '목포') NOT NULL,
+    trip_location ENUM ('BUSAN', 'GANGNEUNG', 'JEJU', 'SEOUL') NOT NULL,
     start_date    DATE                                NOT NULL,
     end_date      DATE                                NOT NULL,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -178,7 +178,7 @@ CREATE TABLE trip
 CREATE TABLE trip_location
 (
     location_id   BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    location_name ENUM ('부산', '강릉', '제주', '서울', '대구', '대전', '광주', '목포' ) NOT NULL,
+    location_name ENUM ('BUSAN', 'GANGNEUNG', 'JEJU', 'SEOUL') NOT NULL,
     latitude      DECIMAL(10, 8),
     longitude     DECIMAL(11, 8),
     address       VARCHAR(200)
@@ -354,17 +354,18 @@ CREATE TABLE tran_res
 -- ========================================================================================
 CREATE TABLE restaurant_info
 (
-    rest_id        BIGINT                                                                        NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 식당 ID (PK)
-    rest_name      VARCHAR(255)                                                                  NOT NULL,                            -- 식당 이름
-    address        VARCHAR(255)                                                                  NOT NULL,                            -- 주소
-    category       ENUM ('korean', 'chinese', 'japanese', 'western', 'etc')                      NOT NULL,                            -- 카테고리
-    rest_image_url VARCHAR(255)                                                                  NOT NULL,                            -- 식당 이미지
-    phone          VARCHAR(20)                                                                   NULL,                                -- 전화번호
-    description    TEXT                                                                          NULL,                                -- 설명
-    latitude       DECIMAL(10, 7)                                                                NULL,                                -- 위도
-    longitude      DECIMAL(10, 7)                                                                NULL,                                -- 경도
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                                                                               -- 생성일시
-    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP                                                    -- 수정일시
+    rest_id        BIGINT                                                                        NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    rest_name      VARCHAR(255)                                                                  NOT NULL,
+    address        VARCHAR(255)                                                                  NOT NULL,
+    category       ENUM ('korean', 'chinese', 'japanese', 'western', 'etc')                      NOT NULL,
+    rest_image_url VARCHAR(500)                                                                  NOT NULL,
+    phone          VARCHAR(20)                                                                   NULL,
+    description    TEXT                                                                          NULL,
+    latitude       DECIMAL(10, 7)                                                                NULL,
+    longitude      DECIMAL(10, 7)                                                                NULL,
+    menu_url       VARCHAR(500)                                                                  NULL,
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- ========================================================================================
@@ -605,114 +606,90 @@ VALUES (4, '닝닝', '1234567890004', '4444', 'KB', 1000000.00);
 -- 결제 내역 테스트용 데이터
 -- 카리나 (member_id=1)
 INSERT INTO payment_record (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
-VALUES (1, 1, '편의점 간식', 4500.00, '2025-08-01 09:10:00', '부산'),
-       (1, 1, '부산 파스타하우스', 21000.00, '2025-08-03 12:43:25', '부산'),
-       (1, 1, '카페 커피', 6500.00, '2025-08-05 15:40:00', '부산');
+VALUES (1, 1, '편의점 간식', 4500.00, '2025-08-01 09:10:00', 'BUSAN'),
+       (1, 1, '부산 파스타하우스', 21000.00, '2025-08-03 12:43:25', 'BUSAN'),
+       (1, 1, '카페 커피', 6500.00, '2025-08-05 15:40:00', 'BUSAN');
 
 -- 윈터 (member_id=2)
 INSERT INTO payment_record (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
-VALUES (2, 2, '주유소 결제', 54000.00, '2025-08-03 10:20:00', '부산'),
-       (2, 2, '숙박 비용', 193000.00, '2025-08-03 12:00:00', '부산'),
-       (2, 2, '교통비', 105000.00, '2025-08-04 13:30:00', '부산'),
-       (2, 2, '길거리 간식', 9999.00, '2025-08-04 17:30:00', '부산'),
-       (2, 2, '편의점 물품', 12000.00, '2025-08-05 22:10:00', '부산');
+VALUES (2, 2, '주유소 결제', 54000.00, '2025-08-03 10:20:00', 'BUSAN'),
+       (2, 2, '숙박 비용', 193000.00, '2025-08-03 12:00:00', 'BUSAN'),
+       (2, 2, '교통비', 105000.00, '2025-08-04 13:30:00', 'BUSAN'),
+       (2, 2, '길거리 간식', 9999.00, '2025-08-04 17:30:00', 'BUSAN'),
+       (2, 2, '편의점 물품', 12000.00, '2025-08-05 22:10:00', 'BUSAN');
 
 -- 지젤 (member_id=3)
 INSERT INTO payment_record (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
-VALUES (3, 3, '팔선생 중화요리', 61000.00, '2025-08-04 12:56:43', '부산'),
-       (3, 3, '이색분식연구소', 10000.00, '2025-08-04 19:44:26', '부산'),
-       (3, 3, '기념품 구매', 22000.00, '2025-08-04 11:15:00', '부산'),
-       (3, 3, '카페 디저트', 8500.00, '2025-08-04 15:45:00', '부산');
+VALUES (3, 3, '팔선생 중화요리', 61000.00, '2025-08-04 12:56:43', 'BUSAN'),
+       (3, 3, '이색분식연구소', 10000.00, '2025-08-04 19:44:26', 'BUSAN'),
+       (3, 3, '기념품 구매', 22000.00, '2025-08-04 11:15:00', 'BUSAN'),
+       (3, 3, '카페 디저트', 8500.00, '2025-08-04 15:45:00', 'BUSAN');
 
 -- 닝닝 (member_id=4)
 INSERT INTO payment_record (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
-VALUES (4, 4, '이자카야 코이', 24300.00, '2025-08-03 18:35:47', '부산'),
-       (4, 4, '편의점 간식', 5500.00, '2025-08-04 12:20:00', '부산'),
-       (4, 4, '기념품', 17000.00, '2025-08-05 16:30:00', '부산');
+VALUES (4, 4, '이자카야 코이', 24300.00, '2025-08-03 18:35:47', 'BUSAN'),
+       (4, 4, '편의점 간식', 5500.00, '2025-08-04 12:20:00', 'BUSAN'),
+       (4, 4, '기념품', 17000.00, '2025-08-05 16:30:00', 'BUSAN');
 
 
 -- 여행 테스트용 데이터(카리나 1인여행 8/1 ~ 8/4)
 INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '혼자 부산 여행', '부산', '2025-08-01', '2025-08-04');
+VALUES (1, '혼자 부산 여행', 'BUSAN', '2025-08-01', '2025-08-04');
 
 -- 여행 테스트용 데이터(윈터, 지젤, 닝닝 3인여행 8/3 ~ 8/5)
 INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (2, '셋이서 부산 여행', '부산', '2025-08-03', '2025-08-05');
+VALUES (2, '셋이서 부산 여행', 'BUSAN', '2025-08-03', '2025-08-05');
 
--- 여행 테스트용 데이터 기존 2개 + 여행 15개 추가 -> 총 17개
--- (카리나, 윈터, 지젤, 닝닝 | MOKPO 여행 1)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '에스파, 낭만을 걷다 - 목포 편', '목포', '2025-09-29', '2025-09-30');
+-- 여행 데이터 추가
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date) VALUES
+-- 3월: BUSAN
+(1, '봄바람 휘날리는 부산', 'BUSAN', '2025-03-10', '2025-03-12'),
 
--- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 2)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, 'aespa in Busan: 파도와 함께', '부산', '2025-03-16', '2025-03-19');
+-- 4월: GANGNEUNG
+(2, '벚꽃 피는 강릉 여행', 'GANGNEUNG', '2025-04-05', '2025-04-07'),
 
--- (카리나, 윈터, 지젤, 닝닝 | DAEJEON 여행 3)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (3, '한적한 오후, 대전 산책', '대전', '2025-10-04', '2025-10-07');
+-- 5월: JEJU
+(3, '초여름 제주 한 바퀴', 'JEJU', '2025-05-15', '2025-05-18'),
 
--- (카리나, 윈터, 지젤, 닝닝 | DAEGU 여행 4)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (2, '햇살 가득한 대구, 여름의 기억', '대구', '2025-06-11', '2025-06-14');
+-- 6월: SEOUL
+(4, '서울 핫플 투어', 'SEOUL', '2025-06-02', '2025-06-05'),
 
--- (카리나, 윈터, 지젤, 닝닝 | GWANGJU 여행 5)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '광주에서 찾은 작은 평화', '광주', '2025-05-10', '2025-05-12');
+-- 7월: BUSAN
+(1, '여름맞이 해운대 여행', 'BUSAN', '2025-07-10', '2025-07-13'),
 
--- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 6)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (2, '푸른 바다, 다시 부산에서', '부산', '2025-10-10', '2025-10-13');
+-- 8월: JEJU
+(2, '한여름 제주 폭염 탈출', 'JEJU', '2025-08-20', '2025-08-24'),
 
--- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 7)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '서울 감성충전 투어', '서울', '2025-08-13', '2025-08-14');
+-- 9월: GANGNEUNG
+(3, '추석 연휴 강릉 힐링여행', 'GANGNEUNG', '2025-09-10', '2025-09-12'),
 
--- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 8)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (2, '서울 속 서울 여행', '서울', '2025-09-01', '2025-09-02');
+-- 10월: BUSAN
+(4, '부산 불꽃 축제 여행', 'BUSAN', '2025-10-04', '2025-10-06'),
 
--- (닝닝, 윈터 | DAEJEON 여행 9)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (4, '성심당을 위한 대전 여행', '대전', '2025-07-21', '2025-07-24');
+-- 10월 말: SEOUL
+(1, '서울 할로윈 나들이', 'SEOUL', '2025-10-28', '2025-10-30'),
 
--- (윈터, 카리나 | JEJU 여행 10)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (2, '윈터랑 카리나의 제주 여행', '제주', '2025-10-25', '2025-10-27');
+-- 11월: JEJU
+(2, '늦가을 제주 단풍 여행', 'JEJU', '2025-11-10', '2025-11-13'),
 
--- (카리나, 지젤, 윈터 | JEJU 여행 11)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '닝닝 없는 제주 여행', '제주', '2025-05-16', '2025-05-18');
+-- 12월 초: SEOUL
+(3, '서울 크리스마스 마켓 투어', 'SEOUL', '2025-12-02', '2025-12-04'),
 
--- (카리나, 지젤 | BUSAN 여행 12)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '부산 맛집 탐방기', '부산', '2025-08-08', '2025-08-10');
+-- 12월 중순: JEJU
+(4, '연말 제주 감귤 체험', 'JEJU', '2025-12-15', '2025-12-17'),
 
--- (닝닝, 지젤 | GANGNEUNG 여행 13)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (4, '바다 보고 싶어서, 강릉', '강릉', '2025-04-13', '2025-04-15');
-
--- (카리나, 닝닝 | DAEJEON 여행 14)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '가볍게 떠난 대전 소풍', '대전', '2025-11-10', '2025-11-11');
-
--- (지젤, 닝닝, 윈터 | BUSAN 여행 15)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (3, '세 명이서 부산 미식여행', '부산', '2025-09-16', '2025-09-18');
+-- 12월 말: JEJU
+(1, '2025 마무리 제주여행', 'JEJU', '2025-12-27', '2025-12-30');
 
 
 
 
 
 INSERT INTO trip_location (location_name, latitude, longitude, address)
-VALUES ('부산', 35.179554, 129.075642, '부산광역시 중구 중앙대로 100'),
-       ('강릉', 37.751853, 128.876057, '강원특별자치도 강릉시 교동광장로 100'),
-       ('제주', 33.499621, 126.531188, '제주특별자치도 제주시 중앙로 100'),
-       ('서울', 37.566535, 126.977969, '서울특별시 중구 세종대로 110'),
-       ('대구', 35.87222, 128.6025, '대구광역시 중구 공평로 88'),
-       ('대전', 36.35041, 127.38455, '대전광역시 중구 중앙로 101'),
-       ('광주', 35.15954, 126.8526, '광주광역시 서구 상무대로 100'),
-       ('목포', 34.81184, 126.39257, '전라남도 목포시 영산로 100');
+VALUES ('BUSAN', 35.179554, 129.075642, '부산광역시 중구 중앙대로 100'),
+       ('GANGNEUNG', 37.751853, 128.876057, '강원특별자치도 강릉시 교동광장로 100'),
+       ('JEJU', 33.499621, 126.531188, '제주특별자치도 제주시 중앙로 100'),
+       ('SEOUL', 37.566535, 126.977969, '서울특별시 중구 세종대로 110');
 
 
 
@@ -721,98 +698,25 @@ VALUES  (1, 1, 'HOST', NOW()), -- 카리나 호스트 부산여행
         (2, 2, 'HOST', NOW()), -- 윈터 호스트 부산여행
         (2, 3, 'MEMBER', NOW()), -- 닝닝 멤버 부산여행
         (2, 4, 'MEMBER', NOW()); -- 지젤 멤버 부산여행
--- (카리나, 윈터, 지젤, 닝닝 | MOKPO 여행 1)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (3, 1, 'HOST', NOW()),
-       (3, 2, 'MEMBER', NOW()),
-       (3, 3, 'MEMBER', NOW()),
-       (3, 4, 'MEMBER', NOW());
 
--- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 2)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (4, 1, 'HOST', NOW()),
-       (4, 2, 'MEMBER', NOW()),
-       (4, 3, 'MEMBER', NOW()),
-       (4, 4, 'MEMBER', NOW());
+-- 여행멤버 데이터 추가
+INSERT INTO trip_member (trip_id, member_id, role, joined_at) VALUES
+-- trip_id = 1 ~ 13
+(3, 1, 'HOST', NOW()), (3, 2, 'MEMBER', NOW()), (3, 3, 'MEMBER', NOW()), (3, 4, 'MEMBER', NOW()),
+(4, 2, 'HOST', NOW()), (4, 1, 'MEMBER', NOW()), (4, 3, 'MEMBER', NOW()), (4, 4, 'MEMBER', NOW()),
+(5, 3, 'HOST', NOW()), (5, 1, 'MEMBER', NOW()), (5, 2, 'MEMBER', NOW()), (5, 4, 'MEMBER', NOW()),
+(6, 4, 'HOST', NOW()), (6, 1, 'MEMBER', NOW()), (6, 2, 'MEMBER', NOW()), (6, 3, 'MEMBER', NOW()),
+(7, 1, 'HOST', NOW()), (7, 2, 'MEMBER', NOW()), (7, 3, 'MEMBER', NOW()), (7, 4, 'MEMBER', NOW()),
+(8, 2, 'HOST', NOW()), (8, 1, 'MEMBER', NOW()), (8, 3, 'MEMBER', NOW()), (8, 4, 'MEMBER', NOW()),
+(9, 3, 'HOST', NOW()), (9, 1, 'MEMBER', NOW()), (9, 2, 'MEMBER', NOW()), (9, 4, 'MEMBER', NOW()),
+(10, 4, 'HOST', NOW()), (10, 1, 'MEMBER', NOW()), (10, 2, 'MEMBER', NOW()), (10, 3, 'MEMBER', NOW()),
+(11, 1, 'HOST', NOW()), (11, 2, 'MEMBER', NOW()), (11, 3, 'MEMBER', NOW()), (11, 4, 'MEMBER', NOW()),
+(12, 2, 'HOST', NOW()), (12, 1, 'MEMBER', NOW()), (12, 3, 'MEMBER', NOW()), (12, 4, 'MEMBER', NOW()),
+(13, 3, 'HOST', NOW()), (13, 1, 'MEMBER', NOW()), (13, 2, 'MEMBER', NOW()), (13, 4, 'MEMBER', NOW()),
+(14, 4, 'HOST', NOW()), (14, 1, 'MEMBER', NOW()), (14, 2, 'MEMBER', NOW()), (14, 3, 'MEMBER', NOW()),
+(15, 1, 'HOST', NOW()), (15, 2, 'MEMBER', NOW()), (15, 3, 'MEMBER', NOW()), (15, 4, 'MEMBER', NOW());
 
--- (카리나, 윈터, 지젤, 닝닝 | DAEJEON 여행 3)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (5, 3, 'HOST', NOW()),
-       (5, 1, 'MEMBER', NOW()),
-       (5, 2, 'MEMBER', NOW()),
-       (5, 4, 'MEMBER', NOW());
 
--- (카리나, 윈터, 지젤, 닝닝 | DAEGU 여행 4)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (6, 2, 'HOST', NOW()),
-       (6, 1, 'MEMBER', NOW()),
-       (6, 3, 'MEMBER', NOW()),
-       (6, 4, 'MEMBER', NOW());
-
--- (카리나, 윈터, 지젤, 닝닝 | GWANGJU 여행 5)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (7, 1, 'HOST', NOW()),
-       (7, 2, 'MEMBER', NOW()),
-       (7, 3, 'MEMBER', NOW()),
-       (7, 4, 'MEMBER', NOW());
-
--- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 6)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (8, 2, 'HOST', NOW()),
-       (8, 1, 'MEMBER', NOW()),
-       (8, 3, 'MEMBER', NOW()),
-       (8, 4, 'MEMBER', NOW());
-
--- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 7)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (9, 1, 'HOST', NOW()),
-       (9, 2, 'MEMBER', NOW()),
-       (9, 3, 'MEMBER', NOW()),
-       (9, 4, 'MEMBER', NOW());
-
--- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 8)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (10, 2, 'HOST', NOW()),
-       (10, 1, 'MEMBER', NOW()),
-       (10, 3, 'MEMBER', NOW()),
-       (10, 4, 'MEMBER', NOW());
-
--- (닝닝, 윈터 | DAEJEON 여행 9)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (11, 4, 'HOST', NOW()),
-       (11, 2, 'MEMBER', NOW());
-
--- (윈터, 카리나 | JEJU 여행 10)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (12, 2, 'HOST', NOW()),
-       (12, 1, 'MEMBER', NOW());
-
--- (카리나, 지젤, 윈터 | JEJU 여행 11)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (13, 1, 'HOST', NOW()),
-       (13, 3, 'MEMBER', NOW()),
-       (13, 2, 'MEMBER', NOW());
-
--- (카리나, 지젤 | BUSAN 여행 12)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (14, 1, 'HOST', NOW()),
-       (14, 3, 'MEMBER', NOW());
-
--- (닝닝, 지젤 | GANGNEUNG 여행 13)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (15, 4, 'HOST', NOW()),
-       (15, 3, 'MEMBER', NOW());
-
--- (카리나, 닝닝 | DAEJEON 여행 14)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (16, 1, 'HOST', NOW()),
-       (16, 4, 'MEMBER', NOW());
-
--- (지젤, 닝닝, 윈터 | BUSAN 여행 15)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (17, 3, 'HOST', NOW()),
-       (17, 4, 'MEMBER', NOW()),
-       (17, 2, 'MEMBER', NOW());
 
 
 
@@ -827,97 +731,47 @@ VALUES
 (2, '2025-08-03'), -- 5
 (2, '2025-08-04'), -- 6
 (2, '2025-08-05'); -- 7
--- 여행 날짜 INSERT 추가
--- (카리나, 윈터, 지젤, 닝닝 | MOKPO 여행 1)
-INSERT INTO trip_day (trip_id, day)
-VALUES (3, '2025-09-29'),
-       (3, '2025-09-30');
 
--- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 2)
-INSERT INTO trip_day (trip_id, day)
-VALUES (4, '2025-03-16'),
-       (4, '2025-03-17'),
-       (4, '2025-03-18'),
-       (4, '2025-03-19');
+-- 여행 날짜 데이터 추가
+INSERT INTO trip_day (trip_id, day) VALUES
+-- trip_id = 1 (2025-03-10 ~ 12)
+(3, '2025-03-10'), (3, '2025-03-11'), (3, '2025-03-12'),
 
--- (카리나, 윈터, 지젤, 닝닝 | DAEJEON 여행 3)
-INSERT INTO trip_day (trip_id, day)
-VALUES (5, '2025-10-04'),
-       (5, '2025-10-05'),
-       (5, '2025-10-06'),
-       (5, '2025-10-07');
+-- trip_id = 2 (2025-04-05 ~ 07)
+(4, '2025-04-05'), (4, '2025-04-06'), (4, '2025-04-07'),
 
--- (카리나, 윈터, 지젤, 닝닝 | DAEGU 여행 4)
-INSERT INTO trip_day (trip_id, day)
-VALUES (6, '2025-06-11'),
-       (6, '2025-06-12'),
-       (6, '2025-06-13'),
-       (6, '2025-06-14');
+-- trip_id = 3 (2025-05-15 ~ 18)
+(5, '2025-05-15'), (5, '2025-05-16'), (5, '2025-05-17'), (5, '2025-05-18'),
 
--- (카리나, 윈터, 지젤, 닝닝 | GWANGJU 여행 5)
-INSERT INTO trip_day (trip_id, day)
-VALUES (7, '2025-05-10'),
-       (7, '2025-05-11'),
-       (7, '2025-05-12');
+-- trip_id = 4 (2025-06-02 ~ 05)
+(6, '2025-06-02'), (6, '2025-06-03'), (6, '2025-06-04'), (6, '2025-06-05'),
 
--- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 6)
-INSERT INTO trip_day (trip_id, day)
-VALUES (8, '2025-10-10'),
-       (8, '2025-10-11'),
-       (8, '2025-10-12'),
-       (8, '2025-10-13');
+-- trip_id = 5 (2025-07-10 ~ 13)
+(7, '2025-07-10'), (7, '2025-07-11'), (7, '2025-07-12'), (7, '2025-07-13'),
 
--- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 7)
-INSERT INTO trip_day (trip_id, day)
-VALUES (9, '2025-08-13'),
-       (9, '2025-08-14');
+-- trip_id = 6 (2025-08-20 ~ 24)
+(8, '2025-08-20'), (8, '2025-08-21'), (8, '2025-08-22'), (8, '2025-08-23'), (8, '2025-08-24'),
 
--- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 8)
-INSERT INTO trip_day (trip_id, day)
-VALUES (10, '2025-09-01'),
-       (10, '2025-09-02');
+-- trip_id = 7 (2025-09-10 ~ 12)
+(9, '2025-09-10'), (9, '2025-09-11'), (9, '2025-09-12'),
 
--- (닝닝, 윈터 | DAEJEON 여행 9)
-INSERT INTO trip_day (trip_id, day)
-VALUES (11, '2025-07-21'),
-       (11, '2025-07-22'),
-       (11, '2025-07-23'),
-       (11, '2025-07-24');
+-- trip_id = 8 (2025-10-04 ~ 06)
+(10, '2025-10-04'), (10, '2025-10-05'), (10, '2025-10-06'),
 
--- (윈터, 카리나 | JEJU 여행 10)
-INSERT INTO trip_day (trip_id, day)
-VALUES (12, '2025-10-25'),
-       (12, '2025-10-26'),
-       (12, '2025-10-27');
+-- trip_id = 9 (2025-10-28 ~ 30)
+(11, '2025-10-28'), (11, '2025-10-29'), (11, '2025-10-30'),
 
--- (카리나, 지젤, 윈터 | JEJU 여행 11)
-INSERT INTO trip_day (trip_id, day)
-VALUES (13, '2025-05-16'),
-       (13, '2025-05-17'),
-       (13, '2025-05-18');
+-- trip_id = 10 (2025-11-10 ~ 13)
+(12, '2025-11-10'), (12, '2025-11-11'), (12, '2025-11-12'), (12, '2025-11-13'),
 
--- (카리나, 지젤 | BUSAN 여행 12)
-INSERT INTO trip_day (trip_id, day)
-VALUES (14, '2025-08-08'),
-       (14, '2025-08-09'),
-       (14, '2025-08-10');
+-- trip_id = 11 (2025-12-02 ~ 04)
+(13, '2025-12-02'), (13, '2025-12-03'), (13, '2025-12-04'),
 
--- (닝닝, 지젤 | GANGNEUNG 여행 13)
-INSERT INTO trip_day (trip_id, day)
-VALUES (15, '2025-04-13'),
-       (15, '2025-04-14'),
-       (15, '2025-04-15');
+-- trip_id = 12 (2025-12-15 ~ 17)
+(14, '2025-12-15'), (14, '2025-12-16'), (14, '2025-12-17'),
 
--- (카리나, 닝닝 | DAEJEON 여행 14)
-INSERT INTO trip_day (trip_id, day)
-VALUES (16, '2025-11-10'),
-       (16, '2025-11-11');
-
--- (지젤, 닝닝, 윈터 | BUSAN 여행 15)
-INSERT INTO trip_day (trip_id, day)
-VALUES (17, '2025-09-16'),
-       (17, '2025-09-17'),
-       (17, '2025-09-18');
+-- trip_id = 13 (2025-12-27 ~ 30)
+(15, '2025-12-27'), (15, '2025-12-28'), (15, '2025-12-29'), (15, '2025-12-30');
 
 
 
@@ -937,151 +791,8 @@ VALUES
 (5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/3 서울역 -> 부산역 11:00 출발 (윈터, 지젤) reservationId = 10, tripDayId = 5
 (5, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/5 서울역 -> 부산역 12:00 출발 (닝닝) reservationId = 11, tripDayId = 5
 (7, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 10:00 출발 (윈터 스케줄 바쁨) reservationId = 12, tripDayId = 7
-(7, 'TRANSPORT'), -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 15:00 출발 (지젤, 닝닝 느긋) reservationId = 13, tripDayId = 7
--- 식당 데이터 추가
-(1, 'RESTAURANT'); -- 식당
+(7, 'TRANSPORT'); -- (윈터, 지젤, 닝닝 부산여행) 8/7 부산역 -> 서울역 15:00 출발 (지젤, 닝닝 느긋) reservationId = 13, tripDayId = 7
 
-INSERT INTO accommodation_info (hotel_name, address, location , latitude, longitude, description, hotel_image_url)
-VALUES ('부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 'BUSAN',  35.1664, 129.0624,
-        '중심 업무 지구의 고층 유리 건물에 자리한 이 고급 호텔은 서면역에서 도보 5분, 광안리 해수욕장에서 지하철로 33분 거리에 있습니다. \n\n아늑하고 우아한 객실에 무료 Wi-Fi, 평면 TV, 차 및 커피 메이커가 갖춰져 있습니다. 스위트룸에는 거실이 추가되며 업그레이드 스위트룸에는 사우나, 벽난로, 식탁이 마련되어 있습니다. 클럽층 객실에는 무료 조식, 스낵, 애프터눈 티가 제공됩니다. 야구를 테마로 꾸민 스위트룸이 2곳 있습니다. 룸 서비스도 이용 가능합니다. \n\n레스토랑 5곳, 베이커리, 정기 라이브 음악 공연이 열리는 바가 있습니다. 헬스장, 사우나, 골프 연습장, 실내외 수영장도 이용할 수 있습니다.',
-        'https://yaimg.yanolja.com/v5/2023/01/04/10/1280/63b55a0edcb3e9.58092209.jpg'),
-       ('씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 'GANGNEUNG',  37.7760, 128.9101,
-        '해변가의 우아한 타워에 자리 잡고 있어 동해 바다가 바로 보이는 이 세련된 호텔은 정동진 기차역에서 6km 떨어져 있습니다.\n\n쾌적한 객실에는 평면 TV, Wi-Fi, 미니 냉장고, 유리 벽으로 된 욕실이 있으며, 대부분의 객실에서 바다 전망이 보입니다. 미니멀리즘 인테리어가 돋보이는 온돌 방식의 객실에는 이불이 제공됩니다. 품격 있는 스위트룸에는 휴식 공간이 추가되고, 업그레이드 스위트룸에는 식사 공간, 우아한 거실, 단독형 욕조를 구비한 고급 욕실이 있습니다. 룸서비스도 이용 가능합니다.\n\n세련된 레스토랑 2곳, 바다 전망이 보이는 바, 야외 인피니티 풀은 물론 실내 수영장, 헬스장, 어린이 놀이 공간과 현대적인 야외 원형 극장도 있습니다.',
-        'https://yaimg.yanolja.com/v5/2025/05/02/06/1280/6814641ba896e4.56171130.jpg'),
-       ('JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 'JEJU',  33.2343, 126.5347,
-        '제주의 바다를 마주한 JW 메리어트 제주 리조트 & 스파는 제주 국제공항에서 50분 거리에 위치하고 있습니다. 서귀포 매일올레시장과 산방산, 성산일출봉 등 자연경관 가까이 자리 잡은 JW 메리어트 제주에서 진정한 휴식을 즐겨보세요. 올데이 다이닝 레스토랑 아일랜드 키친에서 브런치 로열과 함께 여유롭게 하루를 시작하고, 더 라운지에서 애프터눈티 세트를 경험하실 수 있습니다.\n\n더 플라잉 호그에서는 우드 파이어 그릴에 구워 낸 제주식 구이 요리를 파인 다이닝 스타일로 추천해 드립니다. SPA by JW에서 페이셜 및 딥 티슈 마사지를 경험하며 웰니스에 집중해 보는 건 어떨까요?\n\n인피니티 풀을 포함해 총 4곳의 실내 수영장 또는 실외 수영장 또한 마련되어 있습니다. 패밀리클럽에서 아이들과 즐거운 시간을 보낼 수 있고, 어린이들을 위한 다양한 키즈 액티비티 프로그램도 준비됩니다. 완벽한 비즈니스 행사와 데스티네이션 웨딩을 계획하신다면, 한식 또는 양식 옵션을 선택하실 수 있는 맞춤 케이터링 메뉴가 제공되는 JW 메리어트 제주의 실내 혹은 실외 이벤트 공간을 활용해 보세요.\n\nLED TV, 미니바, 대리석 욕조 그리고 무료 Wi-Fi가 제공되는 안락한 객실에서 충분한 휴식을 취하세요. 대부분의 객실에 아름다운 오션뷰를 만끽할 수 있는 발코니가 설치되어 있습니다. JW 메리어트 제주에서 숨이 멎을 정도로 아름다운 제주도의 풍경을 경험해보세요.',
-        'https://yaimg.yanolja.com/v5/2025/07/10/09/1280/686f8a74540cf6.30391796.jpg'),
-       ('시그니엘 부산', '부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워', 'BUSAN', '35.1633', '129.1637', '해운대 해변과 부산의 아름다운 스카이라인을 조망할 수 있는 럭셔리 호텔입니다. 최상의 서비스와 현대적인 시설을 자랑하며, 다양한 레스토랑과 수영장, 스파를 갖추고 있습니다.', 'https://yaimg.yanolja.com/v5/2023/01/04/10/1280/63b55a0edcb3e9.58092209.jpg'),
-       ('그랜드조선 부산', '부산광역시 해운대구 해운대해변로 292', 'BUSAN', '35.1639', '129.1610',
-        '해운대 해변가에 위치한 5성급 호텔로, 품격 있는 서비스와 편안한 휴식을 제공합니다. 다양한 식음료 시설과 실내외 수영장, 키즈 라운지 등을 갖추고 있어 가족 여행객에게도 인기가 많습니다.', 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/274680179.jpg?k=9f32fc5cb943f6998db47daaad1044ae59a112f550c14d29913833ef9e09b803&o='),
-       ('파크 하얏트 부산', '부산광역시 해운대구 마린시티1로 51', 'BUSAN', '35.1652', '129.1491', '운대 마린시티에 위치한 럭셔리 호텔로, 광안대교와 수영만 요트경기장의 전경을 감상할 수 있습니다. 고급스러운 객실과 미식 경험을 제공하는 레스토랑, 최신식 피트니스 시설을 갖추고 있습니다.', 'https://yaimg.yanolja.com/v5/2022/09/01/13/1280/6310b57ea38718.17915397.jpg');
-
-
-INSERT INTO accom_res (accom_res.accom_res_id,accom_id, reservation_id, trip_day_id, guests, hotel_name, address, price, room_type, room_image_url, checkin_day, checkout_day, max_guests, status)
-VALUES
-    -- 부산 롯데 호텔(accom_id=1, 방 종류 3개, 방은 2개씩)
-    -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
-    (1,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'AVAILABLE'),
-    (2,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'AVAILABLE'),
-    (3,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
-    (4,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
-    (5,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
-    (6,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
-    -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
-    (7,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
-    (8,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
-    (9,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
-    (10,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
-    (11,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
-    (12,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
-    -- 8월 3일: 모든 방 AVAILABLE (검색 가능)
-    (13,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-03 15:00:00', '2025-08-04 11:00:00', 2, 'AVAILABLE'),
-    (14,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-03 15:00:00', '2025-08-04 11:00:00', 2, 'AVAILABLE'),
-    (15,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', NULL, '2025-08-03 15:00:00', '2025-08-04 11:00:00', 4, 'AVAILABLE'),
-    (16,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', NULL, '2025-08-03 15:00:00', '2025-08-04 11:00:00', 4, 'AVAILABLE'),
-    (17,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', NULL, '2025-08-03 15:00:00', '2025-08-04 11:00:00', 3, 'AVAILABLE'),
-    (18,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', NULL, '2025-08-03 15:00:00', '2025-08-04 11:00:00', 3, 'AVAILABLE'),
-    -- 8월 4일: 모든 방 AVAILABLE (검색 가능)
-    (19,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-04 15:00:00', '2025-08-05 11:00:00', 2, 'AVAILABLE'),
-    (20,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-04 15:00:00', '2025-08-05 11:00:00', 2, 'AVAILABLE'),
-    (21,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', NULL, '2025-08-04 15:00:00', '2025-08-05 11:00:00', 4, 'AVAILABLE'),
-    (22,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', NULL, '2025-08-04 15:00:00', '2025-08-05 11:00:00', 4, 'AVAILABLE'),
-    (23,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', NULL, '2025-08-04 15:00:00', '2025-08-05 11:00:00', 3, 'AVAILABLE'),
-    (24,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', NULL, '2025-08-04 15:00:00', '2025-08-05 11:00:00', 3, 'AVAILABLE'),
-    -- 8월 5일: 모든 방 AVAILABLE (검색 가능)
-    (25,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-05 15:00:00', '2025-08-06 11:00:00', 2, 'AVAILABLE'),
-    (26,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 180000, 'twin', NULL, '2025-08-05 15:00:00', '2025-08-06 11:00:00', 2, 'AVAILABLE'),
-    (27,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', NULL, '2025-08-05 15:00:00', '2025-08-06 11:00:00', 4, 'AVAILABLE'),
-    (28,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 193000, 'family', NULL, '2025-08-05 15:00:00', '2025-08-06 11:00:00', 4, 'AVAILABLE'),
-    (29,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', NULL, '2025-08-05 15:00:00', '2025-08-06 11:00:00', 3, 'AVAILABLE'),
-    (30,1, NULL, NULL, NULL, '부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 210000, 'deluxe', NULL, '2025-08-05 15:00:00', '2025-08-06 11:00:00', 3, 'AVAILABLE'),
-
-    -- 씨마크 호텔(accom_id=2, 방 종류 3개, 방은 1개씩)
-    -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
-    (31,2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 180000, 'twin', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 2, 'AVAILABLE'),
-    (32,2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 193000, 'family', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
-    (33,2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 210000, 'deluxe', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
-    -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
-    (34,2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 180000, 'twin', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 2, 'AVAILABLE'),
-    (35,2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 193000, 'family', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
-    (36,2, NULL, NULL, NULL, '씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 210000, 'deluxe', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
-
-    -- JW 메리어트 제주(accom_id=3, 방 종류 2개, 방은 2개씩)
-    -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
-    (37,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'family', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
-    (38,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'family', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 4, 'AVAILABLE'),
-    (39,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
-    (40,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-01 15:00:00', '2025-08-02 11:00:00', 3, 'AVAILABLE'),
-    -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
-    (41,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'family', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
-    (42,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'family', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 4, 'AVAILABLE'),
-    (43,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
-    (44,3, NULL, NULL, NULL, 'JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 200000, 'deluxe', NULL, '2025-08-02 15:00:00', '2025-08-03 11:00:00', 3, 'AVAILABLE'),
-
-    -- 시그니엘 부산(accom_id=4, 방 종류 2개 방 1개씩 8/1~8/4)
-    -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
-    (45,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',230000,'twin','https://pix8.agoda.net/hotelImages/34297119/1150527990/a92210af40041d811b7c170cae042485.jpeg?ce=2&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',2,'AVAILABLE'),
-    (46,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',2,'AVAILABLE'),
-    -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
-    (47,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',230000,'twin','https://pix8.agoda.net/hotelImages/34297119/1150527990/a92210af40041d811b7c170cae042485.jpeg?ce=2&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',2,'AVAILABLE'),
-    (48,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',2,'AVAILABLE'),
-    -- 8월 3일: 모든 방 AVAILABLE (검색 가능)
-    (49,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',230000,'twin','https://pix8.agoda.net/hotelImages/34297119/1150527990/a92210af40041d811b7c170cae042485.jpeg?ce=2&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',2,'AVAILABLE'),
-    (50,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',2,'AVAILABLE'),
-    -- 8월 4일: 모든 방 AVAILABLE (검색 가능)
-    (51,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',230000,'twin','https://pix8.agoda.net/hotelImages/34297119/1150527990/a92210af40041d811b7c170cae042485.jpeg?ce=2&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',2,'AVAILABLE'),
-    (52,4,NULL,NULL,NULL,'시그니엘 부산','부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워',300000,'deluxe','https://pix8.agoda.net/hotelImages/13870752/1077789120/935cd010a85089f350f7f866d8b3aea2.jpg?ce=2&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',2,'AVAILABLE'),
-    -- 그랜드조선 부산(accom_id=5 방 종류 3개 방 1개씩 8/1~8/6)
-    -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
-    (53,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',2,'AVAILABLE'),
-    (54,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',250000,'family','https://pix8.agoda.net/hotelImages/16933389/-1/aaba0bc319b64912911a31693bcbea3a.jpg?ca=17&ce=1&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',4,'AVAILABLE'),
-    (55,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',210000,'deluxe','https://pix8.agoda.net/hotelImages/16933389/-1/6d860134a155ab6cc0c72a6b90e80952.jpg?ce=0&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',2,'AVAILABLE'),
-    -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
-    (56,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',2,'AVAILABLE'),
-    (57,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',250000,'family','https://pix8.agoda.net/hotelImages/16933389/-1/aaba0bc319b64912911a31693bcbea3a.jpg?ca=17&ce=1&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',4,'AVAILABLE'),
-    (58,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',210000,'deluxe','https://pix8.agoda.net/hotelImages/16933389/-1/6d860134a155ab6cc0c72a6b90e80952.jpg?ce=0&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',2,'AVAILABLE'),
-    -- 8월 3일: 모든 방 AVAILABLE (검색 가능)
-    (59,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',2,'AVAILABLE'),
-    (60,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',250000,'family','https://pix8.agoda.net/hotelImages/16933389/-1/aaba0bc319b64912911a31693bcbea3a.jpg?ca=17&ce=1&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',4,'AVAILABLE'),
-    (61,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',210000,'deluxe','https://pix8.agoda.net/hotelImages/16933389/-1/6d860134a155ab6cc0c72a6b90e80952.jpg?ce=0&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',2,'AVAILABLE'),
-    -- 8월 4일: 모든 방 AVAILABLE (검색 가능)
-    (62,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',2,'AVAILABLE'),
-    (63,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',250000,'family','https://pix8.agoda.net/hotelImages/16933389/-1/aaba0bc319b64912911a31693bcbea3a.jpg?ca=17&ce=1&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',4,'AVAILABLE'),
-    (64,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',210000,'deluxe','https://pix8.agoda.net/hotelImages/16933389/-1/6d860134a155ab6cc0c72a6b90e80952.jpg?ce=0&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',2,'AVAILABLE'),
-    -- 8월 5일: 모든 방 AVAILABLE (검색 가능)
-    (65,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-05 15:00:00', '2025-08-06 11:00:00',2,'AVAILABLE'),
-    (66,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',300000,'family','https://pix8.agoda.net/hotelImages/16933389/-1/aaba0bc319b64912911a31693bcbea3a.jpg?ca=17&ce=1&s=1024x','2025-08-05 15:00:00', '2025-08-06 11:00:00',4,'AVAILABLE'),
-    (67,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',210000,'deluxe','https://pix8.agoda.net/hotelImages/16933389/-1/6d860134a155ab6cc0c72a6b90e80952.jpg?ce=0&s=1024x','2025-08-05 15:00:00', '2025-08-06 11:00:00',2,'AVAILABLE'),
-    -- 8월 6일: 모든 방 AVAILABLE (검색 가능)
-    (68,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',180000,'twin','https://pix8.agoda.net/hotelImages/16933389/649274911/9a391dc80a143bc39b0d575b8356d483.jpg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',2,'AVAILABLE'),
-    (69,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',300000,'family','https://pix8.agoda.net/hotelImages/16933389/-1/aaba0bc319b64912911a31693bcbea3a.jpg?ca=17&ce=1&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',4,'AVAILABLE'),
-    (70,5,NULL,NULL,NULL,'그랜드조선 부산','부산광역시 해운대구 해운대해변로 292, 엘시티 랜드마크타워',210000,'deluxe','https://pix8.agoda.net/hotelImages/16933389/-1/6d860134a155ab6cc0c72a6b90e80952.jpg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',2,'AVAILABLE'),
-
--- 파크 하얏트 부산(accom_id=6 방 종류 1개 방 3개씩)
-    -- 8월 1일: 모든 방 AVAILABLE (검색 가능)
-    (71,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',3,'AVAILABLE'),
-    (72,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',3,'AVAILABLE'),
-    (73,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-01 15:00:00', '2025-08-02 11:00:00',3,'AVAILABLE'),
-    -- 8월 2일: 모든 방 AVAILABLE (검색 가능)
-    (74,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',3,'AVAILABLE'),
-    (75,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',3,'AVAILABLE'),
-    (76,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-02 15:00:00', '2025-08-03 11:00:00',3,'AVAILABLE'),
-    -- 8월 3일: 모든 방 AVAILABLE (검색 가능)
-    (77,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',3,'AVAILABLE'),
-    (78,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',3,'AVAILABLE'),
-    (79,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-03 15:00:00', '2025-08-04 11:00:00',3,'AVAILABLE'),
-    -- 8월 4일: 모든 방 AVAILABLE (검색 가능)
-    (80,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',3,'AVAILABLE'),
-    (81,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',3,'AVAILABLE'),
-    (82,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-04 15:00:00', '2025-08-05 11:00:00',3,'AVAILABLE'),
-    -- 8월 5일: 모든 방 AVAILABLE (검색 가능)
-    (83,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-05 15:00:00', '2025-08-06 11:00:00',3,'AVAILABLE'),
-    (84,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-05 15:00:00', '2025-08-06 11:00:00',3,'AVAILABLE'),
-    (85,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-05 15:00:00', '2025-08-06 11:00:00',3,'AVAILABLE'),
-    -- 8월 6일: 모든 방 AVAILABLE (검색 가능)
-    (86,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',3,'AVAILABLE'),
-    (87,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',3,'AVAILABLE'),
-    (88,6,NULL,NULL,NULL,'파크 하얏트 부산','부산광역시 해운대구 마린시티1로 51',400000,'deluxe','https://pix8.agoda.net/hotelImages/411082/3261310/adb8d89ee491f510b41d30d309720679.jpeg?ce=0&s=1024x','2025-08-06 15:00:00', '2025-08-07 11:00:00',3,'AVAILABLE');
 
 -- 교통 예약 테스트 데이터
 INSERT INTO transport_info (
@@ -1203,256 +914,4 @@ INSERT INTO transport_info (
       (111, 'SEOUL_STN', 'BUSAN_STN', '서울역', '부산역', '2025-08-07 17:00:00', '2025-08-07 19:30:00', 'ktx', 'KTX-911', 'general', 240, 240, 49800.00, 1),
       (112, 'BUSAN_STN', 'SEOUL_STN', '부산역', '서울역', '2025-08-07 17:00:00', '2025-08-07 19:30:00', 'ktx-sancheon', 'KTX-912', 'general', 240, 240, 49800.00, 1);
 
-
-INSERT INTO tran_res (transport_id, reservation_id, trip_day_id, departure, arrival, seat_room_no, seat_number, seat_type, booked_at, price, version, status)
-VALUES
--- 카리나 혼자여행
-(1, 8, 1, 'SEOUL_STN', 'BUSAN_STN', 10, '12A', 'general', '2025-08-01 09:50:00', 49800, 0, 'CONFIRMED'),
-(62, 9, 4, 'BUSAN_STN', 'SEOUL_STN', 8, '3C', 'general', '2025-08-04 15:50:00', 49800, 0, 'CONFIRMED'),
--- 윈닝젤 여행
-(35, 10, 5, 'SEOUL_STN', 'BUSAN_STN', 5, '12A', 'general', '2025-08-03 10:50:00', 49800, 0, 'CONFIRMED'),
-(35, 10, 5, 'SEOUL_STN', 'BUSAN_STN', 5, '12B', 'general', '2025-08-03 10:50:00', 49800, 0, 'CONFIRMED'),
-(37, 11, 5, 'SEOUL_STN', 'BUSAN_STN', 5, '12C', 'general', '2025-08-03 11:50:00', 49800, 0, 'CONFIRMED'),
-(100, 12, 7, 'BUSAN_STN', 'SEOUL_STN', 5, '12A', 'general', '2025-08-05 09:50:00', 49800, 0, 'CONFIRMED'),
-(102, 13, 7, 'BUSAN_STN', 'SEOUL_STN', 5, '12B', 'general', '2025-08-05 14:50:00', 49800, 0, 'CONFIRMED'),
-(102, 13, 7, 'BUSAN_STN', 'SEOUL_STN', 5, '12C', 'general', '2025-08-05 14:50:00', 49800, 0, 'CONFIRMED');
-
-
--- 식당 정보 테스트용 데이터
-INSERT INTO restaurant_info (
-    rest_name, address, category, rest_image_url,
-    phone, description, latitude, longitude
-) VALUES
--- 한식 (rest_id: 1 ~ 3)
-('해운대 곰장어집', '부산광역시 해운대구 중동2로 10', 'korean',
- 'https://png.pngtree.com/thumb_back/fh260/background/20210910/pngtree-dining-room-at-night-image_842471.jpg',
- '051-111-2222', '불맛 가득한 곰장어 전문점', 35.163, 129.163),
-
-('부산 밀면집', '부산광역시 동래구 충렬대로 237', 'korean',
- 'https://png.pngtree.com/thumb_back/fh260/background/20210910/pngtree-dining-room-at-night-image_842471.jpg',
- '051-333-4444', '시원한 육수의 전통 밀면집', 35.205, 129.086),
-
-('돼지국밥천국', '부산광역시 부산진구 중앙대로 708', 'korean',
- 'https://png.pngtree.com/thumb_back/fh260/background/20210910/pngtree-dining-room-at-night-image_842471.jpg',
- '051-555-6666', '진한 육수의 돼지국밥 명가', 35.152, 129.060),
-
--- 일식 (4 ~ 6)
-('스시하루 부산점', '부산광역시 수영구 수영로 570', 'japanese',
- 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdAn8yesg8uOqwEKgJZIjzKhSC8HMbtY_ykA&s',
- '051-777-8888', '정통 오마카세 전문점', 35.160, 129.115),
-
-('이자카야 코이', '부산광역시 남구 용소로 45', 'japanese',
- 'https://media.timeout.com/images/102190657/750/562/image.jpg',
- '051-222-3333', '감성 가득한 이자카야', 35.128, 129.093),
-
-('돈카츠연구소', '부산광역시 해운대구 해운대로 569', 'japanese',
- 'https://www.qplace.kr/content/images/2023/11/9_4247.jpg',
- '051-444-5555', '두툼한 수제 돈카츠', 35.162, 129.163),
-
--- 중식 (7 ~ 9)
-('팔선생 중화요리', '부산광역시 부산진구 동천로 92', 'chinese',
- 'https://s3.qplace.kr/portfolio/4186/4f53dc96a5ab531a78c68316ea57daf4_w800.webp',
- '051-123-1234', '짜장면·짬뽕 명가', 35.160, 129.065),
-
-('홍콩반점41 부산대점', '부산광역시 금정구 장전온천천로 66', 'chinese',
- 'https://s3.qplace.kr/portfolio/4241/ab1d0a81a28848fc72f5f9a7e45129f8_w800.webp',
- '051-321-4321', '프랜차이즈 중식당', 35.230, 129.089),
-
-('루이하오 중국요리', '부산광역시 연제구 중앙대로 1156', 'chinese',
- 'https://s3.qplace.kr/portfolio/4241/b0a6ff000a70a3fc24529f68491cf02c_w800.webp',
- '051-444-2222', '정통 중식당', 35.181, 129.081),
-
--- 양식 (10 ~ 12)
-('부산 파스타하우스', '부산광역시 수영구 광안해변로 193', 'western',
- 'https://s3.qplace.kr/portfolio/4382/5f12bdc3fdb449d7d51dfe3b460099ef_w800.webp',
- '051-123-4567', '오션뷰 감성 파스타 맛집', 35.153, 129.118),
-
-('스테이크 팩토리', '부산광역시 남구 분포로 145', 'western',
- 'https://s3.qplace.kr/portfolio/2933/4ca799bb3e3813a87258fb32f1dd0a9e_w800.webp',
- '051-999-8888', '두툼한 스테이크 전문점', 35.127, 129.100),
-
-('마리나 피자', '부산광역시 해운대구 우동 1418-2', 'western',
- 'https://s3.qplace.kr/portfolio/2933/d79f6181e3c2e6adb05d34a2c60afe49_w800.webp',
- '051-555-7777', '화덕 피자 전문점', 35.164, 129.163),
-
--- 기타 (13 ~ 15)
-('비건그린 키친', '부산광역시 동구 중앙대로 248', 'etc',
- 'https://street-h.com/wp-content/uploads/2021/03/pyeongsangshi.jpg',
- '051-000-1111', '채식주의자를 위한 건강식당', 35.137, 129.059),
-
-('버블티&카페', '부산광역시 해운대구 좌동로 63', 'etc',
- 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBGoWdfQH9Px179V7bEj1LXefV9XTrS_EwjA&s',
- '051-321-8765', '음료와 디저트 전문 카페', 35.167, 129.176),
-
-('이색분식연구소', '부산광역시 중구 광복로 12', 'etc',
- 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoGoVsFpGXiWMTgYnIhE-j37LpzjtOtde_iA&s',
- '051-888-1111', '퓨전 분식 전문점', 35.101, 129.033);
-
--- 식당 시간 테스트용 데이터
--- 식당별 예약 시간 슬롯 생성 (rest_id: 1 ~ 15, 시간: 11시 ~ 19시, max_capacity: 5)
-INSERT INTO rest_time_slot (rest_id, res_time, max_capacity) VALUES
--- 해운대 곰장어집 (1) (1 ~ 9)
-(1, '11:00', 5), (1, '12:00', 5), (1, '13:00', 5),
-(1, '14:00', 5), (1, '15:00', 5), (1, '16:00', 5),
-(1, '17:00', 5), (1, '18:00', 5), (1, '19:00', 5),
-
--- 부산 밀면집 (2) (10 ~ 18)
-(2, '11:00', 5), (2, '12:00', 5), (2, '13:00', 5),
-(2, '14:00', 5), (2, '15:00', 5), (2, '16:00', 5),
-(2, '17:00', 5), (2, '18:00', 5), (2, '19:00', 5),
-
--- 돼지국밥천국 (3) (19 ~ 27)
-(3, '11:00', 5), (3, '12:00', 5), (3, '13:00', 5),
-(3, '14:00', 5), (3, '15:00', 5), (3, '16:00', 5),
-(3, '17:00', 5), (3, '18:00', 5), (3, '19:00', 5),
-
--- 스시하루 부산점 (4) (28 ~ 36)
-(4, '11:00', 5), (4, '12:00', 5), (4, '13:00', 5),
-(4, '14:00', 5), (4, '15:00', 5), (4, '16:00', 5),
-(4, '17:00', 5), (4, '18:00', 5), (4, '19:00', 5),
-
--- 이자카야 코지 (5) (37 ~ 45)
-(5, '11:00', 5), (5, '12:00', 5), (5, '13:00', 5),
-(5, '14:00', 5), (5, '15:00', 5), (5, '16:00', 5),
-(5, '17:00', 5), (5, '18:00', 5), (5, '19:00', 5),
-
--- 돈카츠연구소 (6) (46 ~ 54)
-(6, '11:00', 5), (6, '12:00', 5), (6, '13:00', 5),
-(6, '14:00', 5), (6, '15:00', 5), (6, '16:00', 5),
-(6, '17:00', 5), (6, '18:00', 5), (6, '19:00', 5),
-
--- 팔선생 중화요리 (7) (55 ~ 63)
-(7, '11:00', 5), (7, '12:00', 5), (7, '13:00', 5),
-(7, '14:00', 5), (7, '15:00', 5), (7, '16:00', 5),
-(7, '17:00', 5), (7, '18:00', 5), (7, '19:00', 5),
-
--- 홍콩반점41 부산대점 (8) (64 ~ 72)
-(8, '11:00', 5), (8, '12:00', 5), (8, '13:00', 5),
-(8, '14:00', 5), (8, '15:00', 5), (8, '16:00', 5),
-(8, '17:00', 5), (8, '18:00', 5), (8, '19:00', 5),
-
--- 루이하오 중국요리 (9) (73 ~ 81)
-(9, '11:00', 5), (9, '12:00', 5), (9, '13:00', 5),
-(9, '14:00', 5), (9, '15:00', 5), (9, '16:00', 5),
-(9, '17:00', 5), (9, '18:00', 5), (9, '19:00', 5),
-
--- 부산 파스타하우스 (10) (82 ~ 90)
-(10, '11:00', 5), (10, '12:00', 5), (10, '13:00', 5),
-(10, '14:00', 5), (10, '15:00', 5), (10, '16:00', 5),
-(10, '17:00', 5), (10, '18:00', 5), (10, '19:00', 5),
-
--- 스테이크 팩토리 (11) (91 ~ 99)
-(11, '11:00', 5), (11, '12:00', 5), (11, '13:00', 5),
-(11, '14:00', 5), (11, '15:00', 5), (11, '16:00', 5),
-(11, '17:00', 5), (11, '18:00', 5), (11, '19:00', 5),
-
--- 마리나 피자 (12) (100 ~ 108)
-(12, '11:00', 5), (12, '12:00', 5), (12, '13:00', 5),
-(12, '14:00', 5), (12, '15:00', 5), (12, '16:00', 5),
-(12, '17:00', 5), (12, '18:00', 5), (12, '19:00', 5),
-
--- 비건그린 키친 (13) (109 ~ 117)
-(13, '11:00', 5), (13, '12:00', 5), (13, '13:00', 5),
-(13, '14:00', 5), (13, '15:00', 5), (13, '16:00', 5),
-(13, '17:00', 5), (13, '18:00', 5), (13, '19:00', 5),
-
--- 버블티&카페 (14) (118 ~ 126)
-(14, '11:00', 5), (14, '12:00', 5), (14, '13:00', 5),
-(14, '14:00', 5), (14, '15:00', 5), (14, '16:00', 5),
-(14, '17:00', 5), (14, '18:00', 5), (14, '19:00', 5),
-
--- 이색분식연구소 (15) (127 ~ 135)
-(15, '11:00', 5), (15, '12:00', 5), (15, '13:00', 5),
-(15, '14:00', 5), (15, '15:00', 5), (15, '16:00', 5),
-(15, '17:00', 5), (15, '18:00', 5), (15, '19:00', 5);
-
-
--- 식당 예약 테스트용 데이터
-INSERT INTO rest_res (rest_id, reservation_id, trip_day_id, res_num, rest_time_id) VALUES
-    (1, 14, 1, 2, 1);
-
-
--- 비용 테스트용 데이터
-INSERT INTO expense (trip_id, member_id, expense_name, expense_date, amount, location, settlement_completed)
-VALUES (2, 2, '교통비', '2025-08-05 17:10:00' ,149400, 'BUSAN', false),
-       (2, 2, '숙박 비용', '2025-08-06 18:10:00' ,193000, 'BUSAN', false),
-       (2, 3, '돼지 국밥', '2025-08-06 19:10:00' ,45000, 'BUSAN', false),
-       (2, 4, '부산 밀면', '2025-08-06 19:10:00' ,30000, 'BUSAN', false),
-       (2, 2, '부산 꼼장어', '2025-08-06 19:10:00' ,50000, 'BUSAN', false),
-       (2, 2, '숙박 비용', '2025-08-06 19:10:00' ,210000, 'BUSAN', false),
-       (2, 3, '이재모 피자', '2025-08-06 19:10:00' ,40000, 'BUSAN', false),
-       (2, 4, '버블티&카페', '2025-08-06 20:10:00' ,18000, 'BUSAN', false),
-       (2, 2, '교통비', '2025-08-06 21:10:00' ,149400, 'BUSAN', false);
-
-INSERT INTO settlement_notes (expense_id, trip_id, member_id, share_amount, is_payed, received, created_at)
-VALUES
--- (2, 2, '교통비', 149400, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(1, 2, 2, 49800, true, false, '2025-08-05 17:10:00'),
-(1, 2, 3, 49800, false, true, '2025-08-05 17:10:00'),
-(1, 2, 4, 49800, false, true, '2025-08-05 17:10:00'),
--- (2, 2, '숙박 비용', 193000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(2, 2, 2, 38600, true, false, '2025-08-06 18:10:00'),
-(2, 2, 3, 38600, false, true, '2025-08-06 18:10:00'),
-(2, 2, 4, 38600, false, true, '2025-08-06 18:10:00'),
--- (2, 3, '돼지 국밥', 45000, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
-(3, 2, 2, 15000, false, true, '2025-08-06 19:10:00'),
-(3, 2, 3, 15000, true, false, '2025-08-06 19:10:00'),
-(3, 2, 4, 15000, false, true, '2025-08-06 19:10:00'),
--- (2, 2, '부산 밀면', 30000, 'BUSAN', false)에 대한 정산 (지젤이 계산)
-(4, 2, 2, 10000, false, true, '2025-08-06 19:10:00'),
-(4, 2, 3, 10000, false, true, '2025-08-06 19:10:00'),
-(4, 2, 4, 10000, true, false, '2025-08-06 19:10:00'),
--- (2, 2, '부산 꼼장어', 50000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(5, 2, 2, 16667, true, false, '2025-08-06 19:10:00'),
-(5, 2, 3, 16666, false, true, '2025-08-06 19:10:00'),
-(5, 2, 4, 16666, false, true, '2025-08-06 19:10:00'),
--- (2, 2, '숙박 비용', 210000, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(6, 2, 2, 70000, true, false, '2025-08-06 19:10:00'),
-(6, 2, 3, 70000, false, true, '2025-08-06 19:10:00'),
-(6, 2, 4, 70000, false, true, '2025-08-06 19:10:00'),
--- (2, 3, '이재모 피자', 40000, 'BUSAN', false)에 대한 정산 (닝닝이 계산)
-(7, 2, 2, 13334, false, true, '2025-08-06 19:10:00'),
-(7, 2, 3, 13333, true, false, '2025-08-06 19:10:00'),
-(7, 2, 4, 13333, false, true, '2025-08-06 19:10:00'),
--- (2, 2, '버블티&카페', 18000, 'BUSAN', false)에 대한 정산 (지젤이 계산)
-(8, 2, 2, 6000, false, true, '2025-08-06 20:10:00'),
-(8, 2, 3, 6000, false, true, '2025-08-06 20:10:00'),
-(8, 2, 4, 6000, true, false, '2025-08-06 20:10:00'),
--- (2, 2, '교통비', 149400, 'BUSAN', false)에 대한 정산 (윈터가 계산)
-(9, 2, 2, 49800, true, false, '2025-08-06 21:10:00'),
-(9, 2, 3, 49800, false, true, '2025-08-06 21:10:00'),
-(9, 2, 4, 49800, false, true, '2025-08-06 21:10:00');
-
-
-INSERT INTO trip_records (trip_id, member_id, title, record_date, content)
-VALUES (1, 1, '부산 도착~', '2025-08-01', '내일 이재모 피자 먹어야지 ㅎㅎ 숙소도 너무 좋다'),
-       (1, 1, '이재모 피자', '2025-08-02', '진짜 맛있음. 다음엔 다른 메뉴 먹어봐야지'),
-       (1, 1, '남포동 투어', '2025-08-02', null),
-       (1, 1, '롯데호텔 조식', '2025-08-03', '짱 맛있음'),
-       (1, 1, '해운대', '2025-08-03', '더운데 경치가 너무 좋았다~~'),
-       (1, 1, '부산 마지막날 ㅜㅜ', '2025-08-04', '아쉽다. 다음에 또 와야지');
-
-INSERT INTO trip_record_images (record_id, image_url)
-VALUES (1, '2b1d7834-3f92-4fb8-8e39-dac2c952c6f4.webp'),
-       (1, '1482b39b-981d-43d9-9747-446f0c08c545.jpg'),
-       (2, '73eed0e4-cfeb-4fad-b890-45a95affb559.webp'),
-       (2, '6078349e-db19-4a53-9d82-f9b2e81cbee3.png'),
-       (3, '773215b6-3a11-4dc5-8050-234d3aaf7b78.webp'),
-       (4, 'b290a04d-d05c-4975-9d52-cd56138bdaf5.jpg'),
-       (5, '7fb93cf9-02d4-4678-8a6b-d30371dfcf75.jpg');
-
--- 숙박 테스트 데이터셋 추가
-# INSERT INTO RESERVATION (trip_day_id, res_kind)
-# VALUES
-# -- trip_day_id: 1, 2, 3, 4 => 카리나 부산 여행
-# (1,'ACCOMMODATION'), -- 숙박
-# (2,'ACCOMMODATION'), -- 숙박
-# (3,'ACCOMMODATION'), -- 숙박
-# (4,'ACCOMMODATION'), -- 숙박
-# -- trip_day_id : 5, 6, 7 => 윈닝젤 부산 여행
-# (5,'ACCOMMODATION'), -- 숙박
-# (6,'ACCOMMODATION'), -- 숙박
-# (7,'ACCOMMODATION'); -- 숙박
-
--- 교통 테스트 데이터셋 추가
 SET FOREIGN_KEY_CHECKS = 1;
