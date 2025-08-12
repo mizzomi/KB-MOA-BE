@@ -1,28 +1,27 @@
 # ===================================
-# Docker ?? ?? ?? (AWS)
+# 로컬 환경 설정 예제
 # ===================================
+# 이 파일을 복사하여 application.properties로 만들어 사용하세요
+# cp application.properties.example application.properties
 
-# JDBC ?? - Docker ???? ???? ??
+# JDBC MySQL (로컬)
 jdbc.driver=com.mysql.cj.jdbc.Driver
-jdbc.url=jdbc:mysql://mysql:3306/{database}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&useUnicode=true
-jdbc.username={username}
-jdbc.password={password}
+jdbc.url=jdbc:mysql://localhost:3306/moa?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+jdbc.username=root
+jdbc.password=YOUR_PASSWORD_HERE
 
-# Redis ?? - Docker ???? ???? ??
-redis.host=redis
+# Redis (로컬)
+redis.host=localhost
 redis.port=6379
 
-# ?? secret key
-my.security.secret-key=MySpuerSecretKey
+# Security Secret Key
+my.security.secret-key=YOUR_SECRET_KEY_HERE
 
-# Firebase ?? (Docker ???? ?? ??)
-firebase.key-path=/usr/local/tomcat/firebase/moa-firebase-service-account-key.json
+# Firebase
+firebase.key-path=firebase/moa-firebase-service-account-key.json
 firebase.project-id=kb-pjt-moa
 firebase.bucket-name=kb-pjt-moa.firebasestorage.app
 
-# ===================================
-# ?? ?? ??
-# ===================================
-# ???? ?? (AWS EC2 + HTTPS)
-server.env=production
-server.use.secure.cookie=true
+# Server Environment
+server.env=local
+server.use.secure.cookie=false
