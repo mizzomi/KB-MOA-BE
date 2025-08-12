@@ -120,13 +120,14 @@
             tr.transport_id as itemId,
             NULL as imageUrl,
             td.day as date,
-            tr.created_at as createdAt,
+            MIN(tr.created_at) as createdAt,
             'TRANSPORT' as resKind
         FROM tran_res tr
             JOIN transport_info ti ON tr.transport_id = ti.transport_id
             JOIN trip_day td ON tr.trip_day_id = td.trip_day_id
         WHERE td.trip_id = #{tripId}
           AND tr.status = 'CONFIRMED'
+        GROUP BY tr.reservation_id, ti.train_no, tr.transport_id, td.day
         ORDER BY td.day
     </select>
 
@@ -137,7 +138,7 @@
             tr.transport_id as itemId,
             NULL as imageUrl,
             td.day as date,
-            tr.created_at as createdAt,
+            MIN(tr.created_at) as createdAt,
             'TRANSPORT' as resKind
         FROM tran_res tr
             JOIN transport_info ti ON tr.transport_id = ti.transport_id
@@ -148,6 +149,7 @@
           AND tm.member_id = #{memberId}
           AND td.day = #{date}
           AND tr.status = 'CONFIRMED'
-        ORDER BY tr.created_at
+        GROUP BY tr.reservation_id, ti.train_no, tr.transport_id, td.day
+        ORDER BY MIN(tr.created_at)
     </select>
 </mapper>

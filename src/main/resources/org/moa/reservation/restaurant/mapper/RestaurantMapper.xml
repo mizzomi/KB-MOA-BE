@@ -171,13 +171,14 @@
             rr.rest_id as itemId,
             ri.rest_image_url as imageUrl,
             td.day as date,
-            rr.created_at as createdAt,
+            MIN(rr.created_at) as createdAt,
             'RESTAURANT' as resKind
         FROM rest_res rr
             JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
             JOIN trip_day td ON rr.trip_day_id = td.trip_day_id
         WHERE td.trip_id = #{tripId}
           AND rr.status IN ('reserved', 'checked_in', 'completed')
+        GROUP BY rr.reservation_id, ri.rest_name, rr.rest_id, ri.rest_image_url, td.day
         ORDER BY td.day
     </select>
 
@@ -188,7 +189,7 @@
             rr.rest_id as itemId,
             ri.rest_image_url as imageUrl,
             td.day as date,
-            rr.created_at as createdAt,
+            MIN(rr.created_at) as createdAt,
             'RESTAURANT' as resKind
         FROM rest_res rr
             JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
@@ -199,7 +200,8 @@
           AND tm.member_id = #{memberId}
           AND td.day = #{date}
           AND rr.status IN ('reserved', 'checked_in', 'completed')
-        ORDER BY rr.created_at
+        GROUP BY rr.reservation_id, ri.rest_name, rr.rest_id, ri.rest_image_url, td.day
+        ORDER BY MIN(rr.created_at)
     </select>
 
 </mapper>
