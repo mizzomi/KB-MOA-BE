@@ -7,9 +7,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class ReservationResponseDto { // 식당, 숙박
+@AllArgsConstructor
+public class QrItemResponseDto<T> {
     private String qrCodeString; // QR 값
-    private Object reservationDetails; // 예약 정보
+    private T details; // 예약 정보
 }

@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import javax.sql.DataSource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.annotation.MapperScan;
@@ -47,6 +48,11 @@ public class RootConfig {
 		String username;
 		@Value("${jdbc.password}")
 		String password;
+
+		@Bean
+		public ObjectMapper objectMapper() {
+			return new ObjectMapper();
+		}
 
 		@Bean
 		public DataSource dataSource() {
