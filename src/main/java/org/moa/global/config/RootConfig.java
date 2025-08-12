@@ -121,6 +121,11 @@ public class RootConfig {
 		String password;
 
 		@Bean
+		public ObjectMapper objectMapper() {
+			return new ObjectMapper();
+		}
+
+		@Bean
 		public DataSource dataSource() {
 			HikariConfig config = new HikariConfig();
 
