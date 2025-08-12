@@ -26900,6 +26900,7 @@ WHERE tran_res_id = 14785;
 -- 15619 가 윈터 10시 부산->서울, KTX 산천, 1호차, E3
 -- 18149, 18155 가 지젤,닝닝 15시 부산->서울, KTX 산천, 7호차, B1,C3
 
+-- 윈터시작
 UPDATE tran_res
 SET reservation_id = 9, trip_day_id = 5, booked_at = now(), status = 'CONFIRMED'
 WHERE tran_res_id = 8161;
