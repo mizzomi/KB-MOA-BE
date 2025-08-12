@@ -1,35 +1,3 @@
-use moa;
-DROP TABLE IF EXISTS tran_res;
-CREATE TABLE tran_res
-(
-    tran_res_id    BIGINT   NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 교통 예약 ID (기본키)
-    transport_id   BIGINT   NOT NULL,                            -- 교통 ID (외래키)
-    reservation_id BIGINT   NULL,                                -- 예약 ID (외래키)
-    trip_day_id    BIGINT   NULL,                                -- 여행 날짜 ID (외래키)
-    departure   VARCHAR(30)   NOT NULL,                          -- 출발역
-    arrival     VARCHAR(30)   NOT NULL,                          -- 도착역
-    seat_room_no   INT        NOT NULL,                          -- 예약한 호실 번호
-    seat_number    VARCHAR(10)   NOT NULL,                       -- 예약 좌석 번호
-    seat_type      ENUM ('general', 'first_class', 'silent', 'family') NOT NULL,   -- 좌석 종류
-    booked_at      DATETIME   NULL,                              -- 예약 일자
-    price          DECIMAL(15, 2)   NOT NULL,                    -- 가격
-    version        INT           NOT NULL DEFAULT 0,             -- 낙관적락을 위한 버전
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,          -- 생성일시
-    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,   -- 수정일시
-    status ENUM('AVAILABLE', 'PENDING', 'CONFIRMED') NOT NULL DEFAULT 'AVAILABLE',
-
-    FOREIGN KEY (transport_id) REFERENCES transport_info (transport_id) ON DELETE CASCADE,
-
-    CONSTRAINT fk_tran_res_reservation_id
-        FOREIGN KEY (reservation_id)
-            REFERENCES reservation (reservation_id)
-            ON DELETE CASCADE,
-
-    CONSTRAINT fk_tran_res_trip_day_id
-        FOREIGN KEY (trip_day_id)
-            REFERENCES trip_day (trip_day_id)
-            ON DELETE CASCADE
-);
 INSERT INTO tran_res (
     transport_id, reservation_id, trip_day_id,
     departure, arrival, seat_room_no, seat_number, seat_type,

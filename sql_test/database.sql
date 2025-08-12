@@ -164,7 +164,7 @@ CREATE TABLE trip
     trip_id       BIGINT AUTO_INCREMENT PRIMARY KEY,
     member_id     BIGINT                              NOT NULL,
     trip_name     VARCHAR(255),
-    trip_location ENUM ('부산', '강릉', '제주', '서울', '대구', '대전', '광주', '목포') NOT NULL,
+    trip_location ENUM ('BUSAN', 'GANGNEUNG', 'JEJU', 'SEOUL') NOT NULL,
     start_date    DATE                                NOT NULL,
     end_date      DATE                                NOT NULL,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -178,7 +178,7 @@ CREATE TABLE trip
 CREATE TABLE trip_location
 (
     location_id   BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    location_name ENUM ('부산', '강릉', '제주', '서울', '대구', '대전', '광주', '목포' ) NOT NULL,
+    location_name ENUM ('BUSAN', 'GANGNEUNG', 'JEJU', 'SEOUL') NOT NULL,
     latitude      DECIMAL(10, 8),
     longitude     DECIMAL(11, 8),
     address       VARCHAR(200)
@@ -358,12 +358,12 @@ CREATE TABLE restaurant_info
     rest_name      VARCHAR(255)                                                                  NOT NULL,
     address        VARCHAR(255)                                                                  NOT NULL,
     category       ENUM ('korean', 'chinese', 'japanese', 'western', 'etc')                      NOT NULL,
-    rest_image_url VARCHAR(255)                                                                  NOT NULL,
+    rest_image_url VARCHAR(500)                                                                  NOT NULL,
     phone          VARCHAR(20)                                                                   NULL,
     description    TEXT                                                                          NULL,
     latitude       DECIMAL(10, 7)                                                                NULL,
     longitude      DECIMAL(10, 7)                                                                NULL,
-    menu_url       VARCHAR(255)                                                                  NULL,
+    menu_url       VARCHAR(500)                                                                  NULL,
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -606,114 +606,90 @@ VALUES (4, '닝닝', '1234567890004', '4444', 'KB', 1000000.00);
 -- 결제 내역 테스트용 데이터
 -- 카리나 (member_id=1)
 INSERT INTO payment_record (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
-VALUES (1, 1, '편의점 간식', 4500.00, '2025-08-01 09:10:00', '부산'),
-       (1, 1, '부산 파스타하우스', 21000.00, '2025-08-03 12:43:25', '부산'),
-       (1, 1, '카페 커피', 6500.00, '2025-08-05 15:40:00', '부산');
+VALUES (1, 1, '편의점 간식', 4500.00, '2025-08-01 09:10:00', 'BUSAN'),
+       (1, 1, '부산 파스타하우스', 21000.00, '2025-08-03 12:43:25', 'BUSAN'),
+       (1, 1, '카페 커피', 6500.00, '2025-08-05 15:40:00', 'BUSAN');
 
 -- 윈터 (member_id=2)
 INSERT INTO payment_record (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
-VALUES (2, 2, '주유소 결제', 54000.00, '2025-08-03 10:20:00', '부산'),
-       (2, 2, '숙박 비용', 193000.00, '2025-08-03 12:00:00', '부산'),
-       (2, 2, '교통비', 105000.00, '2025-08-04 13:30:00', '부산'),
-       (2, 2, '길거리 간식', 9999.00, '2025-08-04 17:30:00', '부산'),
-       (2, 2, '편의점 물품', 12000.00, '2025-08-05 22:10:00', '부산');
+VALUES (2, 2, '주유소 결제', 54000.00, '2025-08-03 10:20:00', 'BUSAN'),
+       (2, 2, '숙박 비용', 193000.00, '2025-08-03 12:00:00', 'BUSAN'),
+       (2, 2, '교통비', 105000.00, '2025-08-04 13:30:00', 'BUSAN'),
+       (2, 2, '길거리 간식', 9999.00, '2025-08-04 17:30:00', 'BUSAN'),
+       (2, 2, '편의점 물품', 12000.00, '2025-08-05 22:10:00', 'BUSAN');
 
 -- 지젤 (member_id=3)
 INSERT INTO payment_record (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
-VALUES (3, 3, '팔선생 중화요리', 61000.00, '2025-08-04 12:56:43', '부산'),
-       (3, 3, '이색분식연구소', 10000.00, '2025-08-04 19:44:26', '부산'),
-       (3, 3, '기념품 구매', 22000.00, '2025-08-04 11:15:00', '부산'),
-       (3, 3, '카페 디저트', 8500.00, '2025-08-04 15:45:00', '부산');
+VALUES (3, 3, '팔선생 중화요리', 61000.00, '2025-08-04 12:56:43', 'BUSAN'),
+       (3, 3, '이색분식연구소', 10000.00, '2025-08-04 19:44:26', 'BUSAN'),
+       (3, 3, '기념품 구매', 22000.00, '2025-08-04 11:15:00', 'BUSAN'),
+       (3, 3, '카페 디저트', 8500.00, '2025-08-04 15:45:00', 'BUSAN');
 
 -- 닝닝 (member_id=4)
 INSERT INTO payment_record (account_id, member_id, payment_name, payment_price, payment_date, payment_location)
-VALUES (4, 4, '이자카야 코이', 24300.00, '2025-08-03 18:35:47', '부산'),
-       (4, 4, '편의점 간식', 5500.00, '2025-08-04 12:20:00', '부산'),
-       (4, 4, '기념품', 17000.00, '2025-08-05 16:30:00', '부산');
+VALUES (4, 4, '이자카야 코이', 24300.00, '2025-08-03 18:35:47', 'BUSAN'),
+       (4, 4, '편의점 간식', 5500.00, '2025-08-04 12:20:00', 'BUSAN'),
+       (4, 4, '기념품', 17000.00, '2025-08-05 16:30:00', 'BUSAN');
 
 
 -- 여행 테스트용 데이터(카리나 1인여행 8/1 ~ 8/4)
 INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '혼자 부산 여행', '부산', '2025-08-01', '2025-08-04');
+VALUES (1, '혼자 부산 여행', 'BUSAN', '2025-08-01', '2025-08-04');
 
 -- 여행 테스트용 데이터(윈터, 지젤, 닝닝 3인여행 8/3 ~ 8/5)
 INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (2, '셋이서 부산 여행', '부산', '2025-08-03', '2025-08-05');
+VALUES (2, '셋이서 부산 여행', 'BUSAN', '2025-08-03', '2025-08-05');
 
--- 여행 테스트용 데이터 기존 2개 + 여행 15개 추가 -> 총 17개
--- (카리나, 윈터, 지젤, 닝닝 | MOKPO 여행 1)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '에스파, 낭만을 걷다 - 목포 편', '목포', '2025-09-29', '2025-09-30');
+-- 여행 데이터 추가
+INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date) VALUES
+-- 3월: BUSAN
+(1, '봄바람 휘날리는 부산', 'BUSAN', '2025-03-10', '2025-03-12'),
 
--- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 2)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, 'aespa in Busan: 파도와 함께', '부산', '2025-03-16', '2025-03-19');
+-- 4월: GANGNEUNG
+(2, '벚꽃 피는 강릉 여행', 'GANGNEUNG', '2025-04-05', '2025-04-07'),
 
--- (카리나, 윈터, 지젤, 닝닝 | DAEJEON 여행 3)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (3, '한적한 오후, 대전 산책', '대전', '2025-10-04', '2025-10-07');
+-- 5월: JEJU
+(3, '초여름 제주 한 바퀴', 'JEJU', '2025-05-15', '2025-05-18'),
 
--- (카리나, 윈터, 지젤, 닝닝 | DAEGU 여행 4)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (2, '햇살 가득한 대구, 여름의 기억', '대구', '2025-06-11', '2025-06-14');
+-- 6월: SEOUL
+(4, '서울 핫플 투어', 'SEOUL', '2025-06-02', '2025-06-05'),
 
--- (카리나, 윈터, 지젤, 닝닝 | GWANGJU 여행 5)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '광주에서 찾은 작은 평화', '광주', '2025-05-10', '2025-05-12');
+-- 7월: BUSAN
+(1, '여름맞이 해운대 여행', 'BUSAN', '2025-07-10', '2025-07-13'),
 
--- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 6)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (2, '푸른 바다, 다시 부산에서', '부산', '2025-10-10', '2025-10-13');
+-- 8월: JEJU
+(2, '한여름 제주 폭염 탈출', 'JEJU', '2025-08-20', '2025-08-24'),
 
--- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 7)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '서울 감성충전 투어', '서울', '2025-08-13', '2025-08-14');
+-- 9월: GANGNEUNG
+(3, '추석 연휴 강릉 힐링여행', 'GANGNEUNG', '2025-09-10', '2025-09-12'),
 
--- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 8)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (2, '서울 속 서울 여행', '서울', '2025-09-01', '2025-09-02');
+-- 10월: BUSAN
+(4, '부산 불꽃 축제 여행', 'BUSAN', '2025-10-04', '2025-10-06'),
 
--- (닝닝, 윈터 | DAEJEON 여행 9)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (4, '성심당을 위한 대전 여행', '대전', '2025-07-21', '2025-07-24');
+-- 10월 말: SEOUL
+(1, '서울 할로윈 나들이', 'SEOUL', '2025-10-28', '2025-10-30'),
 
--- (윈터, 카리나 | JEJU 여행 10)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (2, '윈터랑 카리나의 제주 여행', '제주', '2025-10-25', '2025-10-27');
+-- 11월: JEJU
+(2, '늦가을 제주 단풍 여행', 'JEJU', '2025-11-10', '2025-11-13'),
 
--- (카리나, 지젤, 윈터 | JEJU 여행 11)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '닝닝 없는 제주 여행', '제주', '2025-05-16', '2025-05-18');
+-- 12월 초: SEOUL
+(3, '서울 크리스마스 마켓 투어', 'SEOUL', '2025-12-02', '2025-12-04'),
 
--- (카리나, 지젤 | BUSAN 여행 12)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '부산 맛집 탐방기', '부산', '2025-08-08', '2025-08-10');
+-- 12월 중순: JEJU
+(4, '연말 제주 감귤 체험', 'JEJU', '2025-12-15', '2025-12-17'),
 
--- (닝닝, 지젤 | GANGNEUNG 여행 13)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (4, '바다 보고 싶어서, 강릉', '강릉', '2025-04-13', '2025-04-15');
-
--- (카리나, 닝닝 | DAEJEON 여행 14)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (1, '가볍게 떠난 대전 소풍', '대전', '2025-11-10', '2025-11-11');
-
--- (지젤, 닝닝, 윈터 | BUSAN 여행 15)
-INSERT INTO trip (member_id, trip_name, trip_location, start_date, end_date)
-VALUES (3, '세 명이서 부산 미식여행', '부산', '2025-09-16', '2025-09-18');
+-- 12월 말: JEJU
+(1, '2025 마무리 제주여행', 'JEJU', '2025-12-27', '2025-12-30');
 
 
 
 
 
 INSERT INTO trip_location (location_name, latitude, longitude, address)
-VALUES ('부산', 35.179554, 129.075642, '부산광역시 중구 중앙대로 100'),
-       ('강릉', 37.751853, 128.876057, '강원특별자치도 강릉시 교동광장로 100'),
-       ('제주', 33.499621, 126.531188, '제주특별자치도 제주시 중앙로 100'),
-       ('서울', 37.566535, 126.977969, '서울특별시 중구 세종대로 110'),
-       ('대구', 35.87222, 128.6025, '대구광역시 중구 공평로 88'),
-       ('대전', 36.35041, 127.38455, '대전광역시 중구 중앙로 101'),
-       ('광주', 35.15954, 126.8526, '광주광역시 서구 상무대로 100'),
-       ('목포', 34.81184, 126.39257, '전라남도 목포시 영산로 100');
+VALUES ('BUSAN', 35.179554, 129.075642, '부산광역시 중구 중앙대로 100'),
+       ('GANGNEUNG', 37.751853, 128.876057, '강원특별자치도 강릉시 교동광장로 100'),
+       ('JEJU', 33.499621, 126.531188, '제주특별자치도 제주시 중앙로 100'),
+       ('SEOUL', 37.566535, 126.977969, '서울특별시 중구 세종대로 110');
 
 
 
@@ -722,98 +698,25 @@ VALUES  (1, 1, 'HOST', NOW()), -- 카리나 호스트 부산여행
         (2, 2, 'HOST', NOW()), -- 윈터 호스트 부산여행
         (2, 3, 'MEMBER', NOW()), -- 닝닝 멤버 부산여행
         (2, 4, 'MEMBER', NOW()); -- 지젤 멤버 부산여행
--- (카리나, 윈터, 지젤, 닝닝 | MOKPO 여행 1)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (3, 1, 'HOST', NOW()),
-       (3, 2, 'MEMBER', NOW()),
-       (3, 3, 'MEMBER', NOW()),
-       (3, 4, 'MEMBER', NOW());
 
--- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 2)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (4, 1, 'HOST', NOW()),
-       (4, 2, 'MEMBER', NOW()),
-       (4, 3, 'MEMBER', NOW()),
-       (4, 4, 'MEMBER', NOW());
+-- 여행멤버 데이터 추가
+INSERT INTO trip_member (trip_id, member_id, role, joined_at) VALUES
+-- trip_id = 1 ~ 13
+(3, 1, 'HOST', NOW()), (3, 2, 'MEMBER', NOW()), (3, 3, 'MEMBER', NOW()), (3, 4, 'MEMBER', NOW()),
+(4, 2, 'HOST', NOW()), (4, 1, 'MEMBER', NOW()), (4, 3, 'MEMBER', NOW()), (4, 4, 'MEMBER', NOW()),
+(5, 3, 'HOST', NOW()), (5, 1, 'MEMBER', NOW()), (5, 2, 'MEMBER', NOW()), (5, 4, 'MEMBER', NOW()),
+(6, 4, 'HOST', NOW()), (6, 1, 'MEMBER', NOW()), (6, 2, 'MEMBER', NOW()), (6, 3, 'MEMBER', NOW()),
+(7, 1, 'HOST', NOW()), (7, 2, 'MEMBER', NOW()), (7, 3, 'MEMBER', NOW()), (7, 4, 'MEMBER', NOW()),
+(8, 2, 'HOST', NOW()), (8, 1, 'MEMBER', NOW()), (8, 3, 'MEMBER', NOW()), (8, 4, 'MEMBER', NOW()),
+(9, 3, 'HOST', NOW()), (9, 1, 'MEMBER', NOW()), (9, 2, 'MEMBER', NOW()), (9, 4, 'MEMBER', NOW()),
+(10, 4, 'HOST', NOW()), (10, 1, 'MEMBER', NOW()), (10, 2, 'MEMBER', NOW()), (10, 3, 'MEMBER', NOW()),
+(11, 1, 'HOST', NOW()), (11, 2, 'MEMBER', NOW()), (11, 3, 'MEMBER', NOW()), (11, 4, 'MEMBER', NOW()),
+(12, 2, 'HOST', NOW()), (12, 1, 'MEMBER', NOW()), (12, 3, 'MEMBER', NOW()), (12, 4, 'MEMBER', NOW()),
+(13, 3, 'HOST', NOW()), (13, 1, 'MEMBER', NOW()), (13, 2, 'MEMBER', NOW()), (13, 4, 'MEMBER', NOW()),
+(14, 4, 'HOST', NOW()), (14, 1, 'MEMBER', NOW()), (14, 2, 'MEMBER', NOW()), (14, 3, 'MEMBER', NOW()),
+(15, 1, 'HOST', NOW()), (15, 2, 'MEMBER', NOW()), (15, 3, 'MEMBER', NOW()), (15, 4, 'MEMBER', NOW());
 
--- (카리나, 윈터, 지젤, 닝닝 | DAEJEON 여행 3)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (5, 3, 'HOST', NOW()),
-       (5, 1, 'MEMBER', NOW()),
-       (5, 2, 'MEMBER', NOW()),
-       (5, 4, 'MEMBER', NOW());
 
--- (카리나, 윈터, 지젤, 닝닝 | DAEGU 여행 4)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (6, 2, 'HOST', NOW()),
-       (6, 1, 'MEMBER', NOW()),
-       (6, 3, 'MEMBER', NOW()),
-       (6, 4, 'MEMBER', NOW());
-
--- (카리나, 윈터, 지젤, 닝닝 | GWANGJU 여행 5)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (7, 1, 'HOST', NOW()),
-       (7, 2, 'MEMBER', NOW()),
-       (7, 3, 'MEMBER', NOW()),
-       (7, 4, 'MEMBER', NOW());
-
--- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 6)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (8, 2, 'HOST', NOW()),
-       (8, 1, 'MEMBER', NOW()),
-       (8, 3, 'MEMBER', NOW()),
-       (8, 4, 'MEMBER', NOW());
-
--- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 7)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (9, 1, 'HOST', NOW()),
-       (9, 2, 'MEMBER', NOW()),
-       (9, 3, 'MEMBER', NOW()),
-       (9, 4, 'MEMBER', NOW());
-
--- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 8)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (10, 2, 'HOST', NOW()),
-       (10, 1, 'MEMBER', NOW()),
-       (10, 3, 'MEMBER', NOW()),
-       (10, 4, 'MEMBER', NOW());
-
--- (닝닝, 윈터 | DAEJEON 여행 9)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (11, 4, 'HOST', NOW()),
-       (11, 2, 'MEMBER', NOW());
-
--- (윈터, 카리나 | JEJU 여행 10)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (12, 2, 'HOST', NOW()),
-       (12, 1, 'MEMBER', NOW());
-
--- (카리나, 지젤, 윈터 | JEJU 여행 11)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (13, 1, 'HOST', NOW()),
-       (13, 3, 'MEMBER', NOW()),
-       (13, 2, 'MEMBER', NOW());
-
--- (카리나, 지젤 | BUSAN 여행 12)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (14, 1, 'HOST', NOW()),
-       (14, 3, 'MEMBER', NOW());
-
--- (닝닝, 지젤 | GANGNEUNG 여행 13)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (15, 4, 'HOST', NOW()),
-       (15, 3, 'MEMBER', NOW());
-
--- (카리나, 닝닝 | DAEJEON 여행 14)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (16, 1, 'HOST', NOW()),
-       (16, 4, 'MEMBER', NOW());
-
--- (지젤, 닝닝, 윈터 | BUSAN 여행 15)
-INSERT INTO trip_member (trip_id, member_id, role, joined_at)
-VALUES (17, 3, 'HOST', NOW()),
-       (17, 4, 'MEMBER', NOW()),
-       (17, 2, 'MEMBER', NOW());
 
 
 
@@ -828,97 +731,47 @@ VALUES
 (2, '2025-08-03'), -- 5
 (2, '2025-08-04'), -- 6
 (2, '2025-08-05'); -- 7
--- 여행 날짜 INSERT 추가
--- (카리나, 윈터, 지젤, 닝닝 | MOKPO 여행 1)
-INSERT INTO trip_day (trip_id, day)
-VALUES (3, '2025-09-29'),
-       (3, '2025-09-30');
 
--- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 2)
-INSERT INTO trip_day (trip_id, day)
-VALUES (4, '2025-03-16'),
-       (4, '2025-03-17'),
-       (4, '2025-03-18'),
-       (4, '2025-03-19');
+-- 여행 날짜 데이터 추가
+INSERT INTO trip_day (trip_id, day) VALUES
+-- trip_id = 1 (2025-03-10 ~ 12)
+(3, '2025-03-10'), (3, '2025-03-11'), (3, '2025-03-12'),
 
--- (카리나, 윈터, 지젤, 닝닝 | DAEJEON 여행 3)
-INSERT INTO trip_day (trip_id, day)
-VALUES (5, '2025-10-04'),
-       (5, '2025-10-05'),
-       (5, '2025-10-06'),
-       (5, '2025-10-07');
+-- trip_id = 2 (2025-04-05 ~ 07)
+(4, '2025-04-05'), (4, '2025-04-06'), (4, '2025-04-07'),
 
--- (카리나, 윈터, 지젤, 닝닝 | DAEGU 여행 4)
-INSERT INTO trip_day (trip_id, day)
-VALUES (6, '2025-06-11'),
-       (6, '2025-06-12'),
-       (6, '2025-06-13'),
-       (6, '2025-06-14');
+-- trip_id = 3 (2025-05-15 ~ 18)
+(5, '2025-05-15'), (5, '2025-05-16'), (5, '2025-05-17'), (5, '2025-05-18'),
 
--- (카리나, 윈터, 지젤, 닝닝 | GWANGJU 여행 5)
-INSERT INTO trip_day (trip_id, day)
-VALUES (7, '2025-05-10'),
-       (7, '2025-05-11'),
-       (7, '2025-05-12');
+-- trip_id = 4 (2025-06-02 ~ 05)
+(6, '2025-06-02'), (6, '2025-06-03'), (6, '2025-06-04'), (6, '2025-06-05'),
 
--- (카리나, 윈터, 지젤, 닝닝 | BUSAN 여행 6)
-INSERT INTO trip_day (trip_id, day)
-VALUES (8, '2025-10-10'),
-       (8, '2025-10-11'),
-       (8, '2025-10-12'),
-       (8, '2025-10-13');
+-- trip_id = 5 (2025-07-10 ~ 13)
+(7, '2025-07-10'), (7, '2025-07-11'), (7, '2025-07-12'), (7, '2025-07-13'),
 
--- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 7)
-INSERT INTO trip_day (trip_id, day)
-VALUES (9, '2025-08-13'),
-       (9, '2025-08-14');
+-- trip_id = 6 (2025-08-20 ~ 24)
+(8, '2025-08-20'), (8, '2025-08-21'), (8, '2025-08-22'), (8, '2025-08-23'), (8, '2025-08-24'),
 
--- (카리나, 윈터, 지젤, 닝닝 | SEOUL 여행 8)
-INSERT INTO trip_day (trip_id, day)
-VALUES (10, '2025-09-01'),
-       (10, '2025-09-02');
+-- trip_id = 7 (2025-09-10 ~ 12)
+(9, '2025-09-10'), (9, '2025-09-11'), (9, '2025-09-12'),
 
--- (닝닝, 윈터 | DAEJEON 여행 9)
-INSERT INTO trip_day (trip_id, day)
-VALUES (11, '2025-07-21'),
-       (11, '2025-07-22'),
-       (11, '2025-07-23'),
-       (11, '2025-07-24');
+-- trip_id = 8 (2025-10-04 ~ 06)
+(10, '2025-10-04'), (10, '2025-10-05'), (10, '2025-10-06'),
 
--- (윈터, 카리나 | JEJU 여행 10)
-INSERT INTO trip_day (trip_id, day)
-VALUES (12, '2025-10-25'),
-       (12, '2025-10-26'),
-       (12, '2025-10-27');
+-- trip_id = 9 (2025-10-28 ~ 30)
+(11, '2025-10-28'), (11, '2025-10-29'), (11, '2025-10-30'),
 
--- (카리나, 지젤, 윈터 | JEJU 여행 11)
-INSERT INTO trip_day (trip_id, day)
-VALUES (13, '2025-05-16'),
-       (13, '2025-05-17'),
-       (13, '2025-05-18');
+-- trip_id = 10 (2025-11-10 ~ 13)
+(12, '2025-11-10'), (12, '2025-11-11'), (12, '2025-11-12'), (12, '2025-11-13'),
 
--- (카리나, 지젤 | BUSAN 여행 12)
-INSERT INTO trip_day (trip_id, day)
-VALUES (14, '2025-08-08'),
-       (14, '2025-08-09'),
-       (14, '2025-08-10');
+-- trip_id = 11 (2025-12-02 ~ 04)
+(13, '2025-12-02'), (13, '2025-12-03'), (13, '2025-12-04'),
 
--- (닝닝, 지젤 | GANGNEUNG 여행 13)
-INSERT INTO trip_day (trip_id, day)
-VALUES (15, '2025-04-13'),
-       (15, '2025-04-14'),
-       (15, '2025-04-15');
+-- trip_id = 12 (2025-12-15 ~ 17)
+(14, '2025-12-15'), (14, '2025-12-16'), (14, '2025-12-17'),
 
--- (카리나, 닝닝 | DAEJEON 여행 14)
-INSERT INTO trip_day (trip_id, day)
-VALUES (16, '2025-11-10'),
-       (16, '2025-11-11');
-
--- (지젤, 닝닝, 윈터 | BUSAN 여행 15)
-INSERT INTO trip_day (trip_id, day)
-VALUES (17, '2025-09-16'),
-       (17, '2025-09-17'),
-       (17, '2025-09-18');
+-- trip_id = 13 (2025-12-27 ~ 30)
+(15, '2025-12-27'), (15, '2025-12-28'), (15, '2025-12-29'), (15, '2025-12-30');
 
 
 
@@ -1060,19 +913,5 @@ INSERT INTO transport_info (
       (110, 'BUSAN_STN', 'SEOUL_STN', '부산역', '서울역', '2025-08-07 16:00:00', '2025-08-07 18:30:00', 'ktx-sancheon', 'KTX-910', 'general', 240, 240, 49800.00, 1),
       (111, 'SEOUL_STN', 'BUSAN_STN', '서울역', '부산역', '2025-08-07 17:00:00', '2025-08-07 19:30:00', 'ktx', 'KTX-911', 'general', 240, 240, 49800.00, 1),
       (112, 'BUSAN_STN', 'SEOUL_STN', '부산역', '서울역', '2025-08-07 17:00:00', '2025-08-07 19:30:00', 'ktx-sancheon', 'KTX-912', 'general', 240, 240, 49800.00, 1);
-
-
-INSERT INTO tran_res (transport_id, reservation_id, trip_day_id, departure, arrival, seat_room_no, seat_number, seat_type, booked_at, price, version, status)
-VALUES
--- 카리나 혼자여행
-(1, 8, 1, 'SEOUL_STN', 'BUSAN_STN', 10, '12A', 'general', '2025-08-01 09:50:00', 49800, 0, 'CONFIRMED'),
-(62, 9, 4, 'BUSAN_STN', 'SEOUL_STN', 8, '3C', 'general', '2025-08-04 15:50:00', 49800, 0, 'CONFIRMED'),
--- 윈닝젤 여행
-(35, 10, 5, 'SEOUL_STN', 'BUSAN_STN', 5, '12A', 'general', '2025-08-03 10:50:00', 49800, 0, 'CONFIRMED'),
-(35, 10, 5, 'SEOUL_STN', 'BUSAN_STN', 5, '12B', 'general', '2025-08-03 10:50:00', 49800, 0, 'CONFIRMED'),
-(37, 11, 5, 'SEOUL_STN', 'BUSAN_STN', 5, '12C', 'general', '2025-08-03 11:50:00', 49800, 0, 'CONFIRMED'),
-(100, 12, 7, 'BUSAN_STN', 'SEOUL_STN', 5, '12A', 'general', '2025-08-05 09:50:00', 49800, 0, 'CONFIRMED'),
-(102, 13, 7, 'BUSAN_STN', 'SEOUL_STN', 5, '12B', 'general', '2025-08-05 14:50:00', 49800, 0, 'CONFIRMED'),
-(102, 13, 7, 'BUSAN_STN', 'SEOUL_STN', 5, '12C', 'general', '2025-08-05 14:50:00', 49800, 0, 'CONFIRMED');
 
 SET FOREIGN_KEY_CHECKS = 1;
