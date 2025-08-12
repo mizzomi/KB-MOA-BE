@@ -25,7 +25,7 @@ public class QrCodeUtil {
         // ========= 테스트 시작 =========
         // QR 이미지 파일로 저장 ! ! !
         try {
-            String path = "C:/Users/test_qr.png";
+            String path = "C:/Users/student/Desktop/test_qr.png";
             ImageIO.write(qrImage, "png", new File(path));
             System.out.println("QR 이미지 저장 완료: " + path);
         } catch (Exception e) {
