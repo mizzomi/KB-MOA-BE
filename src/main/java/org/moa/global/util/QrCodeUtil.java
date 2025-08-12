@@ -10,10 +10,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.util.Base64;
 
-// 테스트를 위한 imports
-import java.io.File;
-import javax.imageio.ImageIO;
-
 // 문자열을 QR 코드 이미지로 만들어주는 유틸 클래스
 @Slf4j
 public class QrCodeUtil {
@@ -21,18 +17,6 @@ public class QrCodeUtil {
     // QR 생성
     public static String generateEncryptedQr(String encryptedData) throws Exception {
         BufferedImage qrImage = generateQrImage(encryptedData);
-
-        // ========= 테스트 시작 =========
-        // QR 이미지 파일로 저장 ! ! !
-        try {
-            String path = "C:/Users/student/Desktop/test_qr.png";
-            ImageIO.write(qrImage, "png", new File(path));
-            System.out.println("QR 이미지 저장 완료: " + path);
-        } catch (Exception e) {
-            System.err.println("QR 이미지 저장 실패!");
-            e.printStackTrace();
-        }
-        // ========= 테스트 끝 =========
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         javax.imageio.ImageIO.write(qrImage, "png", baos); // QR 이미지를 메모리 스트림(baos)에 PNG 형식으로 저장
