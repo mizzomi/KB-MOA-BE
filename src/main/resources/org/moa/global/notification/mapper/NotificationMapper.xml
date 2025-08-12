@@ -31,12 +31,12 @@
     </insert>
     <select id="searchNotificationsByMemberIdAndUnread" resultType="org.moa.global.notification.entity.Notification">
         SELECT *
-        FROM NOTIFICATION
+        FROM notification
         WHERE member_id = #{memberId}
             AND is_read = false
     </select>
     <update id="readNotification">
-        UPDATE NOTIFICATION
+        UPDATE notification
         SET is_read = true
         WHERE notification_id = #{notificationId}
             AND is_read = false

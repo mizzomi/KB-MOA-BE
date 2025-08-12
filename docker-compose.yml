@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  # MySQL 데이터베이스
+  mysql:
+    image: mysql:8.0
+    container_name: moa-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MOA_DB_ROOT_PASSWORD:?Set MOA_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: moa
+      TZ: Asia/Seoul
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"  # 개발 편의상 열어둠 (보안 필요시 제거)
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/conf.d:/etc/mysql/conf.d:ro
+    networks:
+      - moa-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$$MYSQL_ROOT_PASSWORD\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    command: >
+      mysqld
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --skip-character-set-client-handshake
+      --init-connect='SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci'
+
+  # Redis 캐시 서버
+  redis:
+    image: redis:7-alpine
+    container_name: moa-redis
+    ports:
+      - "6379:6379"  # 개발 편의상 열어둠 (보안 필요시 제거)
+    volumes:
+      - redis_data:/data
+    networks:
+      - moa-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Tomcat + Spring Application
+  tomcat:
+    image: tomcat:9-jdk17
+    container_name: moa-tomcat
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./build/libs:/tmp/wars:ro
+      - ./src/main/resources/firebase:/usr/local/tomcat/firebase
+      - ./src/main/resources/application-docker.properties:/usr/local/tomcat/conf/application.properties:ro
+    environment:
+      JAVA_OPTS: "-Xms512m -Xmx1024m -Dfile.encoding=UTF-8 -Duser.language=ko -Duser.country=KR"
+      TZ: Asia/Seoul
+      SPRING_PROFILES_ACTIVE: docker
+      LANG: ko_KR.UTF-8
+      LC_ALL: ko_KR.UTF-8
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - moa-network
+    command: >
+      sh -c "
+        echo '========================================' &&
+        echo 'Starting Tomcat deployment process...' &&
+        echo '========================================' &&
+        echo 'Clearing webapps directory...' &&
+        rm -rf /usr/local/tomcat/webapps/* &&
+        echo 'Finding WAR file in /tmp/wars...' &&
+        ls -la /tmp/wars/ &&
+        WAR_FILE=$$(find /tmp/wars -name '*.war' -type f | head -1) &&
+        if [ -z \"$$WAR_FILE\" ]; then
+          echo 'ERROR: No WAR file found in build/libs directory!';
+          echo 'Please run: ./gradlew clean build -x test';
+          exit 1;
+        fi &&
+        echo \"Found WAR file: $$WAR_FILE\" &&
+        echo 'Copying to ROOT.war...' &&
+        cp \"$$WAR_FILE\" /usr/local/tomcat/webapps/ROOT.war &&
+        echo 'WAR file deployed successfully!' &&
+        echo 'Starting Tomcat...' &&
+        catalina.sh run
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+networks:
+  moa-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local

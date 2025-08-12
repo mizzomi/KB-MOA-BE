@@ -1,16 +1,16 @@
-.gradle
+# ===================================
+# 빌드 및 IDE 관련 (올려도 안전)
+# ===================================
+
+# Gradle
+.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### IntelliJ IDEA ###
+# IntelliJ IDEA
 .idea/
-.idea/dataSources.xml
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
 *.iws
 *.iml
 *.ipr
@@ -18,7 +18,7 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-### Eclipse ###
+# Eclipse
 .apt_generated
 .classpath
 .factorypath
@@ -30,22 +30,86 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### 설정 파일 추가
-/src/main/resources/application.properties
-
-### firebase key ###
-/src/main/resources/firebase/*.json
-/src/main/resources/firebase/firebase/moa-firebase-service-account-key.json
-
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# VS Code
 .vscode/
 
-### Mac OS ###
+# ===================================
+# OS 관련 파일
+# ===================================
+
+# Mac OS
 .DS_Store
+**/.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Linux
+*~
+
+# ===================================
+# 민감한 정보 (절대 올리면 안됨)
+# ===================================
+
+# Firebase 서비스 계정 키 (중요!)
+/src/main/resources/firebase/*.json
+/src/main/resources/firebase/moa-firebase-service-account-key.json
+
+# 환경 설정 파일 (비밀번호 포함)
+/src/main/resources/application.properties
+/src/main/resources/application-docker.properties
+
+# 로컬 전용 설정 (만약 있다면)
+/src/main/resources/application-local.properties
+/src/main/resources/application-dev.properties
+/src/main/resources/application-prod.properties
+
+# ===================================
+# 로그 및 임시 파일
+# ===================================
+
+# 로그 파일
+*.log
+logs/
+/logs/
+
+# 임시 파일
+*.tmp
+*.temp
+*.swp
+*.swo
+*~.nib
+
+# ===================================
+# 빌드 결과물
+# ===================================
+
+# WAR 파일
+*.war
+*.jar
+*.ear
+
+# 클래스 파일
+*.class
+
+# ===================================
+# 기타
+# ===================================
+
+# 백업 파일
+*.backup
+*.bak
+*.old
+
+# 압축 파일 (필요시 추가)
+# *.zip
+# *.tar.gz
+# *.rar
