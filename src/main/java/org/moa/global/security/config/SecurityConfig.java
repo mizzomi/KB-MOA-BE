@@ -129,6 +129,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 			// API 경로별 권한 설정
 			.antMatchers("/api/public/**").permitAll()
+			// 인증 관련 엔드포인트 (토큰 갱신은 public, 로그아웃과 검증은 인증 필요)
+			.antMatchers("/api/public/auth/refresh").permitAll()
+			.antMatchers("/api/auth/**").authenticated()
 			// 역할별 접근 제한
 			.antMatchers("/api/member").access("hasRole('ROLE_USER')")
 			.antMatchers("/api/admin").access("hasRole('ROLE_ADMIN')")

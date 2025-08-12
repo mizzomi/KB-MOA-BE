@@ -102,6 +102,11 @@ dependencies {
     // Firebase
     implementation 'com.google.firebase:firebase-admin:9.2.0'
 
+    // Redis - 버전 호환성 수정
+    implementation 'org.springframework.data:spring-data-redis:2.7.18'
+    implementation 'redis.clients:jedis:3.9.0'
+    implementation 'org.apache.commons:commons-pool2:2.11.1'
+
     // 테스트
     testImplementation "org.springframework:spring-test:${springVersion}"
     testCompileOnly "org.projectlombok:lombok:${lombokVersion}"

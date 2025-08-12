@@ -1,14 +1,19 @@
 package org.moa.global.util;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 쿠키 관리 유틸리티 클래스
- * 로컬과 프로덕션 환경에 따라 다른 쿠키 설정 적용
+ * - Access Token: Response Body로 전달
+ * - Refresh Token: HttpOnly 쿠키로 전달
+ * - 로컬: HTTP, 배포: HTTPS (Nginx)
  */
+@Slf4j
 @Component
 public class CookieUtil {
     
@@ -18,51 +23,70 @@ public class CookieUtil {
     @Value("${server.use.secure.cookie:false}")
     private boolean useSecureCookie;
     
+    // 쿠키 이름 상수
+    public static final String REFRESH_TOKEN_COOKIE = "REFRESH_TOKEN";
+    
     /**
-     * JWT 토큰을 쿠키로 생성
-     * 환경에 따라 Secure, SameSite 속성 자동 설정
+     * Refresh Token을 HttpOnly 쿠키로 생성 (보안 강화)
+     * 프론트엔드에서 접근 불가, 자동으로 서버에 전송
      */
-    public void createJwtCookie(HttpServletResponse response, String token, int maxAge) {
-        Cookie cookie = new Cookie("JWT_TOKEN", token);
-        cookie.setHttpOnly(true);  // XSS 방지 (항상 적용)
+    public void createRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+        Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE, refreshToken);
+        cookie.setHttpOnly(true);  // JavaScript에서 접근 불가 (XSS 방지)
         cookie.setPath("/");       // 전체 경로에서 사용
-        cookie.setMaxAge(maxAge);  // 유효 시간
+        cookie.setMaxAge(7 * 24 * 60 * 60); // 7일
         
-        // 프로덕션 환경에서만 Secure 적용
+        // 배포 환경(HTTPS) 설정
         if ("production".equals(serverEnv) || useSecureCookie) {
             cookie.setSecure(true);  // HTTPS에서만 전송
         }
         
-        // Cookie 객체는 SameSite를 직접 지원하지 않으므로
-        // ResponseHeader를 통해 설정
         response.addCookie(cookie);
         
-        // SameSite 속성 추가 (Spring 4.x에서는 헤더로 직접 설정)
-        String cookieValue = buildCookieHeader(cookie);
-        response.addHeader("Set-Cookie", cookieValue);
+        // SameSite 속성 추가 (직접 헤더로 설정)
+        String cookieHeader = buildRefreshTokenCookieHeader(cookie);
+        response.addHeader("Set-Cookie", cookieHeader);
+        
+        log.debug("Refresh Token 쿠키 생성 - HttpOnly: true, Secure: {}, 환경: {}", 
+            cookie.getSecure(), serverEnv);
     }
     
     /**
      * 쿠키 삭제
      */
-    public void deleteJwtCookie(HttpServletResponse response) {
-        Cookie cookie = new Cookie("JWT_TOKEN", null);
-        cookie.setHttpOnly(true);
+    public void deleteCookie(HttpServletResponse response, String cookieName) {
+        Cookie cookie = new Cookie(cookieName, null);
         cookie.setPath("/");
         cookie.setMaxAge(0);  // 즉시 만료
+        cookie.setHttpOnly(true);  // Refresh Token은 항상 HttpOnly
         
         if ("production".equals(serverEnv) || useSecureCookie) {
             cookie.setSecure(true);
         }
         
         response.addCookie(cookie);
+        log.debug("쿠키 삭제: {}", cookieName);
     }
     
     /**
-     * Set-Cookie 헤더 문자열 생성
-     * SameSite 속성을 포함한 완전한 쿠키 헤더 생성
+     * 요청에서 쿠키 값 추출
      */
-    private String buildCookieHeader(Cookie cookie) {
+    public String getCookieValue(HttpServletRequest request, String cookieName) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookieName.equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Refresh Token용 Set-Cookie 헤더 생성
+     */
+    private String buildRefreshTokenCookieHeader(Cookie cookie) {
         StringBuilder sb = new StringBuilder();
         sb.append(cookie.getName()).append("=").append(cookie.getValue());
         
@@ -71,30 +95,35 @@ public class CookieUtil {
         }
         
         sb.append("; Path=").append(cookie.getPath());
-        sb.append("; HttpOnly");
+        sb.append("; HttpOnly"); // 항상 HttpOnly
         
         // 환경별 설정
         if ("production".equals(serverEnv) || useSecureCookie) {
+            // 배포: HTTPS (Nginx가 SSL 처리)
             sb.append("; Secure");
             sb.append("; SameSite=None");  // Cross-Origin 허용 (HTTPS 필수)
         } else {
-            sb.append("; SameSite=Lax");   // 로컬 개발 환경
+            // 로컬: HTTP
+            sb.append("; SameSite=Lax");   // CSRF 방지하면서 일반 링크는 허용
         }
         
         return sb.toString();
     }
     
     /**
-     * 리프레시 토큰용 쿠키 (더 긴 유효기간)
+     * Refresh Token 쿠키 삭제
      */
-    public void createRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
-        createJwtCookie(response, refreshToken, 7 * 24 * 60 * 60); // 7일
+    public void deleteRefreshTokenCookie(HttpServletResponse response) {
+        deleteCookie(response, REFRESH_TOKEN_COOKIE);
     }
     
     /**
-     * 액세스 토큰용 쿠키 (짧은 유효기간)
+     * 모든 인증 관련 쿠키 삭제
      */
-    public void createAccessTokenCookie(HttpServletResponse response, String accessToken) {
-        createJwtCookie(response, accessToken, 60 * 60); // 1시간
+    public void deleteAllAuthCookies(HttpServletResponse response) {
+        deleteRefreshTokenCookie(response);
+        // 레거시 JWT_TOKEN 쿠키도 삭제 (하위 호환성)
+        deleteCookie(response, "JWT_TOKEN");
+        log.info("모든 인증 관련 쿠키 삭제 완료");
     }
 }
