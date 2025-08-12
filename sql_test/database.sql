@@ -785,7 +785,7 @@ VALUES
 (1, 'RESTAURANT'), -- reservationId = 13
 (2, 'RESTAURANT'), -- reservationId = 14
 (3, 'RESTAURANT'), -- reservationId = 15
-(4, 'RESTAURANT'), -- reservationId = 16
+(3, 'RESTAURANT'), -- reservationId = 16
 (5, 'RESTAURANT'), -- reservationId = 17
 (6, 'RESTAURANT'), -- reservationId = 18
 (7, 'RESTAURANT'); -- reservationId = 19
