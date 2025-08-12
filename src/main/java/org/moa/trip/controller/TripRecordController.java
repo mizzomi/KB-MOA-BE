@@ -7,10 +7,7 @@ import org.moa.global.account.service.AccountService;
 import org.moa.global.response.ApiResponse;
 import org.moa.global.security.domain.CustomUser;
 import org.moa.global.type.StatusCode;
-import org.moa.trip.dto.record.TripRecordCardDto;
-import org.moa.trip.dto.record.TripRecordDetailResponseDto;
-import org.moa.trip.dto.record.TripRecordRequestDto;
-import org.moa.trip.dto.record.TripRecordResponseDto;
+import org.moa.trip.dto.record.*;
 import org.moa.trip.service.TripRecordService;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -84,7 +81,7 @@ public class TripRecordController {
             @PathVariable Long tripId,
             @PathVariable Long recordId,
             @AuthenticationPrincipal CustomUser loginUser,
-            @Valid @ModelAttribute TripRecordRequestDto requestDto,
+            @Valid @ModelAttribute TripRecordUpdateRequestDto requestDto,
             BindingResult bindingResult) {
 
         // 유효성 검사 에러 처리
