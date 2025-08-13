@@ -76,6 +76,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		
 		// 허용할 Origin 설정 (프론트엔드 도메인 추가)
 		config.addAllowedOrigin("http://localhost:5173");  // 로컬 개발
+		config.addAllowedOrigin("https://localhost:5173");
 		config.addAllowedOrigin("http://localhost:3000");   // 로컬 개발 (React 기본)
 		config.addAllowedOrigin("https://kb-moa-fe.vercel.app");  // Vercel 프론트엔드 배포
 		config.addAllowedOrigin("https://kbmoa.store");     // 배포 백엔드 (필요시)
