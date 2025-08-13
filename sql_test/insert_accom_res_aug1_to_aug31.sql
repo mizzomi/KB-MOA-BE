@@ -1,4 +1,4 @@
-INSERT INTO ACCOM_RES (accom_res.accom_res_id,accom_id, reservation_id, trip_day_id, guests, hotel_name, address, price, room_type, room_image_url, checkin_day, checkout_day, max_guests, status)
+INSERT INTO accom_res (accom_res.accom_res_id,accom_id, reservation_id, trip_day_id, guests, hotel_name, address, price, room_type, room_image_url, checkin_day, checkout_day, max_guests, status)
 VALUES
 -- 부산 롯데 호텔(accom_id=1) - 8월 1일~31일
 -- 8월 1일
