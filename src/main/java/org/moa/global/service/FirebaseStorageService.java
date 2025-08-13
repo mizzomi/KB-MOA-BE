@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -26,24 +27,26 @@ public class FirebaseStorageService {
         if (file == null || file.isEmpty()) {
             return null;
         }
-
-        Bucket bucket = getBucket();
-
-        String originalFileName = file.getOriginalFilename();
-        String extension = StringUtils.getFilenameExtension(originalFileName);
-
-        // 파일 이름 중복을 피하기 위해 UUID 사용
-        String storedFileName = String.format("%s%s", UUID.randomUUID(), (extension != null ? "." + extension : ""));
-
         // Content-Type 결정
         String contentType = determineContentType(file);
 
+        return uploadAndGetFileName(file.getInputStream(), file.getOriginalFilename(), contentType, file.getSize());
+    }
+
+    /** InputStream을 받아 Firebase Storage에 업로드하고, 저장된 파일 이름 반환 **/
+    public String uploadAndGetFileName(InputStream inputStream, String originalFileName, String contentType, long fileSize) throws IOException {
+        if (inputStream == null || fileSize == 0) {
+            throw new IllegalArgumentException("업로드할 파일 스트림이 비어있거나 크기가 0입니다.");
+        }
+
+        Bucket bucket = getBucket();
+        String extension = StringUtils.getFilenameExtension(originalFileName);
+        String storedFileName = String.format("%s%s", UUID.randomUUID(), (extension != null ? "." + extension : ""));
+
         // Firebase Storage에 파일 업로드
-        bucket.create(storedFileName, file.getBytes(), contentType);
+        bucket.create(storedFileName, inputStream, contentType);
 
         log.info("파일이 성공적으로 업로드 되었습니다: {} (Content-Type: {})", storedFileName, contentType);
-
-        // 저장된 파일 이름 반환
         return storedFileName;
     }
 
