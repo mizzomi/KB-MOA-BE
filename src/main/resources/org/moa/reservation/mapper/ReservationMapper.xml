@@ -39,12 +39,12 @@
             ri.rest_name AS restName,
             ri.address,
             td.day AS date,
-            CAST(rts.res_time AS TIME) AS time,
+            rds.time AS time,
             rr.res_num AS resNum,
             rr.status
         FROM rest_res rr
             JOIN trip_day td ON rr.trip_day_id = td.trip_day_id
-            JOIN rest_time_slot rts ON rr.rest_time_id = rts.rest_time_id
+            JOIN rest_daily_slot rds ON rr.daily_slot_id = rds.daily_slot_id
             JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
         WHERE rr.rest_res_id = #{restResId}
     </select>
@@ -58,13 +58,13 @@
             ri.rest_name AS restName,
             ri.address,
             td.day AS date,
-            CAST(rts.res_time AS TIME) AS time,
+            rds.time AS time,
             rr.res_num AS resNum,
             rr.status
         FROM rest_res rr
                  JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
                  JOIN trip_day td ON rr.trip_day_id = td.trip_day_id
-                 JOIN rest_time_slot rts ON rr.rest_time_id = rts.rest_time_id
+                 JOIN rest_daily_slot rds ON rr.daily_slot_id = rds.daily_slot_id
         WHERE rr.reservation_id = #{reservationId}
     </select>
 

@@ -49,33 +49,37 @@
         WHERE rest_id = #{restId}
     </select>
 
-    <!-- 예약 가능한 시간대 조회 -->
-    <select id="findTimeSlot" resultType="string">
-        SELECT res_time
-        FROM rest_time_slot
+    <!-- 예약 가능한 날짜 시간 조회 -->
+    <select id="findAvailableSlotsByDate" resultType="org.moa.reservation.restaurant.dto.AvailableTimeResponseDto">
+        SELECT
+            daily_slot_id   AS dailySlotId,
+            DATE_FORMAT(rds.time, '%H:%i') AS time,
+            max_capacity    AS maxNum,
+            (max_capacity - current_capacity) AS reservedNum,
+            current_capacity AS availableNum
+        FROM
+            rest_daily_slot rds
+        WHERE
+            rest_id = #{restId}
+          AND day = #{date}
+          AND current_capacity > 0
+    </select>
+
+    <!-- 예약 인원 -->
+    <update id="decreaseCapacity">
+        UPDATE rest_daily_slot
+        SET current_capacity = current_capacity - #{amount}
+        WHERE daily_slot_id = #{dailySlotId}
+          AND current_capacity >= #{amount}
+    </update>
+
+    <!-- dailySlotId 조회 -->
+    <select id="findDailySlotId" resultType="long">
+        SELECT daily_slot_id
+        FROM rest_daily_slot
         WHERE rest_id = #{restId}
-    </select>
-
-    <!-- 특정 시간에 예약된 인원 수 -->
-    <select id="findReservedCount" resultType="int">
-        SELECT COALESCE(SUM(res_num), 0)
-        FROM rest_res
-        WHERE rest_time_id = #{restTimeId}
-    </select>
-
-    <!-- 특정 시간대의 최대 예약 가능 인원 -->
-    <select id="findMaxCapacity" resultType="int">
-        SELECT max_capacity
-        FROM rest_time_slot
-        WHERE rest_time_id = #{restTimeId}
-    </select>
-
-    <!-- restTimeId 조회 -->
-    <select id="findRestTimeId" resultType="long">
-        SELECT rest_time_id
-        FROM rest_time_slot
-        WHERE rest_id = #{restId}
-          AND res_time = #{time}
+          AND day = #{date}
+          AND time = #{time}
     </select>
 
     <!-- tripDayId 조회-->
@@ -103,7 +107,7 @@
             reservation_id,
             trip_day_id,
             rest_id,
-            rest_time_id,
+            daily_slot_id,
             res_num,
             status,
             created_at
@@ -112,7 +116,7 @@
                    #{reservationId},
                    #{tripDayId},
                    #{restId},
-                   #{restTimeId},
+                   #{dailySlotId},
                    #{resNum},
                    'reserved',
                    NOW()
@@ -127,17 +131,17 @@
             ri.rest_id AS restId,
             ri.rest_name AS restName,
             td.day AS date,
-        rts.res_time AS time,
-        rr.res_num AS resNum,
-        rr.status
+            rds.time AS time,
+            rr.res_num AS resNum,
+            rr.status
         FROM
             rest_res rr
-            JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
-            JOIN trip_day td ON rr.trip_day_id = td.trip_day_id
-            JOIN rest_time_slot rts ON rr.rest_time_id = rts.rest_time_id
+                JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
+                JOIN trip_day td ON rr.trip_day_id = td.trip_day_id
+                JOIN rest_daily_slot rds ON rr.daily_slot_id = rds.daily_slot_id -- 수정
         WHERE
             td.trip_id = #{tripId}
-        ORDER BY td.day, rts.res_time
+        ORDER BY td.day, rds.time
     </select>
 
     <!-- 식당 예약 상세 조회 -->
@@ -152,14 +156,14 @@
             ri.category        AS category,
             ri.rest_image_url  AS imageUrl,
             td.day             AS date,
-        rts.res_time       AS time,
-        rr.res_num         AS resNum,
-        rr.status          AS status
+            rds.time           AS time,
+            rr.res_num         AS resNum,
+            rr.status          AS status
         FROM
             rest_res rr
-            JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
-            JOIN trip_day td ON rr.trip_day_id = td.trip_day_id
-            JOIN rest_time_slot rts ON rr.rest_time_id = rts.rest_time_id
+                JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
+                JOIN trip_day td ON rr.trip_day_id = td.trip_day_id
+                JOIN rest_daily_slot rds ON rr.daily_slot_id = rds.daily_slot_id
         WHERE
             rr.rest_res_id = #{restResId}
     </select>
@@ -174,8 +178,8 @@
             MIN(rr.created_at) as createdAt,
             'RESTAURANT' as resKind
         FROM rest_res rr
-            JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
-            JOIN trip_day td ON rr.trip_day_id = td.trip_day_id
+                JOIN restaurant_info ri ON rr.rest_id = ri.rest_id
+                JOIN trip_day td ON rr.trip_day_id = td.trip_day_id
         WHERE td.trip_id = #{tripId}
           AND rr.status IN ('reserved', 'checked_in', 'completed')
         GROUP BY rr.reservation_id, ri.rest_name, rr.rest_id, ri.rest_image_url, td.day

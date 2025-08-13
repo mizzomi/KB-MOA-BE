@@ -14,7 +14,6 @@ public class RestaurantReservationInsertDto {
     private Long tripId;
     private Long tripDayId;
     private Long restId;
-    private Long restTimeId;
-    private String resTime;
+    private Long dailySlotId;
     private Integer resNum;
 }
