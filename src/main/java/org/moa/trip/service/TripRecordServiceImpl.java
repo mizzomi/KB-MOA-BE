@@ -1,5 +1,6 @@
 package org.moa.trip.service;
 
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Qualifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.concurrent.CompletableFuture;
@@ -263,7 +266,20 @@ public class TripRecordServiceImpl implements TripRecordService {
                 .filter(file -> file != null && !file.isEmpty()) // 유효한 파일만 필터링
                 .map(imageFile -> CompletableFuture.runAsync(() -> {
                     try {
-                        String storedFileName = firebaseStorageService.uploadAndGetFileName(imageFile);
+                        // 이미지 리사이징 및 압축
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        Thumbnails.of(imageFile.getInputStream())
+                                .size(1024, 1024)
+                                .outputQuality(0.85)
+                                .toOutputStream(outputStream);
+
+                        byte[] resizedImageBytes = outputStream.toByteArray();
+                        ByteArrayInputStream inputStream = new ByteArrayInputStream(resizedImageBytes);
+
+                        // 리사이징된 이미지를 Firebase에 업로드
+                        String storedFileName = firebaseStorageService.uploadAndGetFileName(
+                                inputStream, imageFile.getOriginalFilename(), imageFile.getContentType(), resizedImageBytes.length);
+
                         TripRecordImage recordImage = TripRecordImage.builder()
                                 .recordId(recordId)
                                 .imageUrl(storedFileName)
