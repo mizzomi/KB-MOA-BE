@@ -30,16 +30,13 @@ public interface RestaurantMapper {
     RestaurantInfoResponseDto findRestaurantInfo(Long restId);
 
     // 예약 가능한 시간대 조회
-    List<String> findTimeSlot(@Param("restId") Long restId);
+    List<AvailableTimeResponseDto> findAvailableSlotsByDate(@Param("restId") Long restId, @Param("date") LocalDate date);
 
-    // 특정 시간에 예약된 인원 수
-    int findReservedCount(@Param("restTimeId") Long restTimeId);
+    // 예약 인원
+    int decreaseCapacity(@Param("dailySlotId") Long dailySlotId, @Param("amount") int amount);
 
-    // 특정 시간대의 최대 예약 가능 인원
-    int findMaxCapacity(@Param("restTimeId") Long restTimeId);
-
-    // restTimeId 조회
-    Long findRestTimeId(@Param("restId") Long restId, @Param("time") String time);
+    // dailySlotId 조회
+    Long findDailySlotId(@Param("restId") Long restId, @Param("date") LocalDate date, @Param("time") String time);
 
     // tripDayId 조회
     Long findTripDayId(@Param("tripId") Long tripId, @Param("date") LocalDate date);
