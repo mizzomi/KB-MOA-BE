@@ -52,28 +52,7 @@ public class RestaurantServiceImpl implements RestaurantService {
 
         log.info("예약 가능 시간 조회 시작 : restId={}, date={}", restId, date);
 
-        List<String> timeSlots = restaurantMapper.findTimeSlot(restId);
-
-        List<AvailableTimeResponseDto> availableTimes = new ArrayList<>();
-
-        for(String timeSlot : timeSlots) {
-            Long restTimeId = restaurantMapper.findRestTimeId(restId, timeSlot);
-            int max = restaurantMapper.findMaxCapacity(restTimeId);
-            int reserved = restaurantMapper.findReservedCount(restTimeId);
-            int available = Math.max(max - reserved, 0);
-
-            log.debug("  - 시간 {} : 최대 {}, 예약 {}, 가능 {}", timeSlot, max, reserved, available);
-
-            if (available > 0) {
-                availableTimes.add(new AvailableTimeResponseDto(
-                        timeSlot,
-                        restTimeId,
-                        max,
-                        reserved,
-                        available
-                ));
-            }
-        }
+        List<AvailableTimeResponseDto> availableTimes = restaurantMapper.findAvailableSlotsByDate(restId, date);
 
         log.info("예약 가능 시간 조회 완료 : {}개 시간대 가능", availableTimes.size());
 
@@ -84,12 +63,27 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Transactional
     @Override
     public void createReservation(Long memberId, RestaurantReservationRequestDto dto) {
+        log.info("예약 생성 시작: memberId={}, request={}", memberId, dto);
+
+        LocalDate date = LocalDate.parse(dto.getDate());
 
         // 1. tripDayId 조회
-        Long tripDayId = restaurantMapper.findTripDayId(dto.getTripId(), LocalDate.parse(dto.getDate()));
+        Long tripDayId = restaurantMapper.findTripDayId(dto.getTripId(), date);
+        if (tripDayId == null) {
+            throw new RuntimeException("해당 날짜에 대한 여행 정보가 없습니다.");
+        }
 
-        // 2. restTimeId 조회
-        Long restTimeId = restaurantMapper.findRestTimeId(dto.getRestId(), dto.getTime());
+        // 2. dailySlotId 조회
+        Long dailySlotId = restaurantMapper.findDailySlotId(dto.getRestId(), date, dto.getTime());
+        if (dailySlotId == null) {
+            throw new RuntimeException("예약 불가능한 시간이거나 마감되었습니다.");
+        }
+
+        // 3. 해당 슬롯의 예약 가능 인원 줄이기
+        int updatedRows = restaurantMapper.decreaseCapacity(dailySlotId, dto.getResNum());
+        if (updatedRows == 0) {
+            throw new RuntimeException("예약 처리 중 좌석이 마감되었습니다. 다시 시도해주세요.");
+        }
 
         // 3. RESERVATION insert
         restaurantMapper.insertReservation(tripDayId);
@@ -101,11 +95,11 @@ public class RestaurantServiceImpl implements RestaurantService {
         insertDto.setTripId(dto.getTripId());
         insertDto.setTripDayId(tripDayId);
         insertDto.setRestId(dto.getRestId());
-        insertDto.setRestTimeId(restTimeId);
-        insertDto.setResTime(dto.getTime());
+        insertDto.setDailySlotId(dailySlotId);
         insertDto.setResNum(dto.getResNum());
 
         restaurantMapper.insertRestaurantReservation(insertDto);
+        log.info("예약 생성 완료: reservationId={}", reservationId);
     }
 
 

@@ -10,7 +10,8 @@ DROP TABLE IF EXISTS trip_record_images;
 DROP TABLE IF EXISTS trip_records;
 DROP TABLE IF EXISTS settlement_notes;
 DROP TABLE IF EXISTS expense;
-DROP TABLE IF EXISTS rest_time_slot;
+DROP TABLE IF EXISTS rest_daily_slot;
+DROP TABLE IF EXISTS rest_time_template;
 DROP TABLE IF EXISTS rest_res;
 DROP TABLE IF EXISTS restaurant_info;
 DROP TABLE IF EXISTS tran_res;
@@ -371,9 +372,9 @@ CREATE TABLE restaurant_info
 );
 
 -- ========================================================================================
--- 식당 시간 테이블
+-- 식당 기본 시간표 테이블
 -- ========================================================================================
-CREATE TABLE rest_time_slot
+CREATE TABLE rest_time_template
 (
     rest_time_id   BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
     rest_id        BIGINT       NOT NULL,
@@ -381,6 +382,25 @@ CREATE TABLE rest_time_slot
     max_capacity   INT          NOT NULL DEFAULT 10,
 
     FOREIGN KEY (rest_id) REFERENCES restaurant_info (rest_id)
+);
+
+-- ========================================================================================
+-- 식당 날짜별 예약칸 테이블
+-- ========================================================================================
+CREATE TABLE rest_daily_slot
+(
+    daily_slot_id    BIGINT AUTO_INCREMENT PRIMARY KEY,
+    rest_id          BIGINT    NOT NULL,
+    day              DATE      NOT NULL,
+    time             TIME      NOT NULL,
+    max_capacity     INT       NOT NULL,
+    current_capacity INT       NOT NULL,
+
+    CONSTRAINT fk_daily_slot_to_restaurant
+        FOREIGN KEY (rest_id) REFERENCES restaurant_info(rest_id)
+            ON DELETE CASCADE,
+
+    UNIQUE KEY uk_restaurant_day_time (rest_id, day, time)
 );
 
 -- ========================================================================================
@@ -392,8 +412,8 @@ CREATE TABLE rest_res
     rest_id        BIGINT       NOT NULL,
     reservation_id BIGINT       NOT NULL,
     trip_day_id    BIGINT       NOT NULL,
+    daily_slot_id  BIGINT       NOT NULL,
     res_num        INT          NOT NULL,
-    rest_time_id   BIGINT       NOT NULL,
     status         ENUM('reserved', 'checked_in', 'completed') DEFAULT 'reserved' NOT NULL,
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -401,7 +421,7 @@ CREATE TABLE rest_res
     FOREIGN KEY (rest_id) REFERENCES restaurant_info (rest_id),
     FOREIGN KEY (reservation_id) REFERENCES reservation (reservation_id),
     FOREIGN KEY (trip_day_id) REFERENCES trip_day (trip_day_id),
-    FOREIGN KEY (rest_time_id) REFERENCES rest_time_slot (rest_time_id)
+    FOREIGN KEY (daily_slot_id) REFERENCES rest_daily_slot (daily_slot_id)
 );
 
 -- ========================================================================================
@@ -983,9 +1003,9 @@ INSERT INTO restaurant_info (
  '051-888-1111', '퓨전 분식 전문점', 35.101, 129.033);
 
 
--- 식당 시간 테스트용 데이터
+-- 식당 기본 시간 테스트용 데이터
 -- 식당별 예약 시간 슬롯 생성 (rest_id: 1 ~ 15, 시간: 11시 ~ 19시, max_capacity: 5)
-INSERT INTO rest_time_slot (rest_id, res_time, max_capacity) VALUES
+INSERT INTO rest_time_template (rest_id, res_time, max_capacity) VALUES
 -- 해운대 곰장어집 (1) (1 ~ 9)
 (1, '11:00', 5), (1, '12:00', 5), (1, '13:00', 5),
 (1, '14:00', 5), (1, '15:00', 5), (1, '16:00', 5),
@@ -1062,15 +1082,65 @@ INSERT INTO rest_time_slot (rest_id, res_time, max_capacity) VALUES
 (15, '17:00', 5), (15, '18:00', 5), (15, '19:00', 5);
 
 
--- 식당 예약 테스트용 데이터
-INSERT INTO rest_res (rest_id, reservation_id, trip_day_id, res_num, rest_time_id) VALUES
-(1, 13, 1, 1, 8), -- 1일 18시 1명 해운대 곰장어집
-(7, 14, 2, 1, 57), -- 2일 13시 1명 팔선생 중화요리
-(15, 15, 3, 1, 128), -- 3일 12시 1명 이색분식연구소
-(5, 16, 3, 1, 45), -- 3일 19시 1명 이자카야 코지
-(5, 17, 5, 3, 44), -- 3일 18시 3명 이자카야 코지
-(10, 18, 6, 3, 84), -- 4일 13시 3명 부산 파스타하우스
-(15, 19, 7, 2, 127); -- 5일 11시 2명 이색분식연구소
+-- 1. 식당 날짜별 예약칸 테스트 데이터 (모든 날짜 & 시간 조합 자동 생성)
+INSERT INTO rest_daily_slot (rest_id, day, time, max_capacity, current_capacity)
+SELECT
+    t.rest_id,
+    d.day,
+    t.res_time,
+    t.max_capacity,
+    t.max_capacity
+FROM
+    rest_time_template t, (SELECT DISTINCT day FROM trip_day) d;
+
+-- 2. 식당 예약 테스트 데이터
+INSERT INTO rest_res (rest_id, reservation_id, trip_day_id, res_num, daily_slot_id) VALUES
+-- 1일 18시 1명 해운대 곰장어집
+(1, 13, 1, 1, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 1 AND day = '2025-08-01' AND time = '18:00:00')),
+-- 2일 13시 1명 팔선생 중화요리
+(7, 14, 2, 1, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 7 AND day = '2025-08-02' AND time = '13:00:00')),
+-- 3일 12시 1명 이색분식연구소
+(15, 15, 3, 1, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 15 AND day = '2025-08-03' AND time = '12:00:00')),
+-- 3일 19시 1명 이자카야 코이
+(5, 16, 3, 1, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 5 AND day = '2025-08-03' AND time = '19:00:00')),
+-- 3일 18시 3명 이자카야 코이
+(5, 17, 5, 3, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 5 AND day = '2025-08-03' AND time = '18:00:00')),
+-- 4일 13시 3명 부산 파스타하우스
+(10, 18, 6, 3, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 10 AND day = '2025-08-04' AND time = '13:00:00')),
+-- 5일 11시 2명 이색분식연구소
+(15, 19, 7, 2, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 15 AND day = '2025-08-05' AND time = '11:00:00'));
+
+-- 3. 테스트 예약을 잔여석에 반영
+-- 1일 18시 해운대 곰장어집 1명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 1
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 1 AND day = '2025-08-01' AND time = '18:00:00') AS temp);
+
+-- 2일 13시 팔선생 중화요리 1명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 1
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 7 AND day = '2025-08-02' AND time = '13:00:00') AS temp);
+
+-- 3일 12시 이색분식연구소 1명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 1
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 15 AND day = '2025-08-03' AND time = '12:00:00') AS temp);
+
+-- 3일 19시 이자카야 코이 1명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 1
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 5 AND day = '2025-08-03' AND time = '19:00:00') AS temp);
+
+-- 3일 18시 이자카야 코이 3명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 3
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 5 AND day = '2025-08-03' AND time = '18:00:00') AS temp);
+
+-- 4일 13시 부산 파스타하우스 3명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 3
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 10 AND day = '2025-08-04' AND time = '13:00:00') AS temp);
+
+-- 5일 11시 이색분식연구소 2명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 2
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 15 AND day = '2025-08-05' AND time = '11:00:00') AS temp);
+
+-- 4. 성능 최적화를 위한 인덱스 추가
+CREATE INDEX idx_rest_daily_slot_rest_id_day ON rest_daily_slot (rest_id, day);
 
 
 -- 비용 테스트용 데이터
