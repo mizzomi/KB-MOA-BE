@@ -50,6 +50,9 @@ public interface RestaurantMapper {
     // 식당 예약 등록
     int insertRestaurantReservation(RestaurantReservationInsertDto insertDto);
 
+    // 특정 날짜 예약칸 자동 생성
+    void createSlotsForDate(@Param("date") LocalDate date);
+    
     // 여행별 식당 예약 조회
     List<RestaurantReservationResponseDto> findReservations(@Param("tripId") Long tripId);
 

@@ -123,6 +123,19 @@
                )
     </insert>
 
+    <!-- 특정 날짜 예약칸 자동 생성 -->
+    <insert id="createSlotsForDate">
+        INSERT IGNORE INTO rest_daily_slot (rest_id, day, time, max_capacity, current_capacity)
+        SELECT
+            t.rest_id,
+            #{date},
+            t.res_time,
+            t.max_capacity,
+            t.max_capacity
+        FROM
+            rest_time_template t
+    </insert>
+
 
     <!-- 여행별 식당 예약 조회 -->
     <select id="findReservations" resultType="org.moa.reservation.restaurant.dto.RestaurantReservationResponseDto">

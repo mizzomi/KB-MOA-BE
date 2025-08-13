@@ -8,6 +8,7 @@ import org.moa.global.service.FcmService;
 import org.moa.global.type.NotificationType;
 import org.moa.member.entity.Member;
 import org.moa.member.mapper.MemberMapper;
+import org.moa.reservation.restaurant.mapper.RestaurantMapper;
 import org.moa.trip.dto.trip.*;
 import org.moa.trip.entity.Trip;
 import org.moa.trip.entity.TripDay;
@@ -41,6 +42,7 @@ public class TripServiceImpl implements TripService {
     private final TripMemberMapper tripMemberMapper;
     private final MemberMapper memberMapper;
     private final NotificationMapper notificationMapper;
+    private final RestaurantMapper restaurantMapper;
 
     @Override
     @Transactional
@@ -92,6 +94,13 @@ public class TripServiceImpl implements TripService {
         }
         tripMapper.insertTripDays(tripDaysToInsert); // 배치 insert 메서드 호출
 
+        // 여행 기간에 해당하는 모든 날짜의 식당 예약칸을 자동으로 생성
+        log.info("새로운 여행 날짜들에 대한 식당 예약칸 자동 생성을 시작합니다...");
+        for (TripDay tripDay : tripDaysToInsert) {
+            restaurantMapper.createSlotsForDate(tripDay.getDay());
+            log.debug("{} 날짜의 식당 예약칸 생성 완료.", tripDay.getDay());
+        }
+        log.info("식당 예약칸 자동 생성을 완료했습니다.");
 
         // 참여자들에게 알림 생성
         if(dto.getMemberIds() != null){
