@@ -3,6 +3,7 @@ package org.moa.trip.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.moa.trip.dto.trip.TripListResponseDto;
+import org.moa.trip.dto.trip.UpcomingTripResponseDto;
 import org.moa.trip.entity.Trip;
 import org.moa.trip.entity.TripDay;
 import org.moa.trip.entity.TripLocation;
@@ -36,4 +37,6 @@ public interface TripMapper {
     List<Long> searchIdsByDays(@Param("recordDays")List<LocalDateTime> recordDays);
 
     List<TripDay> searchByTripId(@Param("tripId") Long tripId);
+
+    UpcomingTripResponseDto findUpcomingTripByMemberId(@Param("memberId") Long memberId);
 }

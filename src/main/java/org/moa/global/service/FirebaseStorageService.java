@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -26,25 +28,44 @@ public class FirebaseStorageService {
         if (file == null || file.isEmpty()) {
             return null;
         }
-
-        Bucket bucket = getBucket();
-
-        String originalFileName = file.getOriginalFilename();
-        String extension = StringUtils.getFilenameExtension(originalFileName);
-
-        // 파일 이름 중복을 피하기 위해 UUID 사용
-        String storedFileName = String.format("%s%s", UUID.randomUUID(), (extension != null ? "." + extension : ""));
-
         // Content-Type 결정
         String contentType = determineContentType(file);
 
+        return uploadAndGetFileName(file.getInputStream(), file.getOriginalFilename(), contentType, file.getSize());
+    }
+
+    /** InputStream을 받아 Firebase Storage에 업로드하고, 저장된 파일 이름 반환 **/
+    public String uploadAndGetFileName(InputStream inputStream, String originalFileName, String contentType, long fileSize) throws IOException {
+        if (inputStream == null || fileSize == 0) {
+            throw new IllegalArgumentException("업로드할 파일 스트림이 비어있거나 크기가 0입니다.");
+        }
+
+        Bucket bucket = getBucket();
+        String extension = StringUtils.getFilenameExtension(originalFileName);
+        String storedFileName = String.format("%s%s", UUID.randomUUID(), (extension != null ? "." + extension : ""));
+
         // Firebase Storage에 파일 업로드
-        bucket.create(storedFileName, file.getBytes(), contentType);
+        bucket.create(storedFileName, inputStream, contentType);
 
         log.info("파일이 성공적으로 업로드 되었습니다: {} (Content-Type: {})", storedFileName, contentType);
-
-        // 저장된 파일 이름 반환
         return storedFileName;
+    }
+
+    /** 압축된 바이트 배열을 업로드하는 메서드 **/
+    public String uploadProcessed(byte[] imageBytes, String format, String contentType) throws IOException {
+        if (imageBytes == null || imageBytes.length == 0) {
+            throw new IllegalArgumentException("업로드할 이미지 데이터가 비어있습니다.");
+        }
+
+        Bucket bucket = getBucket();
+        String storedFileName = String.format("%s.%s", UUID.randomUUID(), format);
+
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(imageBytes)) {
+            bucket.create(storedFileName, inputStream, contentType);
+            log.info("압축된 이미지가 성공적으로 업로드 되었습니다: {} (크기: {} bytes, Content-Type: {})",
+                    storedFileName, imageBytes.length, contentType);
+            return storedFileName;
+        }
     }
 
 
@@ -109,9 +130,10 @@ public class FirebaseStorageService {
 
 
     /** Firebase Storage에서 파일 삭제 **/
-    public void deleteFile(String fileName) {
+    public boolean deleteFile(String fileName) {
         if (!StringUtils.hasText(fileName)) {
-            return;
+            log.warn("삭제할 파일명이 비어있습니다");
+            return false;
         }
 
         try {
@@ -120,14 +142,23 @@ public class FirebaseStorageService {
 
             if (blob == null) {
                 log.warn("삭제하려는 파일이 Storage에 존재하지 않습니다: {}", fileName);
-                return;
+                return false;
             }
-            blob.delete();
-            log.info("파일이 성공적으로 삭제되었습니다: {}", fileName);
+
+            boolean deleted = blob.delete();
+            if (deleted) {
+                log.info("파일이 성공적으로 삭제되었습니다: {}", fileName);
+            } else {
+                log.warn("파일 삭제에 실패했습니다: {}", fileName);
+            }
+            return deleted;
+
         } catch (Exception e) {
             log.error("파일 삭제 중 오류가 발생했습니다: {}", fileName, e);
+            return false;
         }
     }
+
 
     /** 설정된 버킷 이름으로 Bucket 객체 반환 **/
     private Bucket getBucket() {
