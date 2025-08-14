@@ -315,7 +315,8 @@ CREATE TABLE transport_info
     seat_total     INT                                                 NOT NULL,
     seat_remain    INT                                                 NOT NULL,
     price          DECIMAL(15, 2)                                      NOT NULL,
-    is_visible     BOOLEAN                                             NOT NULL
+    is_visible     BOOLEAN                                             NOT NULL,
+    business_id    BIGINT                                              NOT NULL DEFAULT 1
 );
 
 -- ========================================================================================
