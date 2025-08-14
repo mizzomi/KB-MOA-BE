@@ -1402,3 +1402,15 @@ VALUES
 -- 8월 31일 (주말)
 (898,8, NULL, NULL, NULL, '아난티 앳 부산 코브', '부산광역시 기장군 기장읍', 198000, 'twin', NULL, '2025-08-31 15:00:00', '2025-09-01 11:00:00', 2, 'AVAILABLE'),
 (899,8, NULL, NULL, NULL, '아난티 앳 부산 코브', '부산광역시 기장군 기장읍', 264000, 'family', NULL, '2025-08-31 15:00:00', '2025-09-01 11:00:00', 4, 'AVAILABLE');
+
+UPDATE accom_res
+SET reservation_id = 5 , trip_day_id = 5, guests = 3, status = 'CONFIRMED'
+WHERE accom_res_id = 3;
+
+UPDATE accom_res
+SET reservation_id = 5 , trip_day_id = 6, guests = 3, status = 'CONFIRMED'
+WHERE accom_res_id = 9;
+
+UPDATE accom_res
+SET reservation_id = 6 , trip_day_id = 7, guests = 3, status = 'CONFIRMED'
+WHERE accom_res_id = 473;
