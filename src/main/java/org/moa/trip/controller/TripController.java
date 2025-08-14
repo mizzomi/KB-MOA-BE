@@ -7,10 +7,7 @@ import org.moa.global.security.domain.CustomUser;
 import org.moa.trip.dto.expense.ExpenseCreateRequestDto;
 import org.moa.trip.dto.expense.ExpenseResponseDto;
 import org.moa.trip.dto.settlement.SettlementRequestDto;
-import org.moa.trip.dto.trip.AddMemberRequestDto;
-import org.moa.trip.dto.trip.TripCreateRequestDto;
-import org.moa.trip.dto.trip.TripDetailResponseDto;
-import org.moa.trip.dto.trip.TripListResponseDto;
+import org.moa.trip.dto.trip.*;
 import org.moa.trip.service.ExpenseService;
 import org.moa.trip.service.SettlementService;
 import org.moa.trip.service.TripService;
@@ -108,5 +105,19 @@ public class TripController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error(org.moa.global.type.StatusCode.INTERNAL_ERROR, "여행 상세 조회 중 오류가 발생했습니다."));
         }
+    }
+
+
+    @GetMapping("/trips/upcoming")
+    public ResponseEntity<ApiResponse<UpcomingTripResponseDto>> getUpcomingTrip(
+            @AuthenticationPrincipal CustomUser customUser) {
+        Long memberId = customUser.getMember().getMemberId();
+        UpcomingTripResponseDto upcomingTrip = tripService.getUpcomingTrip(memberId);
+
+        if (upcomingTrip == null) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(ApiResponse.of(upcomingTrip));
     }
 }

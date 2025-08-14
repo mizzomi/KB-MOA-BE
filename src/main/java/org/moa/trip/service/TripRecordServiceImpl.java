@@ -266,19 +266,46 @@ public class TripRecordServiceImpl implements TripRecordService {
                 .filter(file -> file != null && !file.isEmpty()) // 유효한 파일만 필터링
                 .map(imageFile -> CompletableFuture.runAsync(() -> {
                     try {
+                        // 리사이징 전 원본 파일 정보 로깅
+                        byte[] originalImageBytes = imageFile.getBytes();
+                        long originalSize = originalImageBytes.length;
+                        log.info("이미지 처리 시작 - 원본 파일: {}, 원본 크기: {} bytes", imageFile.getOriginalFilename(), originalSize);
+
                         // 이미지 리사이징 및 압축
                         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        Thumbnails.of(imageFile.getInputStream())
-                                .size(1024, 1024)
+                        Thumbnails.of(new ByteArrayInputStream(originalImageBytes)) // 메모리에 로드된 바이트 사용
+                                .width(1280) // 일반적인 웹 이미지에 적합한 너비로 기준 변경
                                 .outputQuality(0.85)
                                 .toOutputStream(outputStream);
 
                         byte[] resizedImageBytes = outputStream.toByteArray();
-                        ByteArrayInputStream inputStream = new ByteArrayInputStream(resizedImageBytes);
+                        long resizedSize = resizedImageBytes.length;
+
+                        // 압축 후 크기가 원본보다 크면 원본을, 작으면 압축본을 사용
+                        byte[] finalImageBytes;
+                        boolean wasCompressed;
+
+                        if (resizedSize < originalSize) {
+                            finalImageBytes = resizedImageBytes;
+                            wasCompressed = true;
+                        } else {
+                            finalImageBytes = originalImageBytes;
+                            wasCompressed = false;
+                        }
 
                         // 리사이징된 이미지를 Firebase에 업로드
                         String storedFileName = firebaseStorageService.uploadAndGetFileName(
-                                inputStream, imageFile.getOriginalFilename(), imageFile.getContentType(), resizedImageBytes.length);
+                                new ByteArrayInputStream(finalImageBytes), imageFile.getOriginalFilename(), imageFile.getContentType(), finalImageBytes.length);
+
+                        // 파일 업로드 후, 결과에 따라 적절한 로그를 기록
+                        if (wasCompressed) {
+                            double reductionRate = (100.0 * (originalSize - resizedSize) / originalSize);
+                            log.info("이미지 처리 완료 - 압축 성공. 저장 파일: {}, 압축 크기: {} bytes (원본 대비 {}% 감소)",
+                                    storedFileName, resizedSize, String.format("%.2f", reductionRate));
+                        } else {
+                            log.info("이미지 처리 건너뜀 - 원본이 더 효율적. 저장 파일: {}, 원본 크기: {} bytes",
+                                    storedFileName, originalSize);
+                        }
 
                         TripRecordImage recordImage = TripRecordImage.builder()
                                 .recordId(recordId)
