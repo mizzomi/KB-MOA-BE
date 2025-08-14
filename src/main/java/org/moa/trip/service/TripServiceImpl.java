@@ -216,6 +216,13 @@ public class TripServiceImpl implements TripService {
         log.info("여행 상세 조회 완료 - tripId: {}, tripName: {}", tripId, trip.getTripName());
         return response;
     }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public UpcomingTripResponseDto getUpcomingTrip(Long memberId) {
+        return tripMapper.findUpcomingTripByMemberId(memberId);
+    }
     
     private String determineStatus(LocalDate startDate, LocalDate endDate) {
         LocalDate today = LocalDate.now();

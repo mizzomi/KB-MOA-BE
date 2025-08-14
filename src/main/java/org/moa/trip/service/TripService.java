@@ -15,4 +15,5 @@ public interface TripService {
     Page<TripListResponseDto> getTripList(Long memberId, String locationName, Pageable pageable);
     List<TripLocationResponseDto> getTripLocations();
     TripDetailResponseDto getTripDetail(Long tripId);
+    UpcomingTripResponseDto getUpcomingTrip(Long memberId);
 }
