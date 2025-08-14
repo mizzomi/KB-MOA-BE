@@ -51,7 +51,7 @@
         GROUP BY
             ar.hotel_name, ar.room_type, ar.room_image_url, ar.max_guests, ar.price
         HAVING
-            COUNT(*) &gt; 0
+            COUNT(*) &gt;= DATEDIFF(#{checkoutTime}, #{checkinTime})
     </select>
     <select id="searchAccommById" resultType="org.moa.reservation.accommodation.entity.AccommodationInfo">
         SELECT

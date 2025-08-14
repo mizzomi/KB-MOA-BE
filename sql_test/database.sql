@@ -10,7 +10,8 @@ DROP TABLE IF EXISTS trip_record_images;
 DROP TABLE IF EXISTS trip_records;
 DROP TABLE IF EXISTS settlement_notes;
 DROP TABLE IF EXISTS expense;
-DROP TABLE IF EXISTS rest_time_slot;
+DROP TABLE IF EXISTS rest_daily_slot;
+DROP TABLE IF EXISTS rest_time_template;
 DROP TABLE IF EXISTS rest_res;
 DROP TABLE IF EXISTS restaurant_info;
 DROP TABLE IF EXISTS tran_res;
@@ -97,7 +98,7 @@ CREATE TABLE IF NOT EXISTS tbl_security_audit_log
     INDEX IDX_EVENT_TYPE (EVENT_TYPE),
     INDEX IDX_CREATED_AT (CREATED_AT),
     INDEX IDX_IP_ADDRESS (IP_ADDRESS)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='보안 감사 로그';
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='보안 감사 로그';
 
 
 -- ========================================================================================
@@ -260,7 +261,7 @@ CREATE TABLE accommodation_info
     accom_id        BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
     hotel_name      VARCHAR(255) NOT NULL,
     address         VARCHAR(255) NOT NULL,
-    location        ENUM ('BUSAN', 'GANGNEUNG', 'JEJU') NOT NULL,
+    location        ENUM ('BUSAN', 'GANGNEUNG', 'JEJU', 'SEOUL') NOT NULL,
     latitude        DECIMAL(10, 7),
     longitude       DECIMAL(10, 7),
     description     TEXT,
@@ -371,9 +372,9 @@ CREATE TABLE restaurant_info
 );
 
 -- ========================================================================================
--- 식당 시간 테이블
+-- 식당 기본 시간표 테이블
 -- ========================================================================================
-CREATE TABLE rest_time_slot
+CREATE TABLE rest_time_template
 (
     rest_time_id   BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
     rest_id        BIGINT       NOT NULL,
@@ -381,6 +382,25 @@ CREATE TABLE rest_time_slot
     max_capacity   INT          NOT NULL DEFAULT 10,
 
     FOREIGN KEY (rest_id) REFERENCES restaurant_info (rest_id)
+);
+
+-- ========================================================================================
+-- 식당 날짜별 예약칸 테이블
+-- ========================================================================================
+CREATE TABLE rest_daily_slot
+(
+    daily_slot_id    BIGINT AUTO_INCREMENT PRIMARY KEY,
+    rest_id          BIGINT    NOT NULL,
+    day              DATE      NOT NULL,
+    time             TIME      NOT NULL,
+    max_capacity     INT       NOT NULL,
+    current_capacity INT       NOT NULL,
+
+    CONSTRAINT fk_daily_slot_to_restaurant
+        FOREIGN KEY (rest_id) REFERENCES restaurant_info(rest_id)
+            ON DELETE CASCADE,
+
+    UNIQUE KEY uk_restaurant_day_time (rest_id, day, time)
 );
 
 -- ========================================================================================
@@ -392,8 +412,8 @@ CREATE TABLE rest_res
     rest_id        BIGINT       NOT NULL,
     reservation_id BIGINT       NOT NULL,
     trip_day_id    BIGINT       NOT NULL,
+    daily_slot_id  BIGINT       NOT NULL,
     res_num        INT          NOT NULL,
-    rest_time_id   BIGINT       NOT NULL,
     status         ENUM('reserved', 'checked_in', 'completed') DEFAULT 'reserved' NOT NULL,
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -401,7 +421,7 @@ CREATE TABLE rest_res
     FOREIGN KEY (rest_id) REFERENCES restaurant_info (rest_id),
     FOREIGN KEY (reservation_id) REFERENCES reservation (reservation_id),
     FOREIGN KEY (trip_day_id) REFERENCES trip_day (trip_day_id),
-    FOREIGN KEY (rest_time_id) REFERENCES rest_time_slot (rest_time_id)
+    FOREIGN KEY (daily_slot_id) REFERENCES rest_daily_slot (daily_slot_id)
 );
 
 -- ========================================================================================
@@ -415,7 +435,7 @@ CREATE TABLE expense
     expense_name         VARCHAR(100)                        NOT NULL,
     expense_date         DATETIME                            NOT NULL,
     amount               DECIMAL(15, 2)                      NOT NULL,
-    location             ENUM ('BUSAN', 'GANGNEUNG', 'JEJU') NOT NULL,
+    location             ENUM ('BUSAN', 'GANGNEUNG', 'JEJU', 'SEOUL') NOT NULL,
     settlement_completed BOOLEAN                             NOT NULL,
     created_at           TIMESTAMP                           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at           TIMESTAMP                           NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -516,26 +536,26 @@ VALUES (1, 'ROLE_USER', 'karina@test.com', '1234', '카리나', 'asdf1234', '000
 -- 1) MEMBER 테이블에 사업자 계정 추가
 INSERT INTO member (member_id, member_type, email, password, name, fcm_token, id_card_number)
 VALUES
-      (5, 'ROLE_OWNER', '123-45-67890',    '1234',  '교통사업자',       NULL, 'OWN0000001'),
-      (6, 'ROLE_OWNER', '987-65-43210',    '1234',  '숙박사업자',       NULL, 'OWN0000002'),
-      (7, 'ROLE_OWNER', '456-78-90123-1',    '1234',  '해운대곰장어사업자', NULL, 'OWN0000003'),
-      (8, 'ROLE_OWNER', '456-78-90123-2',    '1234',  '코이이자카야사업자', NULL, 'OWN0000004'),
-      (9, 'ROLE_OWNER', '456-78-90123-3',    '1234',  '팔선생중화요리사업자',NULL,'OWN0000005'),
-      (10, 'ROLE_OWNER', '789-23-45678-4',    '1234',  '파스타하우스사업자',  NULL, 'OWN0000006'),
-      (11, 'ROLE_OWNER', '456-78-90123-5',    '1234',  '이색분식연구소사업자',NULL,'OWN0000007');
+    (5, 'ROLE_OWNER', '123-45-67890',    '1234',  '교통사업자',       NULL, 'OWN0000001'),
+    (6, 'ROLE_OWNER', '987-65-43210',    '1234',  '숙박사업자',       NULL, 'OWN0000002'),
+    (7, 'ROLE_OWNER', '456-78-90123-1',    '1234',  '해운대곰장어사업자', NULL, 'OWN0000003'),
+    (8, 'ROLE_OWNER', '456-78-90123-2',    '1234',  '코이이자카야사업자', NULL, 'OWN0000004'),
+    (9, 'ROLE_OWNER', '456-78-90123-3',    '1234',  '팔선생중화요리사업자',NULL,'OWN0000005'),
+    (10, 'ROLE_OWNER', '789-23-45678-4',    '1234',  '파스타하우스사업자',  NULL, 'OWN0000006'),
+    (11, 'ROLE_OWNER', '456-78-90123-5',    '1234',  '이색분식연구소사업자',NULL,'OWN0000007');
 
 
 -- 사장님 테스트용 데이터
 -- 2) OWNER 테이블에 business ↔ member 연결
 INSERT INTO owner (business_id, business_kind, member_id)
 VALUES
-      ( 1, 'TRANSPORT',    5),
-      ( 1, 'ACCOMMODATION', 6),
-      ( 1, 'RESTAURANT',   7),  -- 해운대 곰장어집
-      ( 5, 'RESTAURANT',   8),  -- 코이 이자카야
-      ( 7, 'RESTAURANT',   9),  -- 팔선생 중화요리
-      (10, 'RESTAURANT',  10),  -- 부산 파스타하우스
-      (15, 'RESTAURANT',  11);   -- 이색분식연구소
+    ( 1, 'TRANSPORT',    5),
+    ( 1, 'ACCOMMODATION', 6),
+    ( 1, 'RESTAURANT',   7),  -- 해운대 곰장어집
+    ( 5, 'RESTAURANT',   8),  -- 코이 이자카야
+    ( 7, 'RESTAURANT',   9),  -- 팔선생 중화요리
+    (10, 'RESTAURANT',  10),  -- 부산 파스타하우스
+    (15, 'RESTAURANT',  11);   -- 이색분식연구소
 
 
 -- 주민등록증 테스트용 데이터
@@ -790,6 +810,26 @@ VALUES
 (6, 'RESTAURANT'), -- reservationId = 18
 (7, 'RESTAURANT'); -- reservationId = 19
 
+INSERT INTO accommodation_info (hotel_name, address, location , latitude, longitude, description, hotel_image_url)
+VALUES ('부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 'BUSAN',  35.1664, 129.0624,
+        '중심 업무 지구의 고층 유리 건물에 자리한 이 고급 호텔은 서면역에서 도보 5분, 광안리 해수욕장에서 지하철로 33분 거리에 있습니다. \n\n아늑하고 우아한 객실에 무료 Wi-Fi, 평면 TV, 차 및 커피 메이커가 갖춰져 있습니다. 스위트룸에는 거실이 추가되며 업그레이드 스위트룸에는 사우나, 벽난로, 식탁이 마련되어 있습니다. 클럽층 객실에는 무료 조식, 스낵, 애프터눈 티가 제공됩니다. 야구를 테마로 꾸민 스위트룸이 2곳 있습니다. 룸 서비스도 이용 가능합니다. \n\n레스토랑 5곳, 베이커리, 정기 라이브 음악 공연이 열리는 바가 있습니다. 헬스장, 사우나, 골프 연습장, 실내외 수영장도 이용할 수 있습니다.',
+        'https://yaimg.yanolja.com/v5/2023/01/04/10/1280/63b55a0edcb3e9.58092209.jpg'),
+       ('씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 'GANGNEUNG',  37.7760, 128.9101,
+        '해변가의 우아한 타워에 자리 잡고 있어 동해 바다가 바로 보이는 이 세련된 호텔은 정동진 기차역에서 6km 떨어져 있습니다.\n\n쾌적한 객실에는 평면 TV, Wi-Fi, 미니 냉장고, 유리 벽으로 된 욕실이 있으며, 대부분의 객실에서 바다 전망이 보입니다. 미니멀리즘 인테리어가 돋보이는 온돌 방식의 객실에는 이불이 제공됩니다. 품격 있는 스위트룸에는 휴식 공간이 추가되고, 업그레이드 스위트룸에는 식사 공간, 우아한 거실, 단독형 욕조를 구비한 고급 욕실이 있습니다. 룸서비스도 이용 가능합니다.\n\n세련된 레스토랑 2곳, 바다 전망이 보이는 바, 야외 인피니티 풀은 물론 실내 수영장, 헬스장, 어린이 놀이 공간과 현대적인 야외 원형 극장도 있습니다.',
+        'https://yaimg.yanolja.com/v5/2025/05/02/06/1280/6814641ba896e4.56171130.jpg'),
+       ('JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 'JEJU',  33.2343, 126.5347,
+        '제주의 바다를 마주한 JW 메리어트 제주 리조트 & 스파는 제주 국제공항에서 50분 거리에 위치하고 있습니다. 서귀포 매일올레시장과 산방산, 성산일출봉 등 자연경관 가까이 자리 잡은 JW 메리어트 제주에서 진정한 휴식을 즐겨보세요. 올데이 다이닝 레스토랑 아일랜드 키친에서 브런치 로열과 함께 여유롭게 하루를 시작하고, 더 라운지에서 애프터눈티 세트를 경험하실 수 있습니다.\n\n더 플라잉 호그에서는 우드 파이어 그릴에 구워 낸 제주식 구이 요리를 파인 다이닝 스타일로 추천해 드립니다. SPA by JW에서 페이셜 및 딥 티슈 마사지를 경험하며 웰니스에 집중해 보는 건 어떨까요?\n\n인피니티 풀을 포함해 총 4곳의 실내 수영장 또는 실외 수영장 또한 마련되어 있습니다. 패밀리클럽에서 아이들과 즐거운 시간을 보낼 수 있고, 어린이들을 위한 다양한 키즈 액티비티 프로그램도 준비됩니다. 완벽한 비즈니스 행사와 데스티네이션 웨딩을 계획하신다면, 한식 또는 양식 옵션을 선택하실 수 있는 맞춤 케이터링 메뉴가 제공되는 JW 메리어트 제주의 실내 혹은 실외 이벤트 공간을 활용해 보세요.\n\nLED TV, 미니바, 대리석 욕조 그리고 무료 Wi-Fi가 제공되는 안락한 객실에서 충분한 휴식을 취하세요. 대부분의 객실에 아름다운 오션뷰를 만끽할 수 있는 발코니가 설치되어 있습니다. JW 메리어트 제주에서 숨이 멎을 정도로 아름다운 제주도의 풍경을 경험해보세요.',
+        'https://yaimg.yanolja.com/v5/2025/07/10/09/1280/686f8a74540cf6.30391796.jpg'),
+       ('시그니엘 부산', '부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워', 'BUSAN', '35.1633', '129.1637', '해운대 해변과 부산의 아름다운 스카이라인을 조망할 수 있는 럭셔리 호텔입니다. 최상의 서비스와 현대적인 시설을 자랑하며, 다양한 레스토랑과 수영장, 스파를 갖추고 있습니다.', 'https://yaimg.yanolja.com/v5/2023/01/04/10/1280/63b55a0edcb3e9.58092209.jpg'),
+       ('그랜드조선 부산', '부산광역시 해운대구 해운대해변로 292', 'BUSAN', '35.1639', '129.1610',
+        '해운대 해변가에 위치한 5성급 호텔로, 품격 있는 서비스와 편안한 휴식을 제공합니다. 다양한 식음료 시설과 실내외 수영장, 키즈 라운지 등을 갖추고 있어 가족 여행객에게도 인기가 많습니다.', 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/274680179.jpg?k=9f32fc5cb943f6998db47daaad1044ae59a112f550c14d29913833ef9e09b803&o='),
+       ('파크 하얏트 부산', '부산광역시 해운대구 마린시티1로 51', 'BUSAN', '35.1652', '129.1491', '운대 마린시티에 위치한 럭셔리 호텔로, 광안대교와 수영만 요트경기장의 전경을 감상할 수 있습니다. 고급스러운 객실과 미식 경험을 제공하는 레스토랑, 최신식 피트니스 시설을 갖추고 있습니다.', 'https://yaimg.yanolja.com/v5/2022/09/01/13/1280/6310b57ea38718.17915397.jpg'),
+       ('파라다이스 호텔 부산', '부산광역시 해운대구 해운대해변로 296', 'BUSAN', 35.1587, 129.1604,
+        '해운대 해변 바로 맞은편에 위치한 대표적인 5성급 리조트 호텔로, 온천(광천수), 사우나, 외부 야외 수영장, 레스토랑 및 스파 시설이 갖춰져 있습니다.',
+        'https://www.hotelscombined.co.kr/rimg/himg/0b/06/62/expedia_group-2950908-164721846-091582.jpg?width=968&height=607&crop=true'),
+       ('아난티 앳 부산 코브', '부산광역시 기장군 기장읍', 'BUSAN', 35.2450, 129.2300,
+        '넓은 고급 객실과 수영장, 레스토랑, 스파 등 시설이 뛰어난 5성급 리조트로, 높은 평점을 자랑합니다.',
+        'https://novotel-ambassador.busan-hotel.com/data/Imgs/1080x700w/7034/703477/703477777/img-novotel-ambassador-busan-1.JPEG');
 
 -- 교통 예약 테스트용 데이터
 INSERT INTO transport_info (
@@ -911,6 +951,26 @@ INSERT INTO transport_info (
       (111, 'SEOUL_STN', 'BUSAN_STN', '서울역', '부산역', '2025-08-07 17:00:00', '2025-08-07 19:30:00', 'ktx', 'KTX-911', 'general', 240, 240, 49800.00, 1),
       (112, 'BUSAN_STN', 'SEOUL_STN', '부산역', '서울역', '2025-08-07 17:00:00', '2025-08-07 19:30:00', 'ktx-sancheon', 'KTX-912', 'general', 240, 240, 49800.00, 1);
 
+INSERT INTO accommodation_info (hotel_name, address, location , latitude, longitude, description, hotel_image_url)
+VALUES ('부산 롯데 호텔', '부산광역시 부산진구 가야대로 772', 'BUSAN',  35.1664, 129.0624,
+        '중심 업무 지구의 고층 유리 건물에 자리한 이 고급 호텔은 서면역에서 도보 5분, 광안리 해수욕장에서 지하철로 33분 거리에 있습니다. \n\n아늑하고 우아한 객실에 무료 Wi-Fi, 평면 TV, 차 및 커피 메이커가 갖춰져 있습니다. 스위트룸에는 거실이 추가되며 업그레이드 스위트룸에는 사우나, 벽난로, 식탁이 마련되어 있습니다. 클럽층 객실에는 무료 조식, 스낵, 애프터눈 티가 제공됩니다. 야구를 테마로 꾸민 스위트룸이 2곳 있습니다. 룸 서비스도 이용 가능합니다. \n\n레스토랑 5곳, 베이커리, 정기 라이브 음악 공연이 열리는 바가 있습니다. 헬스장, 사우나, 골프 연습장, 실내외 수영장도 이용할 수 있습니다.',
+        'https://yaimg.yanolja.com/v5/2023/01/04/10/1280/63b55a0edcb3e9.58092209.jpg'),
+       ('씨마크 호텔', '강원특별자치도 강릉시 해안로406번길 2', 'GANGNEUNG',  37.7760, 128.9101,
+        '해변가의 우아한 타워에 자리 잡고 있어 동해 바다가 바로 보이는 이 세련된 호텔은 정동진 기차역에서 6km 떨어져 있습니다.\n\n쾌적한 객실에는 평면 TV, Wi-Fi, 미니 냉장고, 유리 벽으로 된 욕실이 있으며, 대부분의 객실에서 바다 전망이 보입니다. 미니멀리즘 인테리어가 돋보이는 온돌 방식의 객실에는 이불이 제공됩니다. 품격 있는 스위트룸에는 휴식 공간이 추가되고, 업그레이드 스위트룸에는 식사 공간, 우아한 거실, 단독형 욕조를 구비한 고급 욕실이 있습니다. 룸서비스도 이용 가능합니다.\n\n세련된 레스토랑 2곳, 바다 전망이 보이는 바, 야외 인피니티 풀은 물론 실내 수영장, 헬스장, 어린이 놀이 공간과 현대적인 야외 원형 극장도 있습니다.',
+        'https://yaimg.yanolja.com/v5/2025/05/02/06/1280/6814641ba896e4.56171130.jpg'),
+       ('JW 메리어트 제주 리조트 앤 스파', '제주특별자치도 서귀포시 호근동 399', 'JEJU',  33.2343, 126.5347,
+        '제주의 바다를 마주한 JW 메리어트 제주 리조트 & 스파는 제주 국제공항에서 50분 거리에 위치하고 있습니다. 서귀포 매일올레시장과 산방산, 성산일출봉 등 자연경관 가까이 자리 잡은 JW 메리어트 제주에서 진정한 휴식을 즐겨보세요. 올데이 다이닝 레스토랑 아일랜드 키친에서 브런치 로열과 함께 여유롭게 하루를 시작하고, 더 라운지에서 애프터눈티 세트를 경험하실 수 있습니다.\n\n더 플라잉 호그에서는 우드 파이어 그릴에 구워 낸 제주식 구이 요리를 파인 다이닝 스타일로 추천해 드립니다. SPA by JW에서 페이셜 및 딥 티슈 마사지를 경험하며 웰니스에 집중해 보는 건 어떨까요?\n\n인피니티 풀을 포함해 총 4곳의 실내 수영장 또는 실외 수영장 또한 마련되어 있습니다. 패밀리클럽에서 아이들과 즐거운 시간을 보낼 수 있고, 어린이들을 위한 다양한 키즈 액티비티 프로그램도 준비됩니다. 완벽한 비즈니스 행사와 데스티네이션 웨딩을 계획하신다면, 한식 또는 양식 옵션을 선택하실 수 있는 맞춤 케이터링 메뉴가 제공되는 JW 메리어트 제주의 실내 혹은 실외 이벤트 공간을 활용해 보세요.\n\nLED TV, 미니바, 대리석 욕조 그리고 무료 Wi-Fi가 제공되는 안락한 객실에서 충분한 휴식을 취하세요. 대부분의 객실에 아름다운 오션뷰를 만끽할 수 있는 발코니가 설치되어 있습니다. JW 메리어트 제주에서 숨이 멎을 정도로 아름다운 제주도의 풍경을 경험해보세요.',
+        'https://yaimg.yanolja.com/v5/2025/07/10/09/1280/686f8a74540cf6.30391796.jpg'),
+       ('시그니엘 부산', '부산광역시 해운대구 달맞이길 30, 엘시티 랜드마크타워', 'BUSAN', '35.1633', '129.1637', '해운대 해변과 부산의 아름다운 스카이라인을 조망할 수 있는 럭셔리 호텔입니다. 최상의 서비스와 현대적인 시설을 자랑하며, 다양한 레스토랑과 수영장, 스파를 갖추고 있습니다.', 'https://yaimg.yanolja.com/v5/2023/01/04/10/1280/63b55a0edcb3e9.58092209.jpg'),
+       ('그랜드조선 부산', '부산광역시 해운대구 해운대해변로 292', 'BUSAN', '35.1639', '129.1610',
+        '해운대 해변가에 위치한 5성급 호텔로, 품격 있는 서비스와 편안한 휴식을 제공합니다. 다양한 식음료 시설과 실내외 수영장, 키즈 라운지 등을 갖추고 있어 가족 여행객에게도 인기가 많습니다.', 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/274680179.jpg?k=9f32fc5cb943f6998db47daaad1044ae59a112f550c14d29913833ef9e09b803&o='),
+       ('파크 하얏트 부산', '부산광역시 해운대구 마린시티1로 51', 'BUSAN', '35.1652', '129.1491', '운대 마린시티에 위치한 럭셔리 호텔로, 광안대교와 수영만 요트경기장의 전경을 감상할 수 있습니다. 고급스러운 객실과 미식 경험을 제공하는 레스토랑, 최신식 피트니스 시설을 갖추고 있습니다.', 'https://yaimg.yanolja.com/v5/2022/09/01/13/1280/6310b57ea38718.17915397.jpg'),
+       ('파라다이스 호텔 부산', '부산광역시 해운대구 해운대해변로 296', 'BUSAN', 35.1587, 129.1604,
+        '해운대 해변 바로 맞은편에 위치한 대표적인 5성급 리조트 호텔로, 온천(광천수), 사우나, 외부 야외 수영장, 레스토랑 및 스파 시설이 갖춰져 있습니다.',
+        'https://www.hotelscombined.co.kr/rimg/himg/0b/06/62/expedia_group-2950908-164721846-091582.jpg?width=968&height=607&crop=true'),
+       ('아난티 앳 부산 코브', '부산광역시 기장군 기장읍', 'BUSAN', 35.2450, 129.2300,
+        '넓은 고급 객실과 수영장, 레스토랑, 스파 등 시설이 뛰어난 5성급 리조트로, 높은 평점을 자랑합니다.',
+        'https://novotel-ambassador.busan-hotel.com/data/Imgs/1080x700w/7034/703477/703477777/img-novotel-ambassador-busan-1.JPEG');
 
 -- 식당 정보 테스트용 데이터
 INSERT INTO restaurant_info (
@@ -983,9 +1043,9 @@ INSERT INTO restaurant_info (
  '051-888-1111', '퓨전 분식 전문점', 35.101, 129.033);
 
 
--- 식당 시간 테스트용 데이터
+-- 식당 기본 시간 테스트용 데이터
 -- 식당별 예약 시간 슬롯 생성 (rest_id: 1 ~ 15, 시간: 11시 ~ 19시, max_capacity: 5)
-INSERT INTO rest_time_slot (rest_id, res_time, max_capacity) VALUES
+INSERT INTO rest_time_template (rest_id, res_time, max_capacity) VALUES
 -- 해운대 곰장어집 (1) (1 ~ 9)
 (1, '11:00', 5), (1, '12:00', 5), (1, '13:00', 5),
 (1, '14:00', 5), (1, '15:00', 5), (1, '16:00', 5),
@@ -1062,15 +1122,65 @@ INSERT INTO rest_time_slot (rest_id, res_time, max_capacity) VALUES
 (15, '17:00', 5), (15, '18:00', 5), (15, '19:00', 5);
 
 
--- 식당 예약 테스트용 데이터
-INSERT INTO rest_res (rest_id, reservation_id, trip_day_id, res_num, rest_time_id) VALUES
-(1, 13, 1, 1, 8), -- 1일 18시 1명 해운대 곰장어집
-(7, 14, 2, 1, 57), -- 2일 13시 1명 팔선생 중화요리
-(15, 15, 3, 1, 128), -- 3일 12시 1명 이색분식연구소
-(5, 16, 3, 1, 45), -- 3일 19시 1명 이자카야 코지
-(5, 17, 5, 3, 44), -- 3일 18시 3명 이자카야 코지
-(10, 18, 6, 3, 84), -- 4일 13시 3명 부산 파스타하우스
-(15, 19, 7, 2, 127); -- 5일 11시 2명 이색분식연구소
+-- 1. 식당 날짜별 예약칸 테스트 데이터 (모든 날짜 & 시간 조합 자동 생성)
+INSERT INTO rest_daily_slot (rest_id, day, time, max_capacity, current_capacity)
+SELECT
+    t.rest_id,
+    d.day,
+    t.res_time,
+    t.max_capacity,
+    t.max_capacity
+FROM
+    rest_time_template t, (SELECT DISTINCT day FROM trip_day) d;
+
+-- 2. 식당 예약 테스트 데이터
+INSERT INTO rest_res (rest_id, reservation_id, trip_day_id, res_num, daily_slot_id) VALUES
+-- 1일 18시 1명 해운대 곰장어집
+(1, 13, 1, 1, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 1 AND day = '2025-08-01' AND time = '18:00:00')),
+-- 2일 13시 1명 팔선생 중화요리
+(7, 14, 2, 1, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 7 AND day = '2025-08-02' AND time = '13:00:00')),
+-- 3일 12시 1명 이색분식연구소
+(15, 15, 3, 1, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 15 AND day = '2025-08-03' AND time = '12:00:00')),
+-- 3일 19시 1명 이자카야 코이
+(5, 16, 3, 1, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 5 AND day = '2025-08-03' AND time = '19:00:00')),
+-- 3일 18시 3명 이자카야 코이
+(5, 17, 5, 3, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 5 AND day = '2025-08-03' AND time = '18:00:00')),
+-- 4일 13시 3명 부산 파스타하우스
+(10, 18, 6, 3, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 10 AND day = '2025-08-04' AND time = '13:00:00')),
+-- 5일 11시 2명 이색분식연구소
+(15, 19, 7, 2, (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 15 AND day = '2025-08-05' AND time = '11:00:00'));
+
+-- 3. 테스트 예약을 잔여석에 반영
+-- 1일 18시 해운대 곰장어집 1명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 1
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 1 AND day = '2025-08-01' AND time = '18:00:00') AS temp);
+
+-- 2일 13시 팔선생 중화요리 1명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 1
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 7 AND day = '2025-08-02' AND time = '13:00:00') AS temp);
+
+-- 3일 12시 이색분식연구소 1명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 1
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 15 AND day = '2025-08-03' AND time = '12:00:00') AS temp);
+
+-- 3일 19시 이자카야 코이 1명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 1
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 5 AND day = '2025-08-03' AND time = '19:00:00') AS temp);
+
+-- 3일 18시 이자카야 코이 3명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 3
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 5 AND day = '2025-08-03' AND time = '18:00:00') AS temp);
+
+-- 4일 13시 부산 파스타하우스 3명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 3
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 10 AND day = '2025-08-04' AND time = '13:00:00') AS temp);
+
+-- 5일 11시 이색분식연구소 2명 예약 반영
+UPDATE rest_daily_slot SET current_capacity = current_capacity - 2
+WHERE daily_slot_id = (SELECT temp.daily_slot_id FROM (SELECT daily_slot_id FROM rest_daily_slot WHERE rest_id = 15 AND day = '2025-08-05' AND time = '11:00:00') AS temp);
+
+-- 4. 성능 최적화를 위한 인덱스 추가
+CREATE INDEX idx_rest_daily_slot_rest_id_day ON rest_daily_slot (rest_id, day);
 
 
 -- 비용 테스트용 데이터
