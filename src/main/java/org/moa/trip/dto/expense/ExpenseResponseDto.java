@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 public class ExpenseResponseDto {
     private Long expenseId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private String expenseName;
     private LocalDateTime expenseDate;
     private BigDecimal shareAmount;
     private Boolean received;

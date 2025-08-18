@@ -173,10 +173,12 @@ public class ExpenseServiceImpl implements ExpenseService{
             // DTO 에 넣을 것들
             LocalDateTime expenseDate = expense.getExpenseDate();
             BigDecimal shareAmount = s.getShareAmount();
+            String expenseName = expense.getExpenseName();
             Boolean received = s.getReceived();
             String status = getString(s, expense, received);
             ExpenseResponseDto dto = ExpenseResponseDto.builder()
                     .expenseId(expenseId)
+                    .expenseName(expenseName)
                     .expenseDate(expenseDate)
                     .shareAmount(!received ? expense.getAmount() : shareAmount)
                     .received(received)
