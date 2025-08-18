@@ -68,7 +68,7 @@ services:
       - ./src/main/resources/firebase:/usr/local/tomcat/firebase
       - ./src/main/resources/application-docker.properties:/usr/local/tomcat/conf/application.properties:ro
     environment:
-      JAVA_OPTS: "-Xms512m -Xmx1024m -Dfile.encoding=UTF-8 -Duser.language=ko -Duser.country=KR"
+      JAVA_OPTS: "-Xms512m -Xmx1024m -Dfile.encoding=UTF-8 -Duser.language=ko -Duser.country=KR -Dorg.apache.catalina.connector.maxPostSize=20971520 -Dorg.apache.catalina.connector.maxSwallowSize=-1"
       TZ: Asia/Seoul
       SPRING_PROFILES_ACTIVE: docker
       LANG: ko_KR.UTF-8

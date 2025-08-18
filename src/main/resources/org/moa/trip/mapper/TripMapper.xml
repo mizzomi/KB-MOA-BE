@@ -119,4 +119,35 @@
         FROM trip_day
         WHERE trip_id = #{tripId}
     </select>
+
+    <select id="findUpcomingTripByMemberId" resultType="org.moa.trip.dto.trip.UpcomingTripResponseDto">
+        SELECT
+            t.trip_id       AS tripId,
+            t.trip_name     AS title,
+            t.start_date    AS startDate,
+            t.end_date      AS endDate,
+            t.trip_location AS locationName,
+            (SELECT COUNT(*) FROM trip_member tm2 WHERE tm2.trip_id = t.trip_id) AS memberCount,
+            CASE
+                WHEN CURDATE() BETWEEN t.start_date AND t.end_date THEN '여행중'
+                ELSE '여행예정'
+            END AS status
+        FROM
+            trip t
+                JOIN
+            trip_member tm ON t.trip_id = tm.trip_id
+        WHERE
+            tm.member_id = #{memberId}
+          -- 아직 끝나지 않은 모든 여행을 대상으로 조회
+          AND t.end_date >= CURDATE()
+        ORDER BY
+            -- 여행 중인 여행을 최우선으로 정렬
+            CASE
+                WHEN CURDATE() BETWEEN t.start_date AND t.end_date THEN 1
+                ELSE 2
+            END,
+            -- 그 다음으로 시작일이 빠른 순서로 정렬
+            t.start_date ASC
+        LIMIT 1
+    </select>
 </mapper>
