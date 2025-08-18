@@ -71,6 +71,7 @@ public class QrServiceImpl implements QrService{
         return new IdCardResponseDto(
                 card.getName(),
                 card.getIdCardNumber(),
+
                 card.getIssuedDate().toString(),
                 card.getAddress(),
                 signedImageUrl
@@ -213,7 +214,7 @@ public class QrServiceImpl implements QrService{
             UserTransportReservationDto dto = reservationMapper.findTransInfoByTranResId(tranResId);
             if (dto == null) throw new NoSuchElementException("교통 예약 좌석 정보를 찾을 수 없습니다.");
 
-            if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getTransportId(),"TRANSPORT")) {
+            if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getBusinessId(),"TRANSPORT")) {
                 throw new SecurityException("이 예약에 접근할 권한이 없습니다.");
             }
 
