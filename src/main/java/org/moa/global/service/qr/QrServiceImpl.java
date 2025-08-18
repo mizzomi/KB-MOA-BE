@@ -136,7 +136,7 @@ public class QrServiceImpl implements QrService{
             case "RESTAURANT" : {
                 List<UserRestaurantReservationDto> rests = reservationMapper.findUserRestInfoByReservationId(reservationId);
                 if (rests == null || rests.isEmpty()) {
-                    throw new NoSuchElementException("해당 예약의 숙소 정보를 찾을 수 없습니다.");
+                    throw new NoSuchElementException("해당 예약의 식당 정보를 찾을 수 없습니다.");
                 }
 
                 List<QrItemResponseDto<UserRestaurantReservationDto>> responseList = new ArrayList<>();
@@ -213,7 +213,7 @@ public class QrServiceImpl implements QrService{
             UserTransportReservationDto dto = reservationMapper.findTransInfoByTranResId(tranResId);
             if (dto == null) throw new NoSuchElementException("교통 예약 좌석 정보를 찾을 수 없습니다.");
 
-            if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getTransportId(),"TRANSPORT")) {
+            if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getBusinessId(),"TRANSPORT")) {
                 throw new SecurityException("이 예약에 접근할 권한이 없습니다.");
             }
 
@@ -224,7 +224,7 @@ public class QrServiceImpl implements QrService{
             UserRestaurantReservationDto dto = reservationMapper.findRestInfoByRestResId(restResId);
             if (dto == null) throw new NoSuchElementException("식당 예약 정보를 찾을 수 없습니다.");
 
-            if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getRestId(),"RESTAURANT")) {
+            if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getBusinessId(),"RESTAURANT")) {
                 throw new SecurityException("이 예약에 접근할 권한이 없습니다.");
             }
 
@@ -235,7 +235,7 @@ public class QrServiceImpl implements QrService{
             UserAccommodationReservationDto dto = reservationMapper.findAccomInfoByAccomResId(accomResId);
             if (dto == null) throw new NoSuchElementException("숙소 예약 정보를 찾을 수 없습니다.");
 
-            if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getAccomId(),"ACCOMMODATION")) {
+            if (!reservationMapper.isOwnerOfBusiness(ownerId, dto.getBusinessId(),"ACCOMMODATION")) {
                 throw new SecurityException("이 예약에 접근할 권한이 없습니다.");
             }
 

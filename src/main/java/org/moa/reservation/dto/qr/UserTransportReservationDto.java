@@ -17,6 +17,7 @@ public class UserTransportReservationDto {
     private String type;
     private Long reservationId;
     private Long transportId;
+    private Long businessId;
     private String trainNo;
     private String departureName;
     private String arrivalName;
