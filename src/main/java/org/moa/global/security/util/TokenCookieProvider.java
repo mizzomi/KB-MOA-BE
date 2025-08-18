@@ -49,18 +49,26 @@ public class TokenCookieProvider {
      */
     private void setSecureCookie(HttpServletResponse response, String refreshToken) {
         // Spring Legacy에서는 SameSite 속성을 직접 헤더로 설정
-        // SameSite 값을 properties에서 읽어와서 사용
-        String cookieValue = String.format(
-            "%s=%s; Path=/; Domain=%s; Max-Age=%d; HttpOnly; Secure; SameSite=%s",
-            REFRESH_TOKEN_COOKIE_NAME,
-            refreshToken,
-            cookieDomain,
-            REFRESH_TOKEN_MAX_AGE,
-            sameSite  // properties에서 설정된 값 사용 (None이어야 CORS 환경에서 작동)
-        );
+        StringBuilder cookieBuilder = new StringBuilder();
+        cookieBuilder.append(REFRESH_TOKEN_COOKIE_NAME)
+                     .append("=")
+                     .append(refreshToken)
+                     .append("; Path=/");
         
+        // Domain 설정 (비어있지 않은 경우에만 추가)
+        if (cookieDomain != null && !cookieDomain.trim().isEmpty()) {
+            cookieBuilder.append("; Domain=").append(cookieDomain);
+        }
+        
+        cookieBuilder.append("; Max-Age=").append(REFRESH_TOKEN_MAX_AGE)
+                     .append("; HttpOnly")
+                     .append("; Secure")
+                     .append("; SameSite=").append(sameSite);
+        
+        String cookieValue = cookieBuilder.toString();
         response.addHeader("Set-Cookie", cookieValue);
-        log.debug("Set secure refresh token cookie for production environment with SameSite={}", sameSite);
+        
+        log.debug("Set secure refresh token cookie: {}", cookieValue);
     }
 
     /**
@@ -83,13 +91,22 @@ public class TokenCookieProvider {
     public void clearRefreshTokenCookie(HttpServletResponse response) {
         if ("production".equals(environment) || "docker".equals(environment)) {
             // 배포 환경
-            String cookieValue = String.format(
-                "%s=; Path=/; Domain=%s; Max-Age=0; HttpOnly; Secure; SameSite=%s",
-                REFRESH_TOKEN_COOKIE_NAME,
-                cookieDomain,
-                sameSite  // properties에서 설정된 값 사용
-            );
-            response.addHeader("Set-Cookie", cookieValue);
+            StringBuilder cookieBuilder = new StringBuilder();
+            cookieBuilder.append(REFRESH_TOKEN_COOKIE_NAME)
+                         .append("=")
+                         .append("; Path=/");
+            
+            // Domain 설정 (비어있지 않은 경우에만 추가)
+            if (cookieDomain != null && !cookieDomain.trim().isEmpty()) {
+                cookieBuilder.append("; Domain=").append(cookieDomain);
+            }
+            
+            cookieBuilder.append("; Max-Age=0")
+                         .append("; HttpOnly")
+                         .append("; Secure")
+                         .append("; SameSite=").append(sameSite);
+            
+            response.addHeader("Set-Cookie", cookieBuilder.toString());
         } else {
             // 로컬 환경
             Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, null);
