@@ -23,13 +23,21 @@ public class AuthenticationErrorFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 		throws ServletException, IOException {
 		try {
-			super.doFilter(request, response, filterChain);
+			// super.doFilter가 아닌 filterChain.doFilter를 호출
+			filterChain.doFilter(request, response);
 		} catch (ExpiredJwtException e) {
+			if (!response.isCommitted()) {
 				JsonResponse.sendError(response, HttpStatus.UNAUTHORIZED, "토큰의 유효시간이 지났습니다.");
+			}
 		} catch (UnsupportedJwtException | MalformedJwtException | SignatureException e) {
-			JsonResponse.sendError(response, HttpStatus.UNAUTHORIZED, e.getMessage());
+			if (!response.isCommitted()) {
+				JsonResponse.sendError(response, HttpStatus.UNAUTHORIZED, e.getMessage());
+			}
 		} catch (ServletException e) {
-			JsonResponse.sendError(response, HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+			if (!response.isCommitted()) {
+				JsonResponse.sendError(response, HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+			}
+			throw e; // ServletException은 다시 throw
 		}
 	}
 }

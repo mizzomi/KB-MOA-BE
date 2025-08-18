@@ -79,6 +79,20 @@ public class ApiResponse<T> {
 			.build();
 	}
 
+	// 간편한 성공 응답 (RTR 컨트롤러용)
+	public static <T> ApiResponse<T> success(T data) {
+		return of(data);
+	}
+
+	// 간편한 에러 응답 (RTR 컨트롤러용)
+	public static <T> ApiResponse<T> error(String message) {
+		return ApiResponse.<T>builder()
+			.code(StatusCode.BAD_REQUEST.getCode())
+			.message(message)
+			.timestamp(LocalDateTime.now())
+			.build();
+	}
+
 	@Getter
 	@Builder
 	public static class FieldError {

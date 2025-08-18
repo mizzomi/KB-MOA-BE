@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -23,6 +24,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 @Configuration
+@Import({RedisConfig.class})  // Redis 설정 추가
 @MapperScan(basePackages = {"org.moa.global.account.mapper", "org.moa.member.mapper",
 		"org.moa.trip.mapper", "org.moa.reservation.transport.mapper",
 		"org.moa.reservation.mapper", "org.moa.reservation.accommodation.mapper",

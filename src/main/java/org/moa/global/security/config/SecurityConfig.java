@@ -3,6 +3,7 @@ package org.moa.global.security.config;
 import org.moa.global.security.filter.AuthenticationErrorFilter;
 import org.moa.global.security.filter.JwtAuthenticationFilter;
 import org.moa.global.security.filter.JwtUsernamePasswordAuthenticationFilter;
+import org.moa.global.security.filter.TokenAutoRefreshFilter;
 import org.moa.global.security.handler.CustomAccessDeniedHandler;
 import org.moa.global.security.handler.CustomAuthenticationEntryPoint;
 import org.mybatis.spring.annotation.MapperScan;
@@ -23,6 +24,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.web.access.channel.ChannelProcessingFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -48,6 +50,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Autowired
 	private JwtUsernamePasswordAuthenticationFilter jwtUsernamePasswordAuthenticationFilter;
+	
+	@Autowired(required = false)
+	private TokenAutoRefreshFilter tokenAutoRefreshFilter;
 
 	// BCryptPasswordEncoder 빈 등록
 	@Bean
@@ -88,6 +93,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		config.addAllowedMethod("*");
 		config.addExposedHeader("Authorization");
 		config.addExposedHeader("Set-Cookie");
+		config.addExposedHeader("X-New-Access-Token");  // 자동 갱신 토큰 헤더 노출
+		config.addExposedHeader("X-Token-Refreshed");    // 토큰 갱신 여부 헤더 노출
 		config.setMaxAge(3600L); // preflight 결과 캐시
 		source.registerCorsConfiguration("/**", config);
 		return new CorsFilter(source);
@@ -103,25 +110,43 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	public void configure(HttpSecurity http) throws Exception {
-		// 한글 인코딩 필터 설정
+		// 기본 필터 설정
 		http
 			.addFilterBefore(corsFilter(), ChannelProcessingFilter.class)
-			.addFilterBefore(encodingFilter(), CsrfFilter.class)
-			.addFilterBefore(authenticationErrorFilter, UsernamePasswordAuthenticationFilter.class)
-			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-			.addFilterBefore(jwtUsernamePasswordAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+			.addFilterBefore(encodingFilter(), CsrfFilter.class);
 
+		// 커스텀 필터 체인 구성
+		// 순서: AuthenticationErrorFilter -> JwtUsernamePasswordAuthenticationFilter -> TokenAutoRefreshFilter -> JwtAuthenticationFilter
+		
+		// 1. 인증 에러 처리 필터 (가장 먼저)
+		http.addFilterBefore(authenticationErrorFilter, LogoutFilter.class);
+		
+		// 2. 로그인 처리 필터 (UsernamePasswordAuthenticationFilter 위치에)
+		http.addFilterAt(jwtUsernamePasswordAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+		
+		// 3. Token Auto Refresh Filter (로그인 필터 다음, JWT 필터 전)
+		if (tokenAutoRefreshFilter != null) {
+			http.addFilterAfter(tokenAutoRefreshFilter, UsernamePasswordAuthenticationFilter.class);
+		}
+		
+		// 4. JWT 인증 필터 (마지막)
+		http.addFilterAfter(jwtAuthenticationFilter, 
+			tokenAutoRefreshFilter != null ? TokenAutoRefreshFilter.class : UsernamePasswordAuthenticationFilter.class);
+
+		// Exception Handling
 		http
 			.cors().and()
 			.exceptionHandling()
 			.authenticationEntryPoint(authenticationEntryPoint)
 			.accessDeniedHandler(accessDeniedHandler);
 
+		// Security 기본 설정
 		http.httpBasic().disable()
 			.csrf().disable()
 			.formLogin().disable()
 			.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
+		// URL별 권한 설정
 		http
 			.authorizeRequests()
 			// 정적 리소스 허용
