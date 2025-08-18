@@ -14,6 +14,7 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtProcessor {
 	static private final long TOKEN_VALID_MILISECOND = 1000L * 60 * 60 * 365; // 1년
+	// HS512 requires at least 512 bits (64 bytes) key - RTR과 동일한 키 사용
 	private final String secretKey = "REDACTED_SECRET";
 	private final Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
 

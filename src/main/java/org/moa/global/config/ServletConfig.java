@@ -1,5 +1,6 @@
 package org.moa.global.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
@@ -10,6 +11,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
@@ -35,6 +37,33 @@ import java.util.List;
 	"org.moa.global.account.controller"
 })
 public class ServletConfig implements WebMvcConfigurer {
+
+	@Value("${app.environment:local}")
+	private String environment;
+
+	/**
+	 * CORS 설정 - RTR을 위한 Cookie 전송 허용
+	 */
+	@Override
+	public void addCorsMappings(CorsRegistry registry) {
+		if ("docker".equals(environment) || "production".equals(environment)) {
+			// 배포 환경 - HTTPS
+			registry.addMapping("/api/**")
+				.allowedOrigins("https://yourdomain.com", "https://www.yourdomain.com")
+				.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+				.allowedHeaders("*")
+				.allowCredentials(true)  // Cookie 전송 허용 (RTR 필수)
+				.maxAge(3600);
+		} else {
+			// 로컬 환경 - HTTP
+			registry.addMapping("/api/**")
+				.allowedOrigins("http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000")
+				.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+				.allowedHeaders("*")
+				.allowCredentials(true)  // Cookie 전송 허용 (RTR 필수)
+				.maxAge(3600);
+		}
+	}
 
 	// Controller에서 메소드 파라미터로 Pageable 타입을 사용할 수 있도록 설정
 	// Spring이 ?page=...&size=... 같은 파라미터를 Pageable 객체로 변환할 수 있도록
