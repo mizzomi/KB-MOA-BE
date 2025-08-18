@@ -18,6 +18,9 @@ public class CookieUtil {
     @Value("${server.use.secure.cookie:false}")
     private boolean useSecureCookie;
     
+    @Value("${app.cookie.samesite:Lax}")
+    private String sameSite;
+    
     /**
      * JWT 토큰을 쿠키로 생성
      * 환경에 따라 Secure, SameSite 속성 자동 설정
@@ -76,7 +79,8 @@ public class CookieUtil {
         // 환경별 설정
         if ("production".equals(serverEnv) || useSecureCookie) {
             sb.append("; Secure");
-            sb.append("; SameSite=None");  // Cross-Origin 허용 (HTTPS 필수)
+            // properties에서 설정된 SameSite 값 사용
+            sb.append("; SameSite=").append(sameSite);
         } else {
             sb.append("; SameSite=Lax");   // 로컬 개발 환경
         }

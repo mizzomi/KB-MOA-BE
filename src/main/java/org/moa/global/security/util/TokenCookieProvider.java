@@ -23,6 +23,9 @@ public class TokenCookieProvider {
 
     @Value("${app.cookie.secure:false}")
     private boolean secureCookie;
+    
+    @Value("${app.cookie.samesite:Lax}")
+    private String sameSite;
 
     private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
     private static final int REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // 7일
@@ -46,16 +49,18 @@ public class TokenCookieProvider {
      */
     private void setSecureCookie(HttpServletResponse response, String refreshToken) {
         // Spring Legacy에서는 SameSite 속성을 직접 헤더로 설정
+        // SameSite 값을 properties에서 읽어와서 사용
         String cookieValue = String.format(
-            "%s=%s; Path=/; Domain=%s; Max-Age=%d; HttpOnly; Secure; SameSite=Strict",
+            "%s=%s; Path=/; Domain=%s; Max-Age=%d; HttpOnly; Secure; SameSite=%s",
             REFRESH_TOKEN_COOKIE_NAME,
             refreshToken,
             cookieDomain,
-            REFRESH_TOKEN_MAX_AGE
+            REFRESH_TOKEN_MAX_AGE,
+            sameSite  // properties에서 설정된 값 사용 (None이어야 CORS 환경에서 작동)
         );
         
         response.addHeader("Set-Cookie", cookieValue);
-        log.debug("Set secure refresh token cookie for production environment");
+        log.debug("Set secure refresh token cookie for production environment with SameSite={}", sameSite);
     }
 
     /**
@@ -79,9 +84,10 @@ public class TokenCookieProvider {
         if ("production".equals(environment) || "docker".equals(environment)) {
             // 배포 환경
             String cookieValue = String.format(
-                "%s=; Path=/; Domain=%s; Max-Age=0; HttpOnly; Secure; SameSite=Strict",
+                "%s=; Path=/; Domain=%s; Max-Age=0; HttpOnly; Secure; SameSite=%s",
                 REFRESH_TOKEN_COOKIE_NAME,
-                cookieDomain
+                cookieDomain,
+                sameSite  // properties에서 설정된 값 사용
             );
             response.addHeader("Set-Cookie", cookieValue);
         } else {
