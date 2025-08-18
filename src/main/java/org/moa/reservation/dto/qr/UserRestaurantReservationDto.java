@@ -18,6 +18,7 @@ public class UserRestaurantReservationDto {
     private String type;
     private Long reservationId;
     private Long restId;
+    private Long businessId;
     private String restName;
     private String address;
     @JsonFormat(pattern = "yyyy-MM-dd")

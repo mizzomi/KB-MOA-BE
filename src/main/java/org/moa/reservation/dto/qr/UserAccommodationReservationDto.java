@@ -17,6 +17,7 @@ public class UserAccommodationReservationDto {
     private String type;
     private Long reservationId;
     private Long accomId;
+    private Long businessId;
     private String hotelName;
     private String address;
     private String roomType;
