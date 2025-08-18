@@ -94,8 +94,21 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 				// RTR 적용 - Token Pair 생성
 				TokenInfo tokenInfo = jwtTokenService.createTokenPair(memberId, request);
 				
+				log.debug("Created token pair - AccessToken: {}, RefreshToken: {}", 
+					tokenInfo.getAccessToken() != null ? "Generated" : "NULL",
+					tokenInfo.getRefreshToken() != null ? "Generated" : "NULL");
+				
 				// Refresh Token을 HttpOnly Cookie로 설정
 				tokenCookieProvider.setRefreshTokenCookie(response, tokenInfo.getRefreshToken());
+				
+				log.info("Setting refresh token cookie for memberId={}", memberId);
+				
+				// 응답 헤더 확인을 위한 로그
+				if (response.containsHeader("Set-Cookie")) {
+					log.info("Set-Cookie header is present in response");
+				} else {
+					log.warn("Set-Cookie header is NOT present in response!");
+				}
 				
 				// ApiResponse 형식에 맞게 응답 데이터 구성
 				Map<String, Object> responseData = new HashMap<>();
