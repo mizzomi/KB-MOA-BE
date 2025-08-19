@@ -259,9 +259,16 @@ public class TripRecordServiceImpl implements TripRecordService {
             return;
         }
 
+        // 1. 전체 작업 시간 측정을 위한 시작 시간 기록
+        long totalStartTime = System.currentTimeMillis();
+        log.info("이미지 업로드 시작. 총 {}개", imageFiles.size());
+
         List<CompletableFuture<Void>> uploadFutures = imageFiles.stream()
                 .filter(file -> file != null && !file.isEmpty()) // 유효한 파일만 필터링
                 .map(imageFile -> CompletableFuture.runAsync(() -> {
+                    String originalFileName = imageFile.getOriginalFilename();
+                    // 2. 각 비동기 작업이 '요청'되는 시점의 로그
+                    log.info("  -> 작업 요청: {}", originalFileName);
                     try {
                         String storedFileName = firebaseStorageService.uploadAndGetFileName(imageFile);
                         TripRecordImage recordImage = TripRecordImage.builder()
@@ -269,12 +276,19 @@ public class TripRecordServiceImpl implements TripRecordService {
                                 .imageUrl(storedFileName)
                                 .build();
                         tripRecordImageMapper.insertTripRecordImage(recordImage);
+                        // 3. 각 비동기 작업이 실제로 '완료'되는 시점의 로그
+                        log.info("  <- 비동기 작업 완료: {}", originalFileName);
                     } catch (IOException e) {
                         // 비동기 작업 내에서 발생하는 체크 예외를 런타임 예외로 래핑하여 전파
                         throw new FileUploadException("파일 업로드 중 오류 발생: " + imageFile.getOriginalFilename(), e);
                     }
                 }, ioTaskExecutor)).toList();
 
+        log.info("모든 업로드 작업 요청 완료. 결과 취합 대기 중...");
+
         CompletableFuture.allOf(uploadFutures.toArray(new CompletableFuture[0])).join();
+        // 4. 모든 작업이 완료된 후 총 소요 시간 기록
+        long totalEndTime = System.currentTimeMillis();
+        log.info("모든 이미지 업로드 완료. 총 소요시간: {}ms", (totalEndTime - totalStartTime));
     }
 }
