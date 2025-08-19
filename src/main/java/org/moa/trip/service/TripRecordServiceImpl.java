@@ -77,7 +77,6 @@ public class TripRecordServiceImpl implements TripRecordService {
 
         tripRecordMapper.insertTripRecord(newRecord);
 
-        // 이미지 저장 처리
         uploadAndSaveImages(dto.getImageUrls(), newRecord.getRecordId());
 
         // createdAt같은 DB 자동 생성 값을 가져오기 위해서 방금 생성한 완전한 값을 다시 조회
@@ -263,21 +262,15 @@ public class TripRecordServiceImpl implements TripRecordService {
         long totalStartTime = System.currentTimeMillis();
         log.info("이미지 업로드 시작. 총 {}개", imageFiles.size());
 
-        List<CompletableFuture<Void>> uploadFutures = imageFiles.stream()
+        List<CompletableFuture<String>> uploadFutures = imageFiles.stream()
                 .filter(file -> file != null && !file.isEmpty()) // 유효한 파일만 필터링
-                .map(imageFile -> CompletableFuture.runAsync(() -> {
+                .map(imageFile -> CompletableFuture.supplyAsync(() -> {
                     String originalFileName = imageFile.getOriginalFilename();
                     // 2. 각 비동기 작업이 '요청'되는 시점의 로그
                     log.info("  -> 작업 요청: {}", originalFileName);
                     try {
-                        String storedFileName = firebaseStorageService.uploadAndGetFileName(imageFile);
-                        TripRecordImage recordImage = TripRecordImage.builder()
-                                .recordId(recordId)
-                                .imageUrl(storedFileName)
-                                .build();
-                        tripRecordImageMapper.insertTripRecordImage(recordImage);
-                        // 3. 각 비동기 작업이 실제로 '완료'되는 시점의 로그
-                        log.info("  <- 비동기 작업 완료: {}", originalFileName);
+                        // Firebase에 업로드하고, 저장된 파일 이름을 반환
+                        return firebaseStorageService.uploadAndGetFileName(imageFile);
                     } catch (IOException e) {
                         // 비동기 작업 내에서 발생하는 체크 예외를 런타임 예외로 래핑하여 전파
                         throw new FileUploadException("파일 업로드 중 오류 발생: " + imageFile.getOriginalFilename(), e);
@@ -286,7 +279,26 @@ public class TripRecordServiceImpl implements TripRecordService {
 
         log.info("모든 업로드 작업 요청 완료. 결과 취합 대기 중...");
 
-        CompletableFuture.allOf(uploadFutures.toArray(new CompletableFuture[0])).join();
+        // 2단계: 결과 취합
+        // 모든 업로드가 완료될 때까지 기다린 후, 결과(파일 이름 리스트)를 수집
+        List<String> storedFileNames = uploadFutures.stream()
+                .map(CompletableFuture::join) // 각 Future가 완료되고 결과를 반환할 때까지 대기
+                .toList();
+
+        long uploadEndTime = System.currentTimeMillis();
+        log.info("모든 이미지 업로드 완료. 총 소요시간: {}ms", (uploadEndTime - totalStartTime));
+
+        // 3단계: DB 일괄 저장 (메인 스레드에서 트랜잭션 보장)
+        log.info("DB에 이미지 정보 저장 시작...");
+        storedFileNames.forEach(storedFileName -> {
+            TripRecordImage recordImage = TripRecordImage.builder()
+                    .recordId(recordId)
+                    .imageUrl(storedFileName)
+                    .build();
+            tripRecordImageMapper.insertTripRecordImage(recordImage);
+        });
+        log.info("DB에 이미지 정보 저장 완료.");
+
         // 4. 모든 작업이 완료된 후 총 소요 시간 기록
         long totalEndTime = System.currentTimeMillis();
         log.info("모든 이미지 업로드 완료. 총 소요시간: {}ms", (totalEndTime - totalStartTime));
