@@ -49,31 +49,35 @@ public class TransportReservationValidator {
         }
     }
     
-    // 예약 소유권 검증 (결제용)
+    // 예약 소유권 검증 (결제용) - 여행 참여자 모두 가능
     // @param memberId 현재 사용자 ID
     // @param reservationId 예약 ID
-    // @return 예약 소유자 ID
+    // @return 여행 생성자 ID (기존 로직 호환성 유지)
     public Long validateReservationOwnershipForPayment(Long memberId, Long reservationId) {
-        Long ownerMemberId = reservationMapper.findMemberIdByReservationId(reservationId);
+        // 여행 참여자인지 확인
+        boolean isTripMember = reservationMapper.isTripMemberByReservationIdAndMemberId(reservationId, memberId);
         
-        if (ownerMemberId == null) {
-            throw TransportReservationException.reservationNotFound(reservationId);
+        if (!isTripMember) {
+            throw TransportReservationException.unauthorizedAccess();
         }
         
-        if (!ownerMemberId.equals(memberId)) {
-            throw TransportReservationException.unauthorizedAccess();
+        // 여행 생성자 ID 반환 (기존 로직과의 호환성을 위해)
+        Long ownerMemberId = reservationMapper.findMemberIdByReservationId(reservationId);
+        if (ownerMemberId == null) {
+            throw TransportReservationException.reservationNotFound(reservationId);
         }
         
         return ownerMemberId;
     }
     
-    // 예약 소유권 검증 (취소용)
+    // 예약 소유권 검증 (취소용) - 여행 참여자 모두 가능
     // @param memberId 현재 사용자 ID
     // @param reservationId 예약 ID
     public void validateReservationOwnershipForCancel(Long memberId, Long reservationId) {
-        Long ownerMemberId = reservationMapper.findMemberIdByReservationId(reservationId);
+        // 여행 참여자인지 확인
+        boolean isTripMember = reservationMapper.isTripMemberByReservationIdAndMemberId(reservationId, memberId);
         
-        if (ownerMemberId == null || !ownerMemberId.equals(memberId)) {
+        if (!isTripMember) {
             throw TransportReservationException.unauthorizedCancel();
         }
     }
