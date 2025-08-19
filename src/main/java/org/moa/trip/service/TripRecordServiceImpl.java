@@ -1,6 +1,7 @@
 package org.moa.trip.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.moa.global.exception.ForbiddenAccessException;
 import org.moa.global.exception.RecordNotFoundException;
 import org.moa.global.handler.FileUploadException;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TripRecordServiceImpl implements TripRecordService {
     private final TripRecordMapper tripRecordMapper;
     private final TripRecordImageMapper tripRecordImageMapper;
@@ -181,18 +183,33 @@ public class TripRecordServiceImpl implements TripRecordService {
             return;
         }
 
+        // ✅ 3. 전체 작업 시간 측정을 위한 시작 시간 기록
+        long totalStartTime = System.currentTimeMillis();
+        log.info("이미지 업로드 시작. 총 {}개", imageFiles.size());
+
         for (var imageFile : imageFiles) {
             // 리스트 안에 혹시 모를 빈 파일이 섞여있으면 건너뛰기
             if (imageFile == null || imageFile.isEmpty()) {
                 continue;
             }
             try {
+                // ✅ 4. 개별 작업 시간 측정을 위한 시작 시간 기록
+                long eachStartTime = System.currentTimeMillis();
+                String originalFileName = imageFile.getOriginalFilename();
+                log.info("  - 처리 시작: {}", originalFileName);
+
                 String storedFileName = firebaseStorageService.uploadAndGetFileName(imageFile);
                 TripRecordImage recordImage = TripRecordImage.builder().recordId(recordId).imageUrl(storedFileName).build();
                 tripRecordImageMapper.insertTripRecordImage(recordImage);
+
+                long eachEndTime = System.currentTimeMillis();
+                log.info("  - 처리 완료: {} (소요시간: {}ms)", originalFileName, (eachEndTime - eachStartTime));
             } catch (IOException e) {
                 throw new FileUploadException("파일 업로드에 실패했습니다.", e);
             }
         }
+
+        long totalEndTime = System.currentTimeMillis();
+        log.info("[순차 처리] 모든 이미지 업로드 완료. 총 소요시간: {}ms", (totalEndTime - totalStartTime));
     }
 }
