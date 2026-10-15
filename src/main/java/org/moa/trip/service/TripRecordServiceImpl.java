@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.sql.DataSource;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -47,6 +48,7 @@ import java.util.concurrent.Executor;
 import java.util.Objects;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 @Service
 @Slf4j
@@ -109,20 +111,15 @@ public class TripRecordServiceImpl implements TripRecordService {
         }
         checkMembership(tripId, memberId, "생성");
         List<String> uploaded = uploadImages(dto.getImageUrls());
-        try {
-            return writeTransaction.execute(status -> {
-                checkMembership(tripId, memberId, "생성");
-                TripRecord record = TripRecord.builder()
-                        .tripId(tripId).memberId(memberId).title(dto.getTitle())
-                        .recordDate(dto.getRecordDate()).content(dto.getContent()).build();
-                tripRecordMapper.insertTripRecord(record);
-                saveImages(record.getRecordId(), uploaded);
-                return TripRecordResponseDto.fromEntity(tripRecordMapper.findRecordById(record.getRecordId()));
-            });
-        } catch (RuntimeException | Error failure) {
-            deleteFilesBestEffort(uploaded, "create compensation");
-            throw failure;
-        }
+        return executeImageWrite("create", tripId, null, uploaded, List.of(), () -> {
+            checkMembership(tripId, memberId, "생성");
+            TripRecord record = TripRecord.builder()
+                    .tripId(tripId).memberId(memberId).title(dto.getTitle())
+                    .recordDate(dto.getRecordDate()).content(dto.getContent()).build();
+            tripRecordMapper.insertTripRecord(record);
+            saveImages(record.getRecordId(), uploaded);
+            return TripRecordResponseDto.fromEntity(tripRecordMapper.findRecordById(record.getRecordId()));
+        });
     }
 
     /** 일자별 여행 기록 조회 **/
@@ -216,29 +213,24 @@ public class TripRecordServiceImpl implements TripRecordService {
         TripRecord before = checkRecordAuthority(tripId, recordId, memberId, "수정", false);
         List<String> beforeImages = tripRecordMapper.findImageUrlsByRecordId(recordId);
         Set<String> keep = validateRetainedImages(dto.getExistingImageFileNames(), beforeImages);
+        List<String> removalCandidates = beforeImages.stream().filter(name -> !keep.contains(name)).toList();
         List<String> uploaded = uploadImages(dto.getNewImages());
-        UpdateResult result;
-        try {
-            result = writeTransaction.execute(status -> {
-                TripRecord current = checkRecordAuthority(tripId, recordId, memberId, "수정", true);
-                List<String> currentImages = tripRecordMapper.findImageUrlsByRecordId(recordId);
-                if (!before.equals(current) || !beforeImages.stream().sorted().toList().equals(currentImages.stream().sorted().toList())) {
-                    throw new BusinessException(StatusCode.CONFLICT, "여행 기록이 변경되었습니다. 새로 조회 후 다시 수정해주세요.");
-                }
-                validateRetainedImages(dto.getExistingImageFileNames(), currentImages);
-                List<String> removed = currentImages.stream().filter(name -> !keep.contains(name)).toList();
-                tripRecordMapper.updateTripRecord(TripRecord.builder().recordId(recordId)
-                        .title(dto.getTitle()).content(dto.getContent()).recordDate(dto.getRecordDate()).build());
-                saveImages(recordId, uploaded);
-                if (!removed.isEmpty()) {
-                    tripRecordImageMapper.deleteImagesByRecordIdAndFileNames(recordId, removed);
-                }
-                return new UpdateResult(TripRecordResponseDto.fromEntity(tripRecordMapper.findRecordById(recordId)), removed);
-            });
-        } catch (RuntimeException | Error failure) {
-            deleteFilesBestEffort(uploaded, "update compensation");
-            throw failure;
-        }
+        UpdateResult result = executeImageWrite("update", tripId, recordId, uploaded, removalCandidates, () -> {
+            TripRecord current = checkRecordAuthority(tripId, recordId, memberId, "수정", true);
+            List<String> currentImages = tripRecordMapper.findImageUrlsByRecordId(recordId);
+            if (!before.equals(current) || !beforeImages.stream().sorted().toList().equals(currentImages.stream().sorted().toList())) {
+                throw new BusinessException(StatusCode.CONFLICT, "여행 기록이 변경되었습니다. 새로 조회 후 다시 수정해주세요.");
+            }
+            validateRetainedImages(dto.getExistingImageFileNames(), currentImages);
+            List<String> removed = currentImages.stream().filter(name -> !keep.contains(name)).toList();
+            tripRecordMapper.updateTripRecord(TripRecord.builder().recordId(recordId)
+                    .title(dto.getTitle()).content(dto.getContent()).recordDate(dto.getRecordDate()).build());
+            saveImages(recordId, uploaded);
+            if (!removed.isEmpty()) {
+                tripRecordImageMapper.deleteImagesByRecordIdAndFileNames(recordId, removed);
+            }
+            return new UpdateResult(TripRecordResponseDto.fromEntity(tripRecordMapper.findRecordById(recordId)), removed);
+        });
         // 커밋 후 정리 실패는 이미 성공한 DB 수정을 실패로 바꾸지 않는다.
         deleteFilesBestEffort(result.removed(), "update after commit");
         return result.response();
@@ -256,6 +248,56 @@ public class TripRecordServiceImpl implements TripRecordService {
             return names;
         });
         deleteFilesBestEffort(removed, "delete after commit");
+    }
+
+    /** 커밋 응답 유실 시 rollback 성공/ROLLED_BACK 통지만으로 미커밋을 단정하지 않는다. */
+    private static class WriteOutcome implements TransactionSynchronization {
+        boolean workStarted;
+        boolean workCompleted;
+        int completionStatus = STATUS_UNKNOWN;
+
+        @Override
+        public void afterCompletion(int status) {
+            completionStatus = status;
+        }
+
+        boolean canCompensate() {
+            // 시작 실패는 DB 작업이 없었다. 작업 중 실패는 롤백 완료가 확인돼야 정리한다.
+            // 콜백 반환 이후의 실패는 commit 이전/이후인지 확정할 수 없어 모두 보존한다.
+            return !workStarted || (!workCompleted && completionStatus == STATUS_ROLLED_BACK);
+        }
+
+        String completionName() {
+            return switch (completionStatus) {
+                case STATUS_COMMITTED -> "COMMITTED";
+                case STATUS_ROLLED_BACK -> "ROLLED_BACK";
+                default -> "UNKNOWN";
+            };
+        }
+    }
+
+    private <T> T executeImageWrite(String operation, Long tripId, Long recordId,
+                                    List<String> uploaded, List<String> removalCandidates, Supplier<T> work) {
+        WriteOutcome outcome = new WriteOutcome();
+        try {
+            return writeTransaction.execute(status -> {
+                outcome.workStarted = true;
+                TransactionSynchronizationManager.registerSynchronization(outcome);
+                T result = work.get();
+                outcome.workCompleted = true;
+                return result;
+            });
+        } catch (RuntimeException | Error failure) {
+            if (outcome.canCompensate()) {
+                deleteFilesBestEffort(uploaded, operation + " compensation");
+            } else {
+                log.error("Image cleanup deferred: operation={}, tripId={}, recordId={}, newFiles={}, oldFileCandidates={}, "
+                                + "dbWorkCompleted={}, completionStatus={}; outcome uncertain; verify database before manual cleanup",
+                        operation, tripId, recordId, uploaded, removalCandidates,
+                        outcome.workCompleted, outcome.completionName(), failure);
+            }
+            throw failure;
+        }
     }
 
     private record UpdateResult(TripRecordResponseDto response, List<String> removed) {}

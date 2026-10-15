@@ -205,17 +205,13 @@ class TripRecordImageConsistencyTest {
     }
 
     @Test
-    void commitFailureCompensatesOnlyAfterCommitAttempt() {
+    void commitExceptionPreservesFilesEvenWhenSubsequentRollbackReturnsSuccessfully() {
         transactions.failCommit = true;
-        when(storage.deleteFile("new.jpg")).thenAnswer(i -> {
-            assertThat(transactions.events).containsExactly("begin", "commit", "rollback");
-            assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
-            return true;
-        });
         assertThatThrownBy(() -> service.createRecord(1L, 2L, create(file("a.jpg"))))
                 .isInstanceOf(TransactionSystemException.class);
         verify(images).insertTripRecordImages(anyList());
-        verify(storage).deleteFile("new.jpg");
+        assertThat(transactions.events).containsExactly("begin", "commit", "rollback");
+        verify(storage, never()).deleteFile(anyString());
     }
 
     @Test
@@ -263,12 +259,11 @@ class TripRecordImageConsistencyTest {
     }
 
     @Test
-    void updateCommitFailureKeepsOldFiles() {
+    void updateCommitFailurePreservesBothOldAndNewFiles() {
         transactions.failCommit = true;
         assertThatThrownBy(() -> service.updateRecord(1L, 10L, 2L, update(List.of(), true)))
                 .isInstanceOf(TransactionSystemException.class);
-        verify(storage).deleteFile("new.jpg");
-        verify(storage, never()).deleteFile("old.jpg");
+        verify(storage, never()).deleteFile(anyString());
     }
 
     @Test
@@ -390,16 +385,90 @@ class TripRecordImageConsistencyTest {
         } finally { logger.removeAppender(appender); appender.stop(); }
     }
 
+    @Test
+    void uncertainCommitLogsPreservedFilesDespiteReportedRollback() {
+        transactions.failCommit = true;
+        try (CapturedLogs logs = new CapturedLogs()) {
+            Throwable failure = catchThrowable(() -> service.createRecord(1L, 2L, create(file("a.jpg"))));
+            assertThat(failure).isInstanceOf(TransactionSystemException.class);
+            assertThat(logs.events).anySatisfy(event -> {
+                assertThat(event.getMessage().getFormattedMessage()).contains("Image cleanup deferred", "operation=create",
+                        "tripId=1", "newFiles=[new.jpg]", "dbWorkCompleted=true", "completionStatus=ROLLED_BACK",
+                        "verify database before manual cleanup");
+                assertThat(event.getThrown()).isSameAs(failure);
+            });
+        }
+        verify(storage, never()).deleteFile(anyString());
+    }
+
+    @Test
+    void failedRollbackPreservesNewFilesAndLogsUnknownOutcome() {
+        transactions.failRollback = true;
+        when(images.insertTripRecordImages(anyList())).thenThrow(new IllegalStateException("bulk failed"));
+        try (CapturedLogs logs = new CapturedLogs()) {
+            assertThatThrownBy(() -> service.createRecord(1L, 2L, create(file("a.jpg"))))
+                    .isInstanceOf(TransactionSystemException.class);
+            assertThat(logs.events).anySatisfy(event -> assertThat(event.getMessage().getFormattedMessage())
+                    .contains("newFiles=[new.jpg]", "dbWorkCompleted=false", "completionStatus=UNKNOWN"));
+        }
+        assertThat(transactions.events).containsExactly("begin", "rollback");
+        verify(storage, never()).deleteFile(anyString());
+    }
+
+    @Test
+    void updateWithoutNewFilesLogsExistingRemovalCandidatesWhenCommitIsUncertain() {
+        transactions.failCommit = true;
+        try (CapturedLogs logs = new CapturedLogs()) {
+            assertThatThrownBy(() -> service.updateRecord(1L, 10L, 2L, update(List.of(), false)))
+                    .isInstanceOf(TransactionSystemException.class);
+            assertThat(logs.events).anySatisfy(event -> assertThat(event.getMessage().getFormattedMessage())
+                    .contains("operation=update", "recordId=10", "newFiles=[]", "oldFileCandidates=[old.jpg]"));
+        }
+        verifyNoInteractions(storage);
+    }
+
+    @Test
+    void beginFailureCompensatesBecauseNoDatabaseWorkRan() {
+        transactions.failBegin = true;
+        assertThatThrownBy(() -> service.createRecord(1L, 2L, create(file("a.jpg"))))
+                .isInstanceOf(TransactionSystemException.class).hasMessage("simulated begin failure");
+        verify(records, never()).insertTripRecord(any());
+        verify(storage).deleteFile("new.jpg");
+    }
+
+    static class CapturedLogs implements AutoCloseable {
+        final List<org.apache.logging.log4j.core.LogEvent> events = new ArrayList<>();
+        final org.apache.logging.log4j.core.Logger logger = (org.apache.logging.log4j.core.Logger)
+                org.apache.logging.log4j.LogManager.getLogger(TripRecordServiceImpl.class);
+        final org.apache.logging.log4j.core.appender.AbstractAppender appender =
+                new org.apache.logging.log4j.core.appender.AbstractAppender("uncertain-outcome-test", null, null, true,
+                        org.apache.logging.log4j.core.config.Property.EMPTY_ARRAY) {
+                    @Override public void append(org.apache.logging.log4j.core.LogEvent event) {
+                        events.add(event.toImmutable());
+                    }
+                };
+        CapturedLogs() { appender.start(); logger.addAppender(appender); }
+        @Override public void close() { logger.removeAppender(appender); appender.stop(); }
+    }
+
     static class RecordingTransactions extends AbstractPlatformTransactionManager {
         final List<String> events = new ArrayList<>();
         boolean failCommit;
+        boolean failBegin;
+        boolean failRollback;
         RecordingTransactions() { setRollbackOnCommitFailure(true); }
         @Override protected Object doGetTransaction() { return new Object(); }
-        @Override protected void doBegin(Object tx, TransactionDefinition definition) { events.add("begin"); }
+        @Override protected void doBegin(Object tx, TransactionDefinition definition) {
+            events.add("begin");
+            if (failBegin) throw new TransactionSystemException("simulated begin failure");
+        }
         @Override protected void doCommit(DefaultTransactionStatus status) {
             events.add("commit");
             if (failCommit) throw new TransactionSystemException("simulated commit failure");
         }
-        @Override protected void doRollback(DefaultTransactionStatus status) { events.add("rollback"); }
+        @Override protected void doRollback(DefaultTransactionStatus status) {
+            events.add("rollback");
+            if (failRollback) throw new TransactionSystemException("simulated rollback failure");
+        }
     }
 }

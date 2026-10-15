@@ -93,6 +93,8 @@ class TripRecordImageMysqlTest {
     @BeforeEach
     void cleanDisposableData() throws Exception {
         dataSource.failCommit.set(false);
+        dataSource.failAfterCommit.set(false);
+        dataSource.failRollback.set(false);
         jdbc.update("DELETE FROM trip_record_images"); jdbc.update("DELETE FROM trip_records");
         jdbc.update("DELETE FROM trip_member"); jdbc.update("DELETE FROM trip"); jdbc.update("DELETE FROM member");
         jdbc.update("INSERT INTO trip VALUES (1)"); jdbc.update("INSERT INTO member VALUES (2)");
@@ -157,15 +159,12 @@ class TripRecordImageMysqlTest {
     }
 
     @Test
-    void jdbcCommitExceptionBeforeCommitRollsBackAndCompensates() {
+    void jdbcCommitExceptionBeforeCommitStillPreservesFilesBecauseClientCannotKnowOutcome() {
         dataSource.failCommit.set(true);
-        doAnswer(i -> {
-            assertThat(dataSource.rollbacks).hasValue(1);
-            assertThat(count("trip_records")).isZero(); assertThat(count("trip_record_images")).isZero();
-            return true;
-        }).when(storage).deleteFile(anyString());
         assertThatThrownBy(() -> service.createRecord(1L, 2L, create(2))).isInstanceOf(RuntimeException.class);
-        verify(storage).deleteFile("new-1.jpg"); verify(storage).deleteFile("new-2.jpg");
+        assertThat(dataSource.rollbacks).hasValue(1);
+        assertThat(count("trip_records")).isZero(); assertThat(count("trip_record_images")).isZero();
+        verify(storage, never()).deleteFile(anyString());
         assertThat(dataSource.commits).hasValue(0);
     }
 
@@ -200,7 +199,7 @@ class TripRecordImageMysqlTest {
         assertThatThrownBy(() -> service.updateRecord(1L, id, 2L, update(List.of(),1))).isInstanceOf(RuntimeException.class);
         assertThat(title(id)).isEqualTo("before");
         assertThat(records.findImageUrlsByRecordId(id)).containsExactly("old.jpg");
-        verify(storage, never()).deleteFile("old.jpg"); verify(storage).deleteFile("new-1.jpg");
+        verify(storage, never()).deleteFile(anyString());
     }
 
     @Test
@@ -297,8 +296,39 @@ class TripRecordImageMysqlTest {
         verifyNoInteractions(storage); assertThat(count("trip_records")).isZero();
     }
 
+    @Test
+    void createResponseLossAfterRealCommitPreservesReferencedFilesDespiteSuccessfulRollbackCall() {
+        dataSource.failAfterCommit.set(true);
+        assertThatThrownBy(() -> service.createRecord(1L, 2L, create(2)))
+                .isInstanceOf(RuntimeException.class).hasRootCauseMessage("Injected response loss AFTER MySQL commit");
+        // 별도 연결로 확인: rollback()이 성공해도 이미 커밋된 데이터는 남는다.
+        assertThat(dataSource.commits).hasValue(1);
+        assertThat(dataSource.rollbacks).hasValue(1);
+        assertThat(count("trip_records")).isEqualTo(1);
+        assertThat(jdbc.queryForList("SELECT image_url FROM trip_record_images", String.class))
+                .containsExactlyInAnyOrder("new-1.jpg", "new-2.jpg");
+        verify(storage, never()).deleteFile(anyString());
+    }
+
+    @Test
+    void updateResponseLossAfterRealCommitAndFailedRollbackPreservesAllFiles() {
+        long id = seed();
+        dataSource.failAfterCommit.set(true);
+        dataSource.failRollback.set(true);
+        assertThatThrownBy(() -> service.updateRecord(1L, id, 2L, update(List.of(), 2)))
+                .isInstanceOf(RuntimeException.class);
+        assertThat(dataSource.commits).hasValue(1);
+        assertThat(dataSource.rollbacks).hasValue(0);
+        assertThat(title(id)).isEqualTo("after");
+        assertThat(records.findImageUrlsByRecordId(id)).containsExactlyInAnyOrder("new-1.jpg", "new-2.jpg");
+        // 새 파일은 DB가 참조 중이다. 기존 파일도 결과 불명확 경로에서 자동 정리하지 않는다.
+        verify(storage, never()).deleteFile(anyString());
+    }
+
     static class TrackedDataSource extends DelegatingDataSource {
         final AtomicBoolean failCommit = new AtomicBoolean();
+        final AtomicBoolean failAfterCommit = new AtomicBoolean();
+        final AtomicBoolean failRollback = new AtomicBoolean();
         final AtomicInteger commits = new AtomicInteger(), rollbacks = new AtomicInteger();
         TrackedDataSource(DataSource delegate) { super(delegate); }
         @Override public Connection getConnection() throws SQLException {
@@ -308,9 +338,17 @@ class TripRecordImageMysqlTest {
                         if (method.getName().equals("commit") && failCommit.getAndSet(false)) {
                             throw new SQLException("Injected commit failure BEFORE MySQL commit");
                         }
+                        if (method.getName().equals("rollback") && failRollback.getAndSet(false)) {
+                            throw new SQLException("Injected rollback failure");
+                        }
                         try {
                             Object result = method.invoke(delegate,args);
-                            if (method.getName().equals("commit")) commits.incrementAndGet();
+                            if (method.getName().equals("commit")) {
+                                commits.incrementAndGet();
+                                if (failAfterCommit.getAndSet(false)) {
+                                    throw new SQLException("Injected response loss AFTER MySQL commit");
+                                }
+                            }
                             if (method.getName().equals("rollback")) rollbacks.incrementAndGet();
                             return result;
                         } catch (InvocationTargetException ex) { throw ex.getCause(); }
