@@ -34,6 +34,9 @@ public interface TripRecordMapper {
     // 여행ID + 기록ID 모두 만족하는 여행기록만 조회
     TripRecord findRecordByTripIdAndRecordId(@Param("tripId") Long tripId, @Param("recordId") Long recordId);
 
+    // 변경 작업끼리 직렬화한다. 반드시 DB 트랜잭션 안에서 호출한다.
+    TripRecord findRecordForUpdate(@Param("tripId") Long tripId, @Param("recordId") Long recordId);
+
     // 여행 기록 수정 메소드
     void updateTripRecord(TripRecord tripRecord);
 

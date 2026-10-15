@@ -11,6 +11,8 @@ public interface TripRecordImageMapper {
     // 이미지 저장
     void insertTripRecordImage(TripRecordImage recordImage);
 
+    int insertTripRecordImages(@Param("images") List<TripRecordImage> images);
+
     // 특정 여행 기록에 속한 모든 이미지를 삭제하는 메소드
     void deleteImagesByRecordId(Long recordId);
 

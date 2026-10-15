@@ -8,6 +8,14 @@
         VALUES (#{recordId}, #{imageUrl})
     </insert>
 
+    <insert id="insertTripRecordImages">
+        INSERT INTO trip_record_images (record_id, image_url)
+        VALUES
+        <foreach collection="images" item="image" separator=",">
+            (#{image.recordId}, #{image.imageUrl})
+        </foreach>
+    </insert>
+
     <!-- 이미지 삭제 -->
     <delete id="deleteImagesByRecordId">
         DELETE FROM trip_record_images

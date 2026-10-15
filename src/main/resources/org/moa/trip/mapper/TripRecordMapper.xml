@@ -94,6 +94,13 @@
             record_id = #{recordId} AND trip_id = #{tripId}
     </select>
 
+    <select id="findRecordForUpdate" resultType="org.moa.trip.entity.TripRecord">
+        SELECT record_id, trip_id, member_id, title, record_date, content, created_at, updated_at
+        FROM trip_records
+        WHERE record_id = #{recordId} AND trip_id = #{tripId}
+        FOR UPDATE
+    </select>
+
     <!-- 여행 기록 수정 -->
     <update id="updateTripRecord">
         UPDATE trip_records

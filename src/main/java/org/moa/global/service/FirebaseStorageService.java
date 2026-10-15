@@ -60,12 +60,10 @@ public class FirebaseStorageService {
         Bucket bucket = getBucket();
         String storedFileName = String.format("%s.%s", UUID.randomUUID(), format);
 
-        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(imageBytes)) {
-            bucket.create(storedFileName, inputStream, contentType);
-            log.info("압축된 이미지가 성공적으로 업로드 되었습니다: {} (크기: {} bytes, Content-Type: {})",
-                    storedFileName, imageBytes.length, contentType);
-            return storedFileName;
-        }
+        // 메모리 스트림은 닫을 외부 자원이 없다. 저장 성공 후 파일명 반환 전의
+        // 로깅/후처리 예외로 호출자가 보상할 파일명을 잃지 않도록 바로 반환한다.
+        bucket.create(storedFileName, new ByteArrayInputStream(imageBytes), contentType);
+        return storedFileName;
     }
 
 
@@ -141,18 +139,24 @@ public class FirebaseStorageService {
             Blob blob = bucket.get(fileName);
 
             if (blob == null) {
-                log.warn("삭제하려는 파일이 Storage에 존재하지 않습니다: {}", fileName);
-                return false;
+                log.debug("이미 삭제된 파일입니다: {}", fileName);
+                return true;
             }
 
-            boolean deleted = blob.delete();
-            if (deleted) {
+            // 조회 직후 다른 정리 작업이 삭제했어도 성공으로 취급한다.
+            if (blob.delete() || bucket.get(fileName) == null) {
                 log.info("파일이 성공적으로 삭제되었습니다: {}", fileName);
-            } else {
-                log.warn("파일 삭제에 실패했습니다: {}", fileName);
+                return true;
             }
-            return deleted;
-
+            log.warn("파일 삭제에 실패했습니다: {}", fileName);
+            return false;
+        } catch (StorageException e) {
+            if (e.getCode() == 404) {
+                log.debug("이미 삭제된 파일입니다: {}", fileName);
+                return true;
+            }
+            log.error("파일 삭제 중 오류가 발생했습니다: {}", fileName, e);
+            return false;
         } catch (Exception e) {
             log.error("파일 삭제 중 오류가 발생했습니다: {}", fileName, e);
             return false;

@@ -126,3 +126,36 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+// 기존 전체 테스트의 컴파일 오류와 무관하게 이미지 정합성 테스트를 실행한다.
+sourceSets {
+    tripRecordImageTest {
+        java.srcDir 'src/test/java'
+        java.include 'org/moa/trip/service/TripRecordImage*Test.java'
+        java.include 'org/moa/global/service/FirebaseStorageImageTest.java'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+configurations {
+    tripRecordImageTestImplementation.extendsFrom testImplementation
+    tripRecordImageTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+tasks.register('tripRecordImageTest', Test) {
+    description = 'Runs image consistency unit tests without external services.'
+    group = 'verification'
+    testClassesDirs = sourceSets.tripRecordImageTest.output.classesDirs
+    classpath = sourceSets.tripRecordImageTest.runtimeClasspath
+    useJUnitPlatform()
+    exclude '**/*MysqlTest*'
+}
+tasks.register('tripRecordImageMysqlTest', Test) {
+    description = 'Runs image consistency integration tests against an explicitly configured isolated MySQL.'
+    group = 'verification'
+    testClassesDirs = sourceSets.tripRecordImageTest.output.classesDirs
+    classpath = sourceSets.tripRecordImageTest.runtimeClasspath
+    useJUnitPlatform()
+    include '**/*MysqlTest*'
+    // 외부 DB 상태는 Gradle 입력에 포함되지 않으므로 항상 실제 실행한다.
+    outputs.upToDateWhen { false }
+}
